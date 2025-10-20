@@ -1,0 +1,14 @@
+# Jekyll Configuration for GitHub Pages
+
+# Exclude node_modules and other build artifacts from Jekyll processing
+exclude:
+  - node_modules/
+  - package.json
+  - package-lock.json
+  - "*.bat"
+  - Blocky-Builder/node_modules/
+  - RunesOfTirNaNog/node_modules/
+  - vendor/
+  - .git/
+  - .gitignore
+
