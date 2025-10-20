@@ -143,21 +143,44 @@
         .project-link {
             position: relative;
             border: 2px solid;
-            border-image: linear-gradient(45deg, #ff0000, #ff7f00, #ffff00, #00ff00, #0000ff, #4b0082, #9400d3) 1;
-            animation: rainbow-border 3s ease-in-out infinite;
+            border-image: linear-gradient(90deg, #ff0000, #ff7f00, #ffff00, #00ff00, #0000ff, #4b0082, #9400d3, #ff0000) 1;
+            animation: flowing-rainbow 2s linear infinite;
             transition: all 0.3s ease;
         }
 
         .project-link:hover {
             transform: scale(1.02);
+            animation-duration: 1s;
         }
 
-        @keyframes rainbow-border {
-            0% { background-position: 0% 50%; }
-            25% { background-position: 100% 50%; }
-            50% { background-position: 100% 100%; }
-            75% { background-position: 0% 100%; }
-            100% { background-position: 0% 50%; }
+        @keyframes flowing-rainbow {
+            0% { 
+                border-image-source: linear-gradient(90deg, #ff0000, #ff7f00, #ffff00, #00ff00, #0000ff, #4b0082, #9400d3, #ff0000);
+            }
+            12.5% { 
+                border-image-source: linear-gradient(90deg, #ff7f00, #ffff00, #00ff00, #0000ff, #4b0082, #9400d3, #ff0000, #ff0000);
+            }
+            25% { 
+                border-image-source: linear-gradient(90deg, #ffff00, #00ff00, #0000ff, #4b0082, #9400d3, #ff0000, #ff0000, #ff7f00);
+            }
+            37.5% { 
+                border-image-source: linear-gradient(90deg, #00ff00, #0000ff, #4b0082, #9400d3, #ff0000, #ff0000, #ff7f00, #ffff00);
+            }
+            50% { 
+                border-image-source: linear-gradient(90deg, #0000ff, #4b0082, #9400d3, #ff0000, #ff0000, #ff7f00, #ffff00, #00ff00);
+            }
+            62.5% { 
+                border-image-source: linear-gradient(90deg, #4b0082, #9400d3, #ff0000, #ff0000, #ff7f00, #ffff00, #00ff00, #0000ff);
+            }
+            75% { 
+                border-image-source: linear-gradient(90deg, #9400d3, #ff0000, #ff0000, #ff7f00, #ffff00, #00ff00, #0000ff, #4b0082);
+            }
+            87.5% { 
+                border-image-source: linear-gradient(90deg, #ff0000, #ff0000, #ff7f00, #ffff00, #00ff00, #0000ff, #4b0082, #9400d3);
+            }
+            100% { 
+                border-image-source: linear-gradient(90deg, #ff0000, #ff7f00, #ffff00, #00ff00, #0000ff, #4b0082, #9400d3, #ff0000);
+            }
         }
 
         @keyframes rainbow-aura {
