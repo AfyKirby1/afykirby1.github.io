@@ -7,6 +7,7 @@ Official website for Runes of Tir na Nog by DCS.
 - **Ryan Lorenz** - Developer
 - **James Zink** - Designer
 - **Ryan Zink** - Designer
+- **Drew** - Story Writer
 
 ## Deployment
 
