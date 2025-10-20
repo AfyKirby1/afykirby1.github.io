@@ -141,16 +141,39 @@
         }
 
         .project-link .project-item {
-            border: 3px solid transparent;
-            transition: border 0.3s ease;
+            transition: box-shadow 0.3s ease;
         }
 
         .project-link:hover .project-item {
-            border: 3px solid;
-            border-image: linear-gradient(45deg, 
-                #ff0000, #ff7f00, #ffff00, #00ff00, 
-                #0000ff, #4b0082, #9400d3, #ff0000) 1;
-            animation: rainbow-aura 3s ease-in-out infinite;
+            box-shadow: 0 0 0 3px #ff0000, 
+                        0 0 0 6px #ff7f00, 
+                        0 0 0 9px #ffff00, 
+                        0 0 0 12px #00ff00, 
+                        0 0 0 15px #0000ff, 
+                        0 0 0 18px #4b0082, 
+                        0 0 0 21px #9400d3;
+            animation: rainbow-pulse 2s ease-in-out infinite;
+        }
+
+        @keyframes rainbow-pulse {
+            0%, 100% { 
+                box-shadow: 0 0 0 3px #ff0000, 
+                            0 0 0 6px #ff7f00, 
+                            0 0 0 9px #ffff00, 
+                            0 0 0 12px #00ff00, 
+                            0 0 0 15px #0000ff, 
+                            0 0 0 18px #4b0082, 
+                            0 0 0 21px #9400d3;
+            }
+            50% { 
+                box-shadow: 0 0 0 5px #ff7f00, 
+                            0 0 0 10px #ffff00, 
+                            0 0 0 15px #00ff00, 
+                            0 0 0 20px #0000ff, 
+                            0 0 0 25px #4b0082, 
+                            0 0 0 30px #9400d3, 
+                            0 0 0 35px #ff0000;
+            }
         }
 
         @keyframes rainbow-aura {
