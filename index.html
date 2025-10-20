@@ -141,46 +141,25 @@
         }
 
         .project-link {
-            box-shadow: 0 0 0 1px rgba(255, 0, 0, 0.3), 
-                        0 0 0 2px rgba(255, 127, 0, 0.3), 
-                        0 0 0 3px rgba(255, 255, 0, 0.3), 
-                        0 0 0 4px rgba(0, 255, 0, 0.3), 
-                        0 0 0 5px rgba(0, 0, 255, 0.3), 
-                        0 0 0 6px rgba(75, 0, 130, 0.3), 
-                        0 0 0 7px rgba(148, 0, 211, 0.3);
-            animation: rainbow-pulse 3s ease-in-out infinite;
-            transition: box-shadow 0.3s ease;
+            position: relative;
+            border: 2px solid transparent;
+            background: linear-gradient(white, white) padding-box,
+                       linear-gradient(45deg, #ff0000, #ff7f00, #ffff00, #00ff00, #0000ff, #4b0082, #9400d3) border-box;
+            background-size: 400% 400%;
+            animation: rainbow-border 3s ease-in-out infinite;
+            transition: all 0.3s ease;
         }
 
         .project-link:hover {
-            box-shadow: 0 0 0 2px rgba(255, 0, 0, 0.5), 
-                        0 0 0 4px rgba(255, 127, 0, 0.5), 
-                        0 0 0 6px rgba(255, 255, 0, 0.5), 
-                        0 0 0 8px rgba(0, 255, 0, 0.5), 
-                        0 0 0 10px rgba(0, 0, 255, 0.5), 
-                        0 0 0 12px rgba(75, 0, 130, 0.5), 
-                        0 0 0 14px rgba(148, 0, 211, 0.5);
+            transform: scale(1.02);
         }
 
-        @keyframes rainbow-pulse {
-            0%, 100% { 
-                box-shadow: 0 0 0 3px #ff0000, 
-                            0 0 0 6px #ff7f00, 
-                            0 0 0 9px #ffff00, 
-                            0 0 0 12px #00ff00, 
-                            0 0 0 15px #0000ff, 
-                            0 0 0 18px #4b0082, 
-                            0 0 0 21px #9400d3;
-            }
-            50% { 
-                box-shadow: 0 0 0 5px #ff7f00, 
-                            0 0 0 10px #ffff00, 
-                            0 0 0 15px #00ff00, 
-                            0 0 0 20px #0000ff, 
-                            0 0 0 25px #4b0082, 
-                            0 0 0 30px #9400d3, 
-                            0 0 0 35px #ff0000;
-            }
+        @keyframes rainbow-border {
+            0% { background-position: 0% 50%; }
+            25% { background-position: 100% 50%; }
+            50% { background-position: 100% 100%; }
+            75% { background-position: 0% 100%; }
+            100% { background-position: 0% 50%; }
         }
 
         @keyframes rainbow-aura {
