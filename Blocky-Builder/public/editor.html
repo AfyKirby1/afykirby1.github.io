@@ -1,0 +1,320 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Blocky Builder - World Editor</title>
+    <link rel="stylesheet" href="styles/editor.css">
+    <link rel="stylesheet" href="styles/themes.css">
+</head>
+<body>
+    <div class="header">
+        <div class="header-left">
+            <h1>🏗️ Blocky Builder - World Editor</h1>
+        </div>
+        <div class="header-center">
+            <span id="worldNameDisplay" class="world-name-display">No World Loaded</span>
+        </div>
+        <div class="header-controls">
+            <button onclick="showProjectPanel()" class="header-btn">🆕 New Project</button>
+            <button onclick="goHome()" class="header-btn">🏠 Home</button>
+            <button onclick="saveWorld()" class="header-btn">💾 Save</button>
+            <button onclick="importWorld()" class="header-btn">📥 Import</button>
+            <button onclick="exportWorld()" class="header-btn">📤 Export</button>
+        </div>
+    </div>
+
+    <div class="main-container">
+        <!-- LEFT TOOLBAR -->
+        <div class="toolbar" id="leftToolbar">
+            <button class="minimize-btn" onclick="toggleLeftPanel()" title="Minimize/Expand Panel">◀</button>
+            
+            <div class="tool-section">
+                <h3>🛠️ Tools</h3>
+                <button class="tool-btn active" onclick="selectTool('draw')" id="drawBtn" title="Draw (D)">✏️ Draw</button>
+                <button class="tool-btn" onclick="selectTool('erase')" id="eraseBtn" title="Erase (E)">🗑️ Erase</button>
+                <button class="tool-btn" onclick="selectTool('fill')" id="fillBtn" title="Fill (F)">🪣 Fill</button>
+                <button class="tool-btn" onclick="selectTool('quickfill')" id="quickfillBtn" title="Quick Fill (Q)">⚡ Quick Fill</button>
+                <button class="tool-btn" onclick="selectTool('pan')" id="panBtn" title="Pan (P)">✋ Pan</button>
+                <button class="tool-btn" onclick="selectTool('rotate')" id="rotateBtn" title="Rotate (R)">🔄 Rotate</button>
+                <button class="tool-btn" onclick="selectTool('flip')" id="flipBtn" title="Flip (X)">↔️ Flip</button>
+                <button class="tool-btn" onclick="selectTool('npc')" id="npcBtn" title="Manage NPCs (N)">🧙 NPCs</button>
+            </div>
+
+            <div class="tool-section">
+                <h3>📁 Project</h3>
+                <button class="tool-btn" onclick="showProjectPanel()" id="projectBtn" title="Project Settings">⚙️ Setup</button>
+                <button class="tool-btn" onclick="showProjectPanel()" id="loadWorldBtn" title="Load Existing World">📂 Load</button>
+            </div>
+
+            <div class="tool-section">
+                <h3>↩️ History</h3>
+                <button class="tool-btn" onclick="undo()" id="undoBtn" title="Undo (Ctrl+Z)" disabled>↶ Undo</button>
+                <button class="tool-btn" onclick="redo()" id="redoBtn" title="Redo (Ctrl+Y)" disabled>↷ Redo</button>
+            </div>
+
+        </div>
+
+        <!-- MAIN CANVAS AREA -->
+        <div class="canvas-container">
+            <canvas id="worldCanvas"></canvas>
+            <div class="canvas-overlay">
+                <div class="status-bar">
+                    <span>Tool: <span id="currentTool">Draw</span></span>
+                    <span>Mouse: <span id="mousePos">0, 0</span></span>
+                    <span>Zoom: <span id="zoomLevel">100%</span></span>
+                </div>
+            </div>
+        </div>
+
+        <!-- RIGHT PANEL -->
+        <div class="right-panel" id="rightPanel">
+            <button class="minimize-btn" onclick="toggleRightPanel()" title="Minimize/Expand Panel">▶</button>
+            
+            <div class="tool-section">
+                <h3>🎨 Tile Palette</h3>
+                <div class="tile-palette" id="rightTilePalette">
+                    <!-- Tile palette will be populated by JavaScript -->
+                </div>
+            </div>
+
+            <!-- NPC Management Section -->
+            <div class="tool-section" id="npcManagementSection" style="display: none;">
+                <h3>🧙 NPC Management</h3>
+                <div class="npc-preview-grid" id="npcPreviewGrid">
+                    <!-- NPC previews will be populated here -->
+                </div>
+                <div class="npc-actions">
+                    <button class="tool-btn" onclick="openNPCPanel()" title="Open NPC management panel">🎭 Manage NPCs</button>
+                    <button class="tool-btn" onclick="addNewNPC()" title="Add new NPC">➕ Add NPC</button>
+                </div>
+            </div>
+
+            <div class="tool-section" id="minimapSection">
+                <h3>🗺️ Minimap</h3>
+                <div class="minimap-container">
+                    <canvas id="minimap" width="200" height="200"></canvas>
+                </div>
+            </div>
+
+            <div class="tool-section">
+                <h3>📊 World Stats</h3>
+                <div class="stats" id="worldStats">
+                    <div id="grassCount">Grass: 0</div>
+                    <div id="waterCount">Water: 0</div>
+                    <div id="wallCount">Wall: 0</div>
+                    <div id="caveCount">Cave: 0</div>
+                </div>
+            </div>
+
+            <div class="tool-section">
+                <h3>⚙️ Settings</h3>
+                <button class="tool-btn" onclick="openSettingsPanel()" title="Open settings panel">🔧 Settings</button>
+            </div>
+
+            <div class="tool-section">
+                <h3>📊 Statistics</h3>
+                <button class="tool-btn" onclick="openStatisticsPanel()" title="View editing statistics">📈 View Stats</button>
+            </div>
+
+            <div class="tool-section">
+                <h3>⌨️ Shortcuts</h3>
+                <div style="font-size: 11px; color: #888; line-height: 1.4;">
+                    <div><strong>Tiles:</strong> 1=Grass, 2=Water, 3=Cave</div>
+                    <div><strong>Tools:</strong> D=Draw, E=Erase, F=Fill</div>
+                    <div><strong>Tools:</strong> P=Pan, R=Rotate, X=Flip, S=Spawn, N=NPCs</div>
+                    <div><strong>Tools:</strong> Ctrl+Q=Quick Fill</div>
+                    <div><strong>Panels:</strong> Q=Toggle Left, Ctrl+E=Toggle Right</div>
+                    <div><strong>Other:</strong> Tab=Cycle Tools</div>
+                    <div><strong>Other:</strong> Esc=Reset View, G=Grid</div>
+                    <div><strong>History:</strong> Ctrl+Z=Undo, Ctrl+Y=Redo</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modals -->
+    <div id="settingsModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">⚙️ Editor Settings<span class="close" onclick="closeSettingsPanel()">&times;</span></div>
+            <div id="settingsContent" style="padding: 10px;">
+                <div style="background: #1a1a1a; padding: 15px; border-radius: 5px; margin-bottom: 15px;">
+                    <h4 style="color: #d4af37; margin-bottom: 10px;">🎮 General Settings</h4>
+                    <div style="margin-bottom: 10px;">
+                        <label style="display: flex; align-items: center; gap: 10px;">
+                            <input type="checkbox" id="betaModeToggle" onchange="toggleBetaMode()">
+                            <span>Enable BETA Features</span>
+                        </label>
+                        <div style="font-size: 11px; color: #888; margin-top: 5px;">
+                            Unlock beginner-friendly tools, templates, and advanced features
+                        </div>
+                    </div>
+                    <div style="margin-bottom: 10px;">
+                        <label style="display: flex; align-items: center; gap: 10px;">
+                            <input type="checkbox" id="autoSaveToggle" onchange="toggleAutoSave()">
+                            <span>Auto-save every 5 minutes</span>
+                        </label>
+                    </div>
+                    <div style="margin-bottom: 10px;">
+                        <label style="display: flex; align-items: center; gap: 10px;">
+                            <input type="checkbox" id="showGridToggle" onchange="toggleGridSetting()">
+                            <span>Always show grid</span>
+                        </label>
+                    </div>
+                    <div style="margin-bottom: 10px;">
+                        <label style="display: flex; align-items: center; gap: 10px;">
+                            <input type="checkbox" id="minimapToggle" onchange="toggleMinimap()">
+                            <span>Show minimap</span>
+                        </label>
+                    </div>
+                    <div style="margin-bottom: 10px;">
+                        <label style="display: flex; align-items: center; gap: 10px;">
+                            <input type="checkbox" id="tooltipsToggle" onchange="toggleTooltips()">
+                            <span>Show tooltips</span>
+                        </label>
+                    </div>
+                </div>
+
+                <div style="background: #1a1a1a; padding: 15px; border-radius: 5px;">
+                    <h4 style="color: #d4af37; margin-bottom: 10px;">🎨 Display Settings</h4>
+                    <div style="margin-bottom: 10px;">
+                        <label>Theme:</label>
+                        <select id="themeSelect" onchange="changeTheme()" style="width: 100%; padding: 5px; background: #1a1a1a; border: 2px solid #666; color: #fff; margin-top: 5px;">
+                            <option value="dark">🌙 Dark</option>
+                            <option value="light">☀️ Light</option>
+                            <option value="retro">🕹️ Retro</option>
+                            <option value="forest">🌲 Forest</option>
+                        </select>
+                    </div>
+                    <div style="margin-bottom: 10px;">
+                        <label>Background Color:</label>
+                        <select id="backgroundColorSelect" onchange="changeBackgroundColor()" style="width: 100%; padding: 5px; background: #1a1a1a; border: 2px solid #666; color: #fff; margin-top: 5px;">
+                            <option value="#0a0a0a">⚫ Black (Default)</option>
+                            <option value="#ffffff">⚪ White</option>
+                            <option value="#90EE90">🟢 Light Green</option>
+                            <option value="#8B4513">🟤 Brown</option>
+                            <option value="#808080">🔘 Grey</option>
+                            <option value="#87CEEB">🔵 Light Blue</option>
+                            <option value="#F0E68C">🟡 Light Yellow</option>
+                            <option value="#FFB6C1">🌸 Light Pink</option>
+                        </select>
+                    </div>
+                    <div style="margin-bottom: 10px;">
+                        <label>Tile Size:</label>
+                        <select id="tileSizeSelect" onchange="changeTileSize()" style="width: 100%; padding: 5px; background: #1a1a1a; border: 2px solid #666; color: #fff; margin-top: 5px;">
+                            <option value="16">16px (Small)</option>
+                            <option value="24">24px (Medium)</option>
+                            <option value="32" selected>32px (Default)</option>
+                            <option value="48">48px (Large)</option>
+                        </select>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-buttons">
+                <button class="modal-btn" onclick="closeSettingsPanel()">Close</button>
+                <button class="modal-btn" onclick="resetSettings()">🔄 Reset to Defaults</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Toast Notification -->
+    <div id="toast" class="toast-notification">
+        <div class="toast-content">
+            <span class="toast-icon">✅</span>
+            <span class="toast-message">Ready to build!</span>
+        </div>
+    </div>
+
+    <!-- Project Setup Modal -->
+    <div id="projectModal" class="modal" tabindex="-1">
+        <div class="modal-content project-setup-modal">
+            <div class="modal-header">
+                <h2>🎯 Welcome to Blocky Builder!</h2>
+            </div>
+            <div class="modal-body">
+                <div class="welcome-section">
+                    <p class="welcome-text">Let's get started! Choose how you'd like to begin building your world.</p>
+                    <p class="mandatory-note">⚠️ Project setup is required before you can start building</p>
+                </div>
+                
+                <div class="project-option">
+                    <h3>🆕 Create New World</h3>
+                    <p>Start fresh with a custom-sized world</p>
+                    
+                    <div class="grid-size-section">
+                        <h4>📐 World Dimensions</h4>
+                        <div class="size-presets">
+                            <button class="preset-btn" onclick="setWorldSize(50, 50)" tabindex="0">Small (50×50)</button>
+                            <button class="preset-btn" onclick="setWorldSize(100, 100)" tabindex="0">Medium (100×100)</button>
+                            <button class="preset-btn" onclick="setWorldSize(125, 125)" tabindex="0">Large (125×125)</button>
+                            <button class="preset-btn" onclick="setWorldSize(200, 200)" tabindex="0">Huge (200×200)</button>
+                        </div>
+                        
+                        <div class="custom-size">
+                            <div class="form-group">
+                                <label for="worldWidth">Width (tiles):</label>
+                                <input type="number" id="worldWidth" value="125" min="10" max="500" tabindex="0">
+                            </div>
+                            <div class="form-group">
+                                <label for="worldHeight">Height (tiles):</label>
+                                <input type="number" id="worldHeight" value="125" min="10" max="500" tabindex="0">
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="worldName">World Name:</label>
+                        <input type="text" id="worldName" placeholder="My Awesome World" value="New World" tabindex="0">
+                    </div>
+                    
+                    <div class="world-preview">
+                        <h4>📊 World Preview</h4>
+                        <div class="preview-info">
+                            <span id="previewSize">125 × 125 tiles</span>
+                            <span id="previewTiles">15,625 total tiles</span>
+                        </div>
+                    </div>
+                    
+                    <button class="btn-primary" onclick="createNewWorld()" tabindex="0">🚀 Create World</button>
+                </div>
+                
+                <div class="project-divider">OR</div>
+                
+                <div class="project-option">
+                    <h3>📂 Load Existing World</h3>
+                    <p>Continue working on a saved world</p>
+                    
+                    <div class="world-list" id="worldList">
+                        <div class="loading">Loading worlds...</div>
+                    </div>
+                    <div style="display: flex; justify-content: space-between; margin-top: 10px;">
+                        <button class="btn-secondary" onclick="refreshWorldList()" tabindex="0">🔄 Refresh</button>
+                        <button class="btn-primary" onclick="document.getElementById('modalWorldFileInput').click()" tabindex="0">Load World</button>
+                    </div>
+                    <input type="file" id="modalWorldFileInput" accept=".json" style="display: none;" onchange="loadWorldFromFile(this)">
+                </div>
+                
+                <div class="help-section">
+                    <h4>💡 Need Help?</h4>
+                    <p>• <strong>Small worlds</strong> are great for testing and small projects</p>
+                    <p>• <strong>Medium worlds</strong> work well for most game levels</p>
+                    <p>• <strong>Large worlds</strong> are perfect for open-world games</p>
+                    <p>• <strong>Huge worlds</strong> are for massive projects (may be slower)</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Global file input for importing worlds -->
+    <input type="file" id="worldFileInput" accept=".json" style="display: none;" onchange="loadWorldFromFile(this)">
+
+    <!-- Load Core Modules -->
+    <script src="../src/core/WorldManager.js"></script>
+    <script src="../src/core/Renderer.js"></script>
+    <script src="../src/core/EventSystem.js"></script>
+    <script src="../src/tools/ToolManager.js"></script>
+    
+    <!-- Load Editor Script -->
+    <script src="scripts/editor.js"></script>
+</body>
+</html>

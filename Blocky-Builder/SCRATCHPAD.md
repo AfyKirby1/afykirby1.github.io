@@ -1,0 +1,136 @@
+# Blocky Builder - Development Scratchpad
+
+## Version 0.01 - October 15, 2025
+**Initial Project Setup**
+
+### Project Initialization
+- Created comprehensive documentation suite
+- Prepared git repository structure
+- Ready for initial GitHub push to: https://github.com/AfyKirby1/Blocky-Builder
+
+### Project Context
+This is a standalone HTML-based world editor tool. The entire application runs in a single HTML file with embedded CSS and JavaScript. No build process or dependencies required - just open in browser and use.
+
+### Key Design Decisions
+1. **Single-file architecture** - Everything in one HTML file for maximum portability
+2. **LocalStorage persistence** - Saves user preferences and custom tiles automatically
+3. **Base64 texture storage** - Custom tiles stored as base64 for localStorage compatibility
+4. **Canvas-based rendering** - Uses HTML5 Canvas for pixel-perfect rendering
+5. **No external dependencies** - Pure vanilla JavaScript for zero setup friction
+
+### File Organization
+- Main app: `world-editor.html` (1550 lines)
+- Assets: PNG texture files in `assets/` folder
+- Docs: README, SUMMARY, ARCHITECTURE, etc.
+
+### Technical Notes
+- Zoom range: 10% to 500%
+- World size range: 10x10 to 500x500 tiles
+- Tile size: 32px (fixed)
+- Default world: 125x125 tiles
+- Export format: JSON with full metadata
+
+### Features Worth Noting
+- **Flood Fill:** Uses stack-based algorithm with visited set for performance
+- **Rotation/Flip:** Transform tiles with 90° increments and horizontal flip
+- **Auto Color Detection:** Samples center pixel of uploaded texture for fallback color
+- **Viewport Indicator:** Minimap shows current view position and zoom level
+- **Grid Toggle:** Can be disabled for cleaner view
+
+### Future Considerations
+- Could add WebGL renderer for larger worlds
+- Might benefit from worker threads for flood fill on huge areas
+- Consider IndexedDB for larger custom tile collections
+- Could add collaborative editing with WebRTC
+
+---
+
+## Version 0.06 - October 15, 2025
+**UI/UX Enhancement Update**
+
+### User Request
+User wanted to:
+1. Widen the panels to reduce scrolling
+2. Add minimize/expand functionality with smooth animations
+3. Optimize layout for better space utilization
+
+### Implementation Details
+- **Panel Widths:** Left panel 180px → 280px, Right panel 250px → 320px
+- **Minimize Functionality:** Added toggle buttons with smooth slide animations
+- **CSS Transitions:** 0.3s ease transitions for all panel interactions
+- **Keyboard Shortcuts:** Q for left panel, Ctrl+E for right panel
+- **Layout Optimization:** Reduced button padding (12px → 8px), font size (14px → 12px), margins (5px → 3px)
+
+### Technical Implementation
+- Added `.minimized` CSS classes with width transitions
+- Created `toggleLeftPanel()` and `toggleRightPanel()` JavaScript functions
+- Updated keyboard event handler to include new shortcuts
+- Modified CSS for compact layout throughout
+- Added minimize buttons to HTML with proper positioning
+
+### Code Changes
+- CSS: Added minimize functionality, transitions, compact styling
+- HTML: Added minimize buttons to both panels
+- JavaScript: Added panel toggle functions and keyboard shortcuts
+- Documentation: Updated CHANGELOG.md and SUMMARY.md
+
+### User Experience Improvements
+- Significantly less vertical scrolling required
+- Quick access to maximize canvas space when needed
+- Smooth, professional animations
+- Full keyboard control over panel visibility
+- Better space utilization throughout interface
+
+### Notes for Future Development
+- Panel state could be persisted in localStorage
+- Could add panel width customization
+- Might add panel docking options
+- Consider adding panel themes/skins
+
+---
+
+## Version 0.06 - October 15, 2025 (Updated)
+**UI/UX Enhancement Update - Bug Fixes**
+
+### Issues Identified and Fixed
+1. **Minimize Buttons Not Visible** - Buttons had `display: none` by default
+2. **Right Panel Content Bleeding** - Content was visible when panel was minimized
+3. **Button Positioning Issues** - Right panel button was positioned incorrectly
+4. **Button Text Logic Errors** - Arrow directions were wrong for right panel
+
+### Technical Fixes Applied
+- **Button Visibility:** Changed `display: none` to `display: block` for `.minimize-btn`
+- **Right Panel Button Position:** Added specific CSS rule `.right-panel .minimize-btn` with `left: 10px`
+- **Content Hiding:** Used comprehensive CSS selector `.right-panel.minimized > *:not(.minimize-btn)` to hide all children except button
+- **Overflow Protection:** Added `overflow: hidden` to minimized state
+- **Button Text Logic:** Fixed arrow directions in `toggleRightPanel()` function
+
+### CSS Changes Made
+```css
+.minimize-btn {
+    display: block; /* Changed from display: none */
+}
+
+.right-panel .minimize-btn {
+    left: 10px; /* Position on left side of right panel */
+}
+
+.right-panel.minimized {
+    overflow: hidden; /* Prevent content bleeding */
+}
+
+.right-panel.minimized > *:not(.minimize-btn) {
+    display: none; /* Hide all content except button */
+}
+```
+
+### JavaScript Fixes
+- Fixed button text logic in `toggleRightPanel()` function
+- Ensured proper arrow direction changes (◀ when expanded, ▶ when minimized)
+
+### Result
+- Both minimize buttons now visible and functional
+- Right panel properly hides all content when minimized
+- No content bleeding through panel boundaries
+- Smooth animations work correctly
+- Keyboard shortcuts (Q and Ctrl+E) work as expected
