@@ -342,6 +342,19 @@ export class Game {
             return;
         }
         
+        // Check if Bob is enabled in world generator settings (default: true)
+        const bobEnabled = localStorage.getItem('bobEnabled');
+        const shouldSpawnBob = bobEnabled === null ? true : bobEnabled === 'true';
+        
+        if (shouldSpawnBob) {
+            // Create Bob somewhere in the world (spawns at random location)
+            const worldDims = this.world.getDimensions();
+            this.npcFactory.createBobInWorld(worldDims.width, worldDims.height);
+            console.log('✅ Bob NPC spawned (world generator setting: enabled)');
+        } else {
+            console.log('❌ Bob NPC not spawned (world generator setting: disabled)');
+        }
+        
         // Future NPC spawning based on density setting
         // const npcDensity = parseFloat(localStorage.getItem('npcDensity') || '1');
         
