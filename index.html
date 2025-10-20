@@ -142,10 +142,8 @@
 
         .project-link {
             position: relative;
-            border: 2px solid transparent;
-            background: linear-gradient(white, white) padding-box,
-                       linear-gradient(45deg, #ff0000, #ff7f00, #ffff00, #00ff00, #0000ff, #4b0082, #9400d3) border-box;
-            background-size: 400% 400%;
+            border: 2px solid;
+            border-image: linear-gradient(45deg, #ff0000, #ff7f00, #ffff00, #00ff00, #0000ff, #4b0082, #9400d3) 1;
             animation: rainbow-border 3s ease-in-out infinite;
             transition: all 0.3s ease;
         }
