@@ -207,9 +207,160 @@
                 font-size: 1.5rem;
             }
         }
+
+        /* Sparkles and Embers */
+        .particle {
+            position: fixed;
+            pointer-events: none;
+            z-index: 0;
+        }
+
+        .sparkle {
+            width: 3px;
+            height: 3px;
+            background: white;
+            border-radius: 50%;
+            box-shadow: 0 0 6px 2px rgba(255, 255, 255, 0.8);
+            animation: sparkle-float linear infinite;
+        }
+
+        .ember {
+            width: 4px;
+            height: 4px;
+            background: radial-gradient(circle, #ffaa33, #ff6633);
+            border-radius: 50%;
+            box-shadow: 0 0 8px 2px rgba(255, 100, 50, 0.6);
+            animation: ember-float linear infinite;
+        }
+
+        @keyframes sparkle-float {
+            0% {
+                transform: translateY(0) translateX(0) scale(0);
+                opacity: 0;
+            }
+            10% {
+                opacity: 1;
+                transform: scale(1);
+            }
+            50% {
+                opacity: 0.8;
+            }
+            90% {
+                opacity: 0.5;
+            }
+            100% {
+                transform: translateY(-100vh) translateX(var(--drift)) scale(0.5);
+                opacity: 0;
+            }
+        }
+
+        @keyframes sparkle-fall {
+            0% {
+                transform: translateY(0) translateX(0) scale(0);
+                opacity: 0;
+            }
+            10% {
+                opacity: 1;
+                transform: scale(1);
+            }
+            50% {
+                opacity: 0.8;
+            }
+            90% {
+                opacity: 0.5;
+            }
+            100% {
+                transform: translateY(100vh) translateX(var(--drift)) scale(0.5);
+                opacity: 0;
+            }
+        }
+
+        @keyframes ember-float {
+            0% {
+                transform: translateY(0) translateX(0) scale(0) rotate(0deg);
+                opacity: 0;
+            }
+            10% {
+                opacity: 1;
+                transform: scale(1);
+            }
+            50% {
+                opacity: 0.9;
+            }
+            90% {
+                opacity: 0.3;
+            }
+            100% {
+                transform: translateY(-120vh) translateX(var(--drift)) scale(0.3) rotate(360deg);
+                opacity: 0;
+            }
+        }
     </style>
 </head>
 <body>
+    <script>
+        // Create sparkles and embers
+        function createParticles() {
+            const sparkleCount = 30;
+            const emberCount = 20;
+            
+            // Create sparkles (half rising from bottom, half falling from top)
+            for (let i = 0; i < sparkleCount; i++) {
+                const sparkle = document.createElement('div');
+                sparkle.className = 'particle sparkle';
+                
+                const startX = Math.random() * window.innerWidth;
+                const drift = (Math.random() - 0.5) * 200;
+                const duration = 8 + Math.random() * 12;
+                const delay = Math.random() * 10;
+                const size = 0.5 + Math.random() * 1;
+                
+                // Half sparkles fall from top, half rise from bottom
+                const fromTop = i < sparkleCount / 2;
+                
+                sparkle.style.left = startX + 'px';
+                if (fromTop) {
+                    sparkle.style.top = '-10px';
+                    sparkle.style.animationName = 'sparkle-fall';
+                } else {
+                    sparkle.style.bottom = '-10px';
+                    sparkle.style.animationName = 'sparkle-float';
+                }
+                sparkle.style.setProperty('--drift', drift + 'px');
+                sparkle.style.animationDuration = duration + 's';
+                sparkle.style.animationDelay = delay + 's';
+                sparkle.style.animationIterationCount = 'infinite';
+                sparkle.style.animationTimingFunction = 'linear';
+                sparkle.style.transform = `scale(${size})`;
+                
+                document.body.appendChild(sparkle);
+            }
+            
+            // Create embers
+            for (let i = 0; i < emberCount; i++) {
+                const ember = document.createElement('div');
+                ember.className = 'particle ember';
+                
+                const startX = Math.random() * window.innerWidth;
+                const drift = (Math.random() - 0.5) * 150;
+                const duration = 10 + Math.random() * 15;
+                const delay = Math.random() * 12;
+                const size = 0.6 + Math.random() * 1.2;
+                
+                ember.style.left = startX + 'px';
+                ember.style.bottom = '-10px';
+                ember.style.setProperty('--drift', drift + 'px');
+                ember.style.animationDuration = duration + 's';
+                ember.style.animationDelay = delay + 's';
+                ember.style.transform = `scale(${size})`;
+                
+                document.body.appendChild(ember);
+            }
+        }
+        
+        // Initialize particles when page loads
+        window.addEventListener('load', createParticles);
+    </script>
     <div class="container">
         <h1>Runes of Tir na Nog</h1>
         <p class="subtitle">An Epic Gaming Experience</p>
