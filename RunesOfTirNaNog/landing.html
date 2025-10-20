@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    
+    <!-- ✅ SECURITY FIX (VULN-006): Content Security Policy -->
+    <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' data: blob:; connect-src 'self'; frame-ancestors 'none'; base-uri 'self'; form-action 'self';">
+    <meta http-equiv="X-Content-Type-Options" content="nosniff">
+    <meta http-equiv="X-Frame-Options" content="DENY">
+    <meta http-equiv="Referrer-Policy" content="no-referrer">
+    
+    <title>Runes of Tir na nÓg</title>
+    <link rel="icon" type="image/png" href="favicon.png">
+    <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;700;900&display=swap" rel="stylesheet">
+    <style>
+        *{margin:0;padding:0;box-sizing:border-box}
+        body{height:100vh;display:flex;align-items:center;justify-content:center;background:linear-gradient(135deg,#0a0a1a 0%,#1a1a2e 50%,#0a0a1a 100%);color:#d4af37;font-family:'Cinzel',serif;overflow:hidden}
+        .container{position:relative;text-align:center;background:rgba(26,26,46,0.85);border:2px solid #d4af37;border-radius:16px;padding:40px 60px;box-shadow:0 0 30px rgba(212,175,55,0.35),inset 0 0 30px rgba(212,175,55,0.08)}
+        .title{font-size:3rem;font-weight:900;letter-spacing:3px;text-transform:uppercase;margin-bottom:12px;background:linear-gradient(45deg,#8b5a2b,#d4af37,#ffd700,#ffed4e,#d4af37);-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent;text-shadow:2px 2px 0px rgba(139,90,43,0.8),-2px -2px 0px rgba(139,90,43,0.8),0 0 12px #ff8c42}
+        .tagline{color:#d4d4f4;font-size:1rem;opacity:.95;margin-bottom:28px}
+        .play{display:inline-block;padding:14px 42px;background:linear-gradient(145deg,#2d5a2d,#1a3a1a);border:2px solid #4ade80;color:#4ade80;border-radius:10px;text-decoration:none;font-weight:800;letter-spacing:2px;text-transform:uppercase;transition:all .25s ease}
+        .play:hover{transform:translateY(-2px);border-color:#6ee7b7;color:#6ee7b7;box-shadow:0 10px 22px rgba(110,231,183,.25)}
+        .links{margin-top:18px;font-size:.9rem}
+        .links a{color:#8b7355;text-decoration:none;margin:0 10px}
+        .links a:hover{color:#d4af37}
+        .footer{position:fixed;bottom:14px;width:100%;text-align:center;color:#8b7355;font-size:.8rem}
+    </style>
+    <meta name="description" content="Runes of Tir na nÓg — a feature-rich top‑down RPG prototype with pixel art, smooth camera, and 60 FPS game loop.">
+    <meta property="og:title" content="Runes of Tir na nÓg">
+    <meta property="og:description" content="Vanilla JS RPG prototype • Pixel-perfect • 60 FPS • Modular architecture">
+    <meta property="og:type" content="website">
+</head>
+<body>
+    <div class="container">
+        <div class="title">Runes of Tir na nÓg</div>
+        <div class="tagline">A minimalist gateway to your adventure</div>
+        <a class="play" href="assets/menu.html">▶ Play</a>
+        <div class="links">
+            <a href="README.md">About</a>
+            <a href="SUMMARY.md">Summary</a>
+        </div>
+    </div>
+    <div class="footer">Vanilla JavaScript • Pixel‑perfect • 60 FPS</div>
+    
+</body>
+</html>
+
+

@@ -1,0 +1,472 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    
+    <!-- ✅ SECURITY FIX (VULN-006): Content Security Policy -->
+    <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' data: blob:; connect-src 'self'; base-uri 'self'; form-action 'self';">
+    <meta http-equiv="X-Content-Type-Options" content="nosniff">
+    <meta http-equiv="Referrer-Policy" content="no-referrer">
+    
+    <title>Runes of Tir na nÓg - Main Menu</title>
+    <link rel="icon" type="image/png" href="Ground_Texture_1.png">
+    <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;700&display=swap" rel="stylesheet">
+    <style>
+        *{margin:0;padding:0;box-sizing:border-box}body{background:#0a0a0a;font-family:'Cinzel',serif;overflow:hidden;height:100vh;display:flex;flex-direction:column;justify-content:center;align-items:center}
+
+        /* Static background base */
+        .pixel-background {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(135deg, #0a0a1a 0%, #1a1a2e 50%, #0a0a1a 100%);
+            z-index: 1;
+            overflow: hidden;
+        }
+
+        /* Animated triangular shapes */
+        .floating-shape {
+            position: absolute;
+            width: 40px;
+            height: 40px;
+            opacity: 0.3;
+        }
+
+        .triangle-up {
+            width: 0;
+            height: 0;
+            border-left: 20px solid transparent;
+            border-right: 20px solid transparent;
+            border-bottom: 35px solid #16213e;
+        }
+
+        .triangle-down {
+            width: 0;
+            height: 0;
+            border-left: 20px solid transparent;
+            border-right: 20px solid transparent;
+            border-top: 35px solid #1a1a2e;
+        }
+
+        .square {
+            width: 30px;
+            height: 30px;
+            background: #16213e;
+            transform: rotate(45deg);
+        }
+
+        /* Vertical floating animations */
+        @keyframes floatUp {
+            0% { transform: translateY(110vh) translateX(0); opacity: 0; }
+            10% { opacity: 0.3; }
+            90% { opacity: 0.3; }
+            100% { transform: translateY(-10vh) translateX(15px); opacity: 0; }
+        }
+
+        @keyframes floatDown {
+            0% { transform: translateY(-10vh) translateX(0); opacity: 0; }
+            10% { opacity: 0.3; }
+            90% { opacity: 0.3; }
+            100% { transform: translateY(110vh) translateX(-15px); opacity: 0; }
+        }
+
+        @keyframes floatUpSlow {
+            0% { transform: translateY(110vh) translateX(0); opacity: 0; }
+            10% { opacity: 0.2; }
+            90% { opacity: 0.2; }
+            100% { transform: translateY(-10vh) translateX(25px); opacity: 0; }
+        }
+
+        @keyframes floatDownSlow {
+            0% { transform: translateY(-10vh) translateX(0); opacity: 0; }
+            10% { opacity: 0.2; }
+            90% { opacity: 0.2; }
+            100% { transform: translateY(110vh) translateX(-25px); opacity: 0; }
+        }
+
+        /* Floating pixel particles */
+        .pixel-particles {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            z-index: 2;
+        }
+
+        .pixel-particle {
+            position: absolute;
+            width: 4px;
+            height: 4px;
+            background: #d4af37;
+            animation: floatPixel 8s linear infinite;
+        }
+
+        .pixel-particle:nth-child(1) { left: 10%; animation-delay: 0s; }
+        .pixel-particle:nth-child(2) { left: 20%; animation-delay: 1s; }
+        .pixel-particle:nth-child(3) { left: 30%; animation-delay: 2s; }
+        .pixel-particle:nth-child(4) { left: 40%; animation-delay: 3s; }
+        .pixel-particle:nth-child(5) { left: 50%; animation-delay: 4s; }
+        .pixel-particle:nth-child(6) { left: 60%; animation-delay: 5s; }
+        .pixel-particle:nth-child(7) { left: 70%; animation-delay: 6s; }
+        .pixel-particle:nth-child(8) { left: 80%; animation-delay: 7s; }
+        .pixel-particle:nth-child(9) { left: 90%; animation-delay: 0.5s; }
+
+        @keyframes floatPixel {
+            0% {
+                transform: translateY(100vh) translateX(0);
+                opacity: 0;
+            }
+            10% {
+                opacity: 1;
+            }
+            90% {
+                opacity: 1;
+            }
+            100% {
+                transform: translateY(-100px) translateX(20px);
+                opacity: 0;
+            }
+        }
+
+        /* Main menu container */
+        .menu-container {
+            position: relative;
+            z-index: 10;
+            text-align: center;
+            background: rgba(26, 26, 46, 0.8);
+            border: 2px solid #d4af37;
+            border-radius: 15px;
+            padding: 40px 60px;
+            box-shadow: 
+                0 0 30px rgba(212, 175, 55, 0.5),
+                inset 0 0 30px rgba(212, 175, 55, 0.1);
+        }
+
+        /* Game title */
+        .game-title {
+            font-size: 3rem;
+            font-weight: 900;
+            text-align: center;
+            color: #d4af37;
+            text-shadow:
+                2px 2px 0px rgba(139, 90, 43, 0.8),
+                -2px -2px 0px rgba(139, 90, 43, 0.8),
+                4px 4px 8px rgba(0, 0, 0, 0.9),
+                0 0 10px #ff6b35,
+                0 0 20px #ff4500,
+                0 0 30px #ff6347;
+            letter-spacing: 3px;
+            background: linear-gradient(45deg, #8b5a2b, #d4af37, #ffd700, #ffed4e, #d4af37);
+            -webkit-background-clip: text;
+            background-clip: text;
+            -webkit-text-fill-color: transparent;
+            animation: titleFloat 4s ease-in-out infinite, simpleFlame 2s ease-in-out infinite alternate;
+            white-space: nowrap;
+            margin-bottom: 40px;
+            font-family: 'Cinzel', serif;
+            text-transform: uppercase;
+        }
+
+        @keyframes titleFloat {
+            0%, 100% { transform: translateY(0px); }
+            25% { transform: translateY(-3px); }
+            75% { transform: translateY(3px); }
+        }
+
+        @keyframes simpleFlame {
+            0% { 
+                text-shadow:
+                    2px 2px 0px rgba(139, 90, 43, 0.8),
+                    -2px -2px 0px rgba(139, 90, 43, 0.8),
+                    4px 4px 8px rgba(0, 0, 0, 0.9),
+                    0 0 8px #ff6b35,
+                    0 0 15px #ff4500,
+                    0 0 25px #ff6347;
+            }
+            100% { 
+                text-shadow:
+                    2px 2px 0px rgba(139, 90, 43, 0.8),
+                    -2px -2px 0px rgba(139, 90, 43, 0.8),
+                    4px 4px 8px rgba(0, 0, 0, 0.9),
+                    0 0 12px #ff8c42,
+                    0 0 25px #ff6347,
+                    0 0 35px #ff4500;
+            }
+        }
+
+        /* Menu buttons */
+        .menu-buttons {
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+            align-items: center;
+        }
+
+        .menu-button {
+            background: linear-gradient(145deg, #2a2a3e, #1a1a2e);
+            border: 2px solid #d4af37;
+            color: #d4af37;
+            padding: 15px 40px;
+            font-size: 1.2rem;
+            font-weight: bold;
+            font-family: 'Cinzel', serif;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            border-radius: 8px;
+            box-shadow: 
+                0 4px 8px rgba(0, 0, 0, 0.3),
+                0 0 15px rgba(212, 175, 55, 0.2);
+            min-width: 200px;
+        }
+
+        .menu-button:hover {
+            background: linear-gradient(145deg, #3a3a4e, #2a2a3e);
+            border-color: #ffd700;
+            color: #ffd700;
+            transform: translateY(-2px);
+            box-shadow: 
+                0 6px 12px rgba(0, 0, 0, 0.4),
+                0 0 25px rgba(255, 215, 0, 0.4);
+        }
+
+        .menu-button:active {
+            transform: translateY(0px);
+            box-shadow: 
+                0 2px 4px rgba(0, 0, 0, 0.3),
+                0 0 15px rgba(212, 175, 55, 0.3);
+        }
+
+        /* Play button special styling */
+        .play-button {
+            background: linear-gradient(145deg, #2d5a2d, #1a3a1a);
+            border-color: #4ade80;
+            color: #4ade80;
+        }
+
+        .play-button:hover {
+            background: linear-gradient(145deg, #3d6a3d, #2a4a2a);
+            border-color: #6ee7b7;
+            color: #6ee7b7;
+            box-shadow: 
+                0 6px 12px rgba(0, 0, 0, 0.4),
+                0 0 25px rgba(110, 231, 183, 0.4);
+        }
+
+        /* Tír na nÓg button special styling */
+        .tir-button {
+            background: linear-gradient(145deg, #4a2d5a, #2a1a3a);
+            border-color: #a78bfa;
+            color: #a78bfa;
+        }
+
+        .tir-button:hover {
+            background: linear-gradient(145deg, #5a3d6a, #3a2a4a);
+            border-color: #c4b5fd;
+            color: #c4b5fd;
+            box-shadow: 
+                0 6px 12px rgba(0, 0, 0, 0.4),
+                0 0 25px rgba(167, 139, 250, 0.5);
+        }
+
+        .settings-button {
+            background: linear-gradient(145deg, #3a3a5a, #2a2a4a);
+            border-color: #8b8baa;
+            color: #d4d4f4;
+        }
+
+        .settings-button:hover {
+            background: linear-gradient(145deg, #4a4a6a, #3a3a5a);
+            border-color: #ababca;
+            color: #ffffff;
+            box-shadow: 
+                0 6px 12px rgba(0, 0, 0, 0.4),
+                0 0 25px rgba(139, 139, 170, 0.5);
+        }
+
+
+        /* Quit button special styling */
+        .quit-button {
+            background: linear-gradient(145deg, #5a2d2d, #3a1a1a);
+            border-color: #ef4444;
+            color: #ef4444;
+        }
+
+        .quit-button:hover {
+            background: linear-gradient(145deg, #6a3d3d, #4a2a2a);
+            border-color: #f87171;
+            color: #f87171;
+            box-shadow: 
+                0 6px 12px rgba(0, 0, 0, 0.4),
+                0 0 25px rgba(248, 113, 113, 0.4);
+        }
+    </style>
+</head>
+<body>
+    <!-- Pixelated background with animated shapes -->
+    <div class="pixel-background">
+        <div class="floating-shape" style="left: 5%; animation: floatUp 12s linear infinite;"><div class="triangle-up"></div></div>
+        <div class="floating-shape" style="left: 15%; animation: floatDown 15s linear infinite; animation-delay: 2s;"><div class="triangle-down"></div></div>
+        <div class="floating-shape" style="left: 25%; animation: floatUpSlow 18s linear infinite; animation-delay: 4s;"><div class="square"></div></div>
+        <div class="floating-shape" style="left: 35%; animation: floatUp 14s linear infinite; animation-delay: 1s;"><div class="triangle-down"></div></div>
+        <div class="floating-shape" style="left: 45%; animation: floatDownSlow 20s linear infinite; animation-delay: 3s;"><div class="triangle-up"></div></div>
+        <div class="floating-shape" style="left: 55%; animation: floatUp 16s linear infinite; animation-delay: 5s;"><div class="square"></div></div>
+        <div class="floating-shape" style="left: 65%; animation: floatDown 13s linear infinite;"><div class="triangle-up"></div></div>
+        <div class="floating-shape" style="left: 75%; animation: floatUpSlow 19s linear infinite; animation-delay: 6s;"><div class="triangle-down"></div></div>
+        <div class="floating-shape" style="left: 85%; animation: floatDownSlow 17s linear infinite; animation-delay: 2s;"><div class="square"></div></div>
+        <div class="floating-shape" style="left: 95%; animation: floatUp 15s linear infinite; animation-delay: 7s;"><div class="triangle-up"></div></div>
+        <div class="floating-shape" style="left: 10%; animation: floatDown 14s linear infinite; animation-delay: 8s;"><div class="triangle-down"></div></div>
+        <div class="floating-shape" style="left: 20%; animation: floatUpSlow 16s linear infinite; animation-delay: 3s;"><div class="square"></div></div>
+        <div class="floating-shape" style="left: 30%; animation: floatDownSlow 18s linear infinite; animation-delay: 5s;"><div class="triangle-up"></div></div>
+        <div class="floating-shape" style="left: 40%; animation: floatUp 13s linear infinite; animation-delay: 9s;"><div class="triangle-down"></div></div>
+        <div class="floating-shape" style="left: 50%; animation: floatDown 19s linear infinite; animation-delay: 1s;"><div class="square"></div></div>
+        <div class="floating-shape" style="left: 60%; animation: floatUpSlow 15s linear infinite; animation-delay: 4s;"><div class="triangle-up"></div></div>
+        <div class="floating-shape" style="left: 70%; animation: floatDownSlow 14s linear infinite; animation-delay: 7s;"><div class="triangle-down"></div></div>
+        <div class="floating-shape" style="left: 80%; animation: floatUp 17s linear infinite; animation-delay: 2s;"><div class="square"></div></div>
+        <div class="floating-shape" style="left: 90%; animation: floatDown 16s linear infinite; animation-delay: 6s;"><div class="triangle-up"></div></div>
+    </div>
+    
+    <!-- Floating pixel particles -->
+    <div class="pixel-particles">
+        <div class="pixel-particle"></div>
+        <div class="pixel-particle"></div>
+        <div class="pixel-particle"></div>
+        <div class="pixel-particle"></div>
+        <div class="pixel-particle"></div>
+        <div class="pixel-particle"></div>
+        <div class="pixel-particle"></div>
+        <div class="pixel-particle"></div>
+        <div class="pixel-particle"></div>
+    </div>
+
+    <!-- Main menu container -->
+    <div class="menu-container">
+        <h1 class="game-title">Runes of Tir na nÓg</h1>
+        
+        <div class="menu-buttons">
+            <button class="menu-button play-button" onclick="startGame()">
+                ▶ Play Game
+            </button>
+            <button class="menu-button tir-button" onclick="goToTirNaNog()">
+                ✨ Go to Tír na nÓg
+            </button>
+            <button class="menu-button settings-button" onclick="openSettings()">
+                ⚙ Settings
+            </button>
+            <button class="menu-button quit-button" onclick="quitGame()">
+                ✖ Quit
+            </button>
+        </div>
+    </div>
+
+    <script type="module">
+        import { SettingsPanel } from '../ui/SettingsPanel.js';
+        import { VideoSettings } from '../ui/VideoSettings.js';
+        import { GameplaySettings } from '../ui/GameplaySettings.js';
+        import { KeybindSettings } from '../ui/KeybindSettings.js';
+
+        // Initialize settings system
+        let settingsPanel = null;
+        let videoSettings = null;
+        let gameplaySettings = null;
+        let keybindSettings = null;
+
+        function initSettings() {
+            settingsPanel = new SettingsPanel();
+            videoSettings = new VideoSettings();
+            gameplaySettings = new GameplaySettings();
+            keybindSettings = new KeybindSettings();
+            
+            // Register settings categories
+            settingsPanel.registerCategory('video', videoSettings);
+            settingsPanel.registerCategory('gameplay', gameplaySettings);
+            settingsPanel.registerCategory('keybinds', keybindSettings);
+            
+            // Inject settings styles
+            const style = document.createElement('style');
+            style.textContent = settingsPanel.getStyles() + gameplaySettings.getStyles() + keybindSettings.getStyles();
+            document.head.appendChild(style);
+        }
+
+        function startGame() {
+            // Navigate to world selection
+            window.location.href = 'world-selection.html';
+        }
+
+        function goToTirNaNog() {
+            // Load custom world: Tír na nÓg
+            window.location.href = '../index.html?customWorld=tir-na-nog';
+        }
+
+        function quitGame() {
+            // Navigate back to landing page
+            window.location.href = '../landing.html';
+        }
+
+        function openSettings() {
+            if (settingsPanel) {
+                settingsPanel.open();
+            }
+        }
+
+        // Make functions globally accessible for onclick handlers
+        window.startGame = startGame;
+        window.goToTirNaNog = goToTirNaNog;
+        window.quitGame = quitGame;
+        window.openSettings = openSettings;
+
+        // Initialize on page load
+        document.addEventListener('DOMContentLoaded', function() {
+            // Initialize settings system
+            initSettings();
+            // Add click ripple effect to buttons
+            const buttons = document.querySelectorAll('.menu-button');
+            buttons.forEach(button => {
+                button.addEventListener('click', function(e) {
+                    const ripple = document.createElement('span');
+                    const rect = this.getBoundingClientRect();
+                    const size = Math.max(rect.width, rect.height);
+                    const x = e.clientX - rect.left - size / 2;
+                    const y = e.clientY - rect.top - size / 2;
+                    
+                    ripple.style.width = ripple.style.height = size + 'px';
+                    ripple.style.left = x + 'px';
+                    ripple.style.top = y + 'px';
+                    ripple.style.position = 'absolute';
+                    ripple.style.borderRadius = '50%';
+                    ripple.style.background = 'rgba(255, 255, 255, 0.3)';
+                    ripple.style.transform = 'scale(0)';
+                    ripple.style.animation = 'ripple 0.6s linear';
+                    ripple.style.pointerEvents = 'none';
+                    
+                    this.style.position = 'relative';
+                    this.style.overflow = 'hidden';
+                    this.appendChild(ripple);
+                    
+                    setTimeout(() => {
+                        ripple.remove();
+                    }, 600);
+                });
+            });
+        });
+
+        // CSS for ripple effect
+        const style = document.createElement('style');
+        style.textContent = `
+            @keyframes ripple {
+                to {
+                    transform: scale(4);
+                    opacity: 0;
+                }
+            }
+        `;
+        document.head.appendChild(style);
+    </script>
+</body>
+</html>

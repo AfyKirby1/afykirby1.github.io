@@ -1,0 +1,699 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    
+    <!-- ✅ SECURITY FIX (VULN-006): Content Security Policy -->
+    <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' data: blob:; connect-src 'self'; base-uri 'self'; form-action 'self';">
+    <meta http-equiv="X-Content-Type-Options" content="nosniff">
+    <meta http-equiv="Referrer-Policy" content="no-referrer">
+    
+    <title>Runes of Tir na nÓg - Prototype</title>
+    <link rel="icon" href="../favicon.ico" type="image/x-icon">
+    <link rel="shortcut icon" href="../favicon.ico" type="image/x-icon">
+    <style>
+        body{margin:0;padding:0;background:#4a7c59;font-family:'Courier New',monospace;color:#fff;overflow:hidden;background-image:radial-gradient(circle at 20% 80%,rgba(139,90,43,0.3) 0%,transparent 50%),radial-gradient(circle at 80% 20%,rgba(74,124,89,0.3) 0%,transparent 50%)}
+
+        .game-container{position:relative;width:100vw;height:100vh;margin:0;padding:0;border:12px solid #8b5a2b;border-image:linear-gradient(45deg,#8b5a2b,#d4af37,#8b5a2b,#654321) 1;box-shadow:inset 0 0 20px rgba(139,90,43,0.5),0 0 40px rgba(212,175,55,0.3);background:#4a7c59;box-sizing:border-box;overflow:hidden}
+
+        .game-title{position:fixed;top:5px;left:50%;transform:translateX(-50%);font-size:2.2em;font-weight:900;text-align:center;color:#d4af37;text-shadow:2px 2px 0px rgba(139,90,43,0.8),-2px -2px 0px rgba(139,90,43,0.8),4px 4px 8px rgba(0,0,0,0.9),0 0 10px #ff6b35,0 0 20px #ff4500,0 0 30px #ff6347;letter-spacing:2px;z-index:3000;background:linear-gradient(45deg,#8b5a2b,#d4af37,#ffd700,#ffed4e,#d4af37);-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent;animation:titleFloat 4s ease-in-out infinite,simpleFlame 2s ease-in-out infinite alternate;white-space:nowrap;padding:12px 25px;margin:0;font-family:'Courier New',monospace;text-transform:uppercase}
+
+        .title-sparks {
+            position: fixed;
+            top: 5px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 100%;
+            height: 100px;
+            pointer-events: none;
+            z-index: 2999;
+            overflow: hidden;
+        }
+
+        .spark {
+            position: absolute;
+            width: 2px;
+            height: 2px;
+            background: radial-gradient(circle, #ff6b35, #ff4500, #ff6347);
+            border-radius: 50%;
+            animation: sparkFloat 3s ease-in-out infinite;
+            opacity: 0.8;
+        }
+
+        @keyframes sparkFloat {
+            0%, 100% { transform: translateY(0px) rotate(0deg); opacity: 0.8; }
+            25% { transform: translateY(-10px) rotate(90deg); opacity: 1; }
+            50% { transform: translateY(-5px) rotate(180deg); opacity: 0.6; }
+            75% { transform: translateY(-15px) rotate(270deg); opacity: 0.9; }
+        }
+
+        @keyframes titleFloat {
+            0%, 100% { transform: translateX(-50%) translateY(0px); }
+            50% { transform: translateX(-50%) translateY(-3px); }
+        }
+
+        @keyframes simpleFlame {
+            0% { text-shadow: 2px 2px 0px rgba(139,90,43,0.8),-2px -2px 0px rgba(139,90,43,0.8),4px 4px 8px rgba(0,0,0,0.9),0 0 10px #ff6b35,0 0 20px #ff4500,0 0 30px #ff6347; }
+            100% { text-shadow: 2px 2px 0px rgba(139,90,43,0.8),-2px -2px 0px rgba(139,90,43,0.8),4px 4px 8px rgba(0,0,0,0.9),0 0 15px #ff6b35,0 0 25px #ff4500,0 0 35px #ff6347; }
+        }
+
+        canvas {
+            display: block;
+            position: absolute;
+            top: 0;
+            left: 0;
+            z-index: 1;
+        }
+
+        .ui-container {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            z-index: 1000;
+            font-family: 'Courier New', monospace;
+        }
+
+        /* Interactive Controls Bubble */
+        .controls-bubble {
+            position: absolute;
+            bottom: 30px;
+            right: 30px;
+            width: 60px;
+            height: 60px;
+            background: linear-gradient(145deg, #8b5a2b, #654321);
+            border: 3px solid #d4af37;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            pointer-events: auto;
+            z-index: 1001;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 15px rgba(212, 175, 55, 0.4);
+        }
+
+        .controls-bubble:hover {
+            transform: scale(1.1);
+            box-shadow: 0 6px 20px rgba(212, 175, 55, 0.6);
+            border-color: #ffd700;
+        }
+
+        .bubble-icon {
+            font-size: 24px;
+            filter: drop-shadow(2px 2px 4px rgba(0, 0, 0, 0.8));
+        }
+
+        .bubble-tooltip {
+            position: absolute;
+            bottom: -30px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: rgba(0, 0, 0, 0.9);
+            color: #d4af37;
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-size: 10px;
+            white-space: nowrap;
+            opacity: 0;
+            transition: opacity 0.3s ease;
+            pointer-events: none;
+        }
+
+        .controls-bubble:hover .bubble-tooltip {
+            opacity: 1;
+        }
+
+        /* Controls Window */
+        .controls-window {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            background: rgba(0, 0, 0, 0.8);
+            display: none;
+            justify-content: center;
+            align-items: center;
+            z-index: 10000;
+            pointer-events: auto;
+        }
+
+        .controls-window.show {
+            display: flex;
+        }
+
+        .controls-content {
+            background: linear-gradient(135deg, rgba(26, 26, 46, 0.98), rgba(15, 15, 30, 0.98));
+            border: 3px solid #d4af37;
+            border-radius: 15px;
+            max-width: 500px;
+            width: 90%;
+            max-height: 80vh;
+            overflow: hidden;
+            box-shadow: 0 0 40px rgba(212, 175, 55, 0.6);
+        }
+
+        .controls-header {
+            background: linear-gradient(135deg, #8b5a2b, #654321);
+            padding: 20px;
+            border-bottom: 2px solid #d4af37;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .controls-header h3 {
+            margin: 0;
+            color: #d4af37;
+            font-size: 1.5rem;
+            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.8);
+        }
+
+        .controls-close {
+            background: rgba(139, 90, 43, 0.5);
+            border: 2px solid #d4af37;
+            color: #d4af37;
+            font-size: 1.2rem;
+            width: 35px;
+            height: 35px;
+            border-radius: 6px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-weight: bold;
+        }
+
+        .controls-close:hover {
+            background: rgba(139, 90, 43, 0.8);
+            border-color: #ffd700;
+            color: #ffd700;
+            transform: scale(1.1);
+        }
+
+        .controls-body {
+            padding: 20px;
+            max-height: 60vh;
+            overflow-y: auto;
+            color: #d4af37;
+        }
+
+        .controls-body::-webkit-scrollbar {
+            width: 12px;
+        }
+
+        .controls-body::-webkit-scrollbar-track {
+            background: rgba(139, 90, 43, 0.3);
+            border-radius: 6px;
+        }
+
+        .controls-body::-webkit-scrollbar-thumb {
+            background: linear-gradient(180deg, #d4af37, #8b5a2b);
+            border-radius: 6px;
+        }
+
+        .controls-body::-webkit-scrollbar-thumb:hover {
+            background: linear-gradient(180deg, #ffd700, #d4af37);
+        }
+
+        .control-category {
+            margin-bottom: 25px;
+            padding-bottom: 15px;
+            border-bottom: 2px solid rgba(212, 175, 55, 0.3);
+        }
+
+        .control-category:last-child {
+            border-bottom: none;
+            margin-bottom: 0;
+        }
+
+        .control-category h4 {
+            color: #ffd700;
+            margin: 0 0 15px 0;
+            font-size: 1.2rem;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .control-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 8px 0;
+            margin: 5px 0;
+        }
+
+        .control-action {
+            color: #d4af37;
+            font-size: 14px;
+        }
+
+        .control-key {
+            background: linear-gradient(145deg, #2a2a3e, #1a1a2e);
+            border: 2px solid #8b7355;
+            color: #ffed4e;
+            padding: 4px 12px;
+            border-radius: 6px;
+            font-size: 12px;
+            font-weight: bold;
+            text-transform: uppercase;
+            min-width: 60px;
+            text-align: center;
+        }
+
+        .control-status {
+            margin-left: 10px;
+            font-size: 16px;
+        }
+
+        .control-status.implemented {
+            color: #4ade80;
+        }
+
+        .control-status.coming-soon {
+            color: #ffa500;
+        }
+
+        .pause-menu {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            background: rgba(0, 0, 0, 0.8);
+            display: none;
+            visibility: hidden;
+            z-index: 99999;
+            font-family: "Courier New", monospace;
+            pointer-events: auto;
+        }
+
+        .pause-menu.show {
+            display: flex;
+            visibility: visible;
+        }
+
+        .pause-content {
+            margin: auto;
+            text-align: center;
+            background: rgba(139, 90, 43, 0.9);
+            padding: 40px;
+            border-radius: 15px;
+            border: 3px solid #d4af37;
+            box-shadow: 0 0 30px rgba(212, 175, 55, 0.5);
+            min-width: 300px;
+        }
+
+        .pause-title {
+            font-size: 2.5em;
+            color: #d4af37;
+            margin-bottom: 30px;
+            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.8);
+        }
+
+        .pause-button {
+            display: inline-block;
+            padding: 15px 30px;
+            margin: 10px;
+            font-size: 1.2em;
+            font-family: "Courier New", monospace;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            text-transform: uppercase;
+            font-weight: bold;
+            transition: all 0.3s ease;
+        }
+
+        .pause-button.resume {
+            background: #4a7c59;
+            color: white;
+        }
+
+        .pause-button.resume:hover {
+            background: #5a9c69;
+            transform: scale(1.05);
+        }
+
+        .pause-button.quit {
+            background: #8b5a2b;
+            color: white;
+        }
+
+        .pause-button.quit:hover {
+            background: #9b6a3b;
+            transform: scale(1.05);
+        }
+
+        /* Health Bar Styles */
+        .health-bar {
+            position: absolute;
+            bottom: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            display: flex;
+            gap: 5px;
+            align-items: center;
+            justify-content: center;
+            z-index: 1001;
+            pointer-events: none;
+        }
+
+        .heart-container {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .health-heart {
+            image-rendering: pixelated;
+            image-rendering: -moz-crisp-edges;
+            image-rendering: crisp-edges;
+            transition: all 0.3s ease;
+            filter: drop-shadow(2px 2px 4px rgba(0, 0, 0, 0.8));
+        }
+
+        .health-heart:hover {
+            transform: scale(1.1);
+        }
+    </style>
+</head>
+<body>
+    <div class="game-container">
+        <!-- Game Title with Sparks -->
+        <div class="game-title">RUNES OF TIR NA NÓG</div>
+        <div class="title-sparks" id="titleSparks"></div>
+
+        <!-- Game Canvas -->
+        <canvas id="gameCanvas"></canvas>
+
+        <!-- UI Overlay -->
+        <div class="ui-container">
+            <!-- Health Bar -->
+            <div id="health-bar" class="health-bar"></div>
+            
+            <!-- Interactive Controls Bubble -->
+            <div class="controls-bubble" id="controlsBubble">
+                <div class="bubble-icon">🎮</div>
+                <div class="bubble-tooltip">Click for Controls</div>
+            </div>
+        </div>
+
+        <!-- Pause Menu -->
+        <div id="pauseMenu" class="pause-menu">
+            <div class="pause-content">
+                <div class="pause-title">GAME PAUSED</div>
+                <button id="resumeBtn" class="pause-button resume">▶ RESUME</button>
+                <button id="quitBtn" class="pause-button quit">🏠 QUIT TO MENU</button>
+            </div>
+        </div>
+
+        <!-- Controls Window -->
+        <div id="controlsWindow" class="controls-window">
+            <div class="controls-content">
+                <div class="controls-header">
+                    <h3>🎮 Game Controls</h3>
+                    <button class="controls-close" id="controlsClose">✖</button>
+                </div>
+                <div class="controls-body" id="controlsBody">
+                    <!-- Controls will be populated by JavaScript -->
+                </div>
+            </div>
+        </div>
+    </div>
+
+        <script type="module">
+            // Debug mode disabled for production
+            // window.DEBUG_MODE = true;
+            import { Game } from './core/Game.js';
+            import { SaveSystem } from './core/SaveSystem.js';
+            import { World } from './world/World.js';
+            import { SecurityUtils } from './utils/SecurityUtils.js';
+
+        // Controls system
+        class GameControls {
+            constructor() {
+                this.isOpen = false;
+                this.init();
+            }
+
+            init() {
+                this.setupEventListeners();
+                this.populateControls();
+            }
+
+            setupEventListeners() {
+                // Controls bubble click
+                const controlsBubble = document.getElementById('controlsBubble');
+                const controlsWindow = document.getElementById('controlsWindow');
+                const controlsClose = document.getElementById('controlsClose');
+
+                controlsBubble.addEventListener('click', () => {
+                    this.toggleControls();
+                });
+
+                controlsClose.addEventListener('click', () => {
+                    this.closeControls();
+                });
+
+                // Close when clicking outside
+                controlsWindow.addEventListener('click', (e) => {
+                    if (e.target === controlsWindow) {
+                        this.closeControls();
+                    }
+                });
+            }
+
+            populateControls() {
+                const controlsBody = document.getElementById('controlsBody');
+                const keybinds = this.loadKeybinds();
+                
+                controlsBody.innerHTML = `
+                    <div class="control-category">
+                        <h4>🚶 Movement</h4>
+                        ${this.renderControlItem('Move Up', keybinds.moveUp, true)}
+                        ${this.renderControlItem('Move Down', keybinds.moveDown, true)}
+                        ${this.renderControlItem('Move Left', keybinds.moveLeft, true)}
+                        ${this.renderControlItem('Move Right', keybinds.moveRight, true)}
+                        ${this.renderControlItem('Sprint', keybinds.sprint, true)}
+                        ${this.renderControlItem('Crouch', keybinds.crouch, true)}
+                    </div>
+
+                    <div class="control-category">
+                        <h4>🎮 Game Controls</h4>
+                        ${this.renderControlItem('Pause Game', keybinds.pause, true)}
+                        ${this.renderControlItem('Open Inventory (I)', keybinds.inventory, true)}
+                        ${this.renderControlItem('Interact', keybinds.interact, false)}
+                        ${this.renderControlItem('Main Menu', keybinds.menu, false)}
+                        ${this.renderControlItem('Debug Info', keybinds.debug, true)}
+                        ${this.renderControlItem('Screenshot', keybinds.screenshot, true)}
+                    </div>
+
+                    <div class="control-category">
+                        <h4>📷 Camera</h4>
+                        ${this.renderControlItem('Mouse Look', 'Mouse', true)}
+                        ${this.renderControlItem('Zoom In/Out', 'Scroll Wheel', true)}
+                        ${this.renderControlItem('Zoom In', keybinds.zoomIn, false)}
+                        ${this.renderControlItem('Zoom Out', keybinds.zoomOut, false)}
+                        ${this.renderControlItem('Reset Zoom', keybinds.resetZoom, false)}
+                        ${this.renderControlItem('Camera Lock', keybinds.toggleCameraLock, false)}
+                    </div>
+
+                    <div class="control-category">
+                        <h4>🔊 Audio</h4>
+                        ${this.renderControlItem('Toggle Audio', keybinds.toggleAudio, true)}
+                        ${this.renderControlItem('Volume Up', keybinds.volumeUp, false)}
+                        ${this.renderControlItem('Volume Down', keybinds.volumeDown, false)}
+                    </div>
+                `;
+            }
+
+            renderControlItem(action, key, isImplemented) {
+                const status = isImplemented ? 'implemented' : 'coming-soon';
+                const statusIcon = isImplemented ? '✅' : '🚧';
+                const keyDisplay = this.formatKeyDisplay(key);
+                
+                return `
+                    <div class="control-item">
+                        <span class="control-action">${action}</span>
+                        <div style="display: flex; align-items: center;">
+                            <span class="control-key">${keyDisplay}</span>
+                            <span class="control-status ${status}">${statusIcon}</span>
+                        </div>
+                    </div>
+                `;
+            }
+
+            formatKeyDisplay(keyCode) {
+                const keyMap = {
+                    'KeyW': 'W', 'KeyA': 'A', 'KeyS': 'S', 'KeyD': 'D',
+                    'KeyE': 'E', 'KeyF': 'F', 'KeyI': 'I', 'KeyM': 'M',
+                    'KeyK': 'K', 'ShiftLeft': 'Shift', 'ControlLeft': 'Ctrl',
+                    'Escape': 'ESC', 'Space': 'Space', 'F1': 'F1', 'F12': 'F12',
+                    'Equal': '=', 'Minus': '-', 'BracketLeft': '[', 'BracketRight': ']'
+                };
+                return keyMap[keyCode] || keyCode;
+            }
+
+            loadKeybinds() {
+                const saved = localStorage.getItem('gameKeybinds');
+                if (saved) {
+                    try {
+                        return JSON.parse(saved);
+                    } catch (e) {
+                        console.error('Failed to load keybinds:', e);
+                    }
+                }
+                
+                // Default keybinds
+                return {
+                    moveUp: 'KeyW', moveDown: 'KeyS', moveLeft: 'KeyA', moveRight: 'KeyD',
+                    sprint: 'ShiftLeft', crouch: 'ControlLeft', pause: 'Escape', inventory: 'KeyI',
+                    interact: 'KeyE', menu: 'KeyM', debug: 'F1', screenshot: 'F12',
+                    zoomIn: 'Equal', zoomOut: 'Minus', resetZoom: 'Digit0', toggleCameraLock: 'KeyC',
+                    toggleAudio: 'KeyK', volumeUp: 'BracketRight', volumeDown: 'BracketLeft'
+                };
+            }
+
+            toggleControls() {
+                if (this.isOpen) {
+                    this.closeControls();
+                } else {
+                    this.openControls();
+                }
+            }
+
+            openControls() {
+                const controlsWindow = document.getElementById('controlsWindow');
+                controlsWindow.classList.add('show');
+                this.isOpen = true;
+            }
+
+            closeControls() {
+                const controlsWindow = document.getElementById('controlsWindow');
+                controlsWindow.classList.remove('show');
+                this.isOpen = false;
+            }
+        }
+
+        window.addEventListener('load', async () => {
+            try {
+                // Initialize controls system
+                window.gameControls = new GameControls();
+                
+                let game;
+                let worldConfig = null;
+                let saveData = null;
+
+                // Parse URL parameters
+                const urlParams = new URLSearchParams(window.location.search);
+                const isNewWorld = urlParams.get('new') === 'true';
+                const slotParam = urlParams.get('slot');
+                const customWorldParam = urlParams.get('customWorld');
+
+                if (customWorldParam) {
+                    // ✅ SECURITY FIX (VULN-004): Validate URL parameter
+                    // Whitelist of allowed worlds
+                    const ALLOWED_WORLDS = ['tir-na-nog'];
+                    const sanitized = SecurityUtils.validateURLParam(customWorldParam, ALLOWED_WORLDS);
+                    
+                    if (!sanitized) {
+                        console.error('Invalid world parameter:', customWorldParam);
+                        alert(`Invalid world name. Allowed worlds: ${ALLOWED_WORLDS.join(', ')}\n\nUsing default world instead.`);
+                        game = new Game(null, null);
+                    } else {
+                        // Load custom world from file with validated parameter
+                        const worldPath = `worlds/${sanitized}/world.json`;
+                        console.log(`Loading custom world from: ${worldPath}`);
+                        
+                        const customWorldData = await World.loadFromFile(worldPath);
+                        if (customWorldData) {
+                            game = new Game(null, null, customWorldData);
+                            console.log(`Custom world "${customWorldData.metadata?.name || 'Unknown'}" loaded successfully!`);
+                        } else {
+                            alert(`Failed to load custom world: ${sanitized}\n\nMake sure you have placed world.json in:\ngame/worlds/${sanitized}/world.json`);
+                            game = new Game(null, null);
+                        }
+                    }
+                } else if (isNewWorld) {
+                    // Load world config from sessionStorage
+                    const configJson = sessionStorage.getItem('worldConfig');
+                    if (configJson) {
+                        worldConfig = JSON.parse(configJson);
+                        
+                        // Prompt for save slot
+                        const slot = prompt('Save to slot (1 or 2):');
+                        const slotNum = parseInt(slot);
+                        if (slotNum === 1 || slotNum === 2) {
+                            game = new Game(worldConfig, null);
+                            game.saveSlot = slotNum;
+                        } else {
+                            game = new Game(worldConfig, null);
+                        }
+                        
+                        // Clear session storage
+                        sessionStorage.removeItem('worldConfig');
+                    } else {
+                        game = new Game(null, null);
+                    }
+                } else if (slotParam) {
+                    // Load from save slot
+                    const slotNum = parseInt(slotParam);
+                    if (slotNum >= 1 && slotNum <= SaveSystem.MAX_SLOTS) {
+                        saveData = SaveSystem.loadWorld(slotNum);
+                        if (saveData) {
+                            game = new Game(null, saveData);
+                            game.saveSlot = slotNum;
+                        } else {
+                            console.error(`No save data found in slot ${slotNum}`);
+                            game = new Game(null, null);
+                        }
+                    } else {
+                        console.error('Invalid slot number');
+                        game = new Game(null, null);
+                    }
+                } else {
+                    // No parameters, create default world
+                    game = new Game(null, null);
+                }
+
+                window.game = game;
+
+                // Make functions globally available for debugging
+                window.setPlayerName = (name) => game.setPlayerName(name);
+                window.getPlayerName = () => game.getPlayerName();
+
+                console.log('Runes of Tir na nÓg - Game initialized successfully');
+                console.log('Components loaded:', {
+                    Player: '✓',
+                    Input: '✓',
+                    World: '✓',
+                    Camera: '✓',
+                    UI: '✓',
+                    GameLoop: '✓',
+                    NameTag: '✓',
+                    SaveSystem: '✓'
+                });
+                console.log('Player name:', game.getPlayerName());
+                console.log('Try: setPlayerName("Your Name") to change the player name');
+            } catch (error) {
+                console.error('Failed to initialize game:', error);
+            }
+        });
+
+        // Pause when window loses focus
+        document.addEventListener('visibilitychange', () => {
+            if (window.game) {
+                if (document.hidden) {
+                    window.game.pause();
+                } else {
+                    window.game.resume();
+                }
+            }
+        });
+    </script>
+</body>
+</html>
