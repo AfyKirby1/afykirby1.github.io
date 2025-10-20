@@ -159,7 +159,7 @@ function startEditor() {
     // Simulate loading time
     setTimeout(() => {
         // Redirect to editor
-        window.location.href = '/editor';
+        window.location.href = 'editor.html';
     }, 1000);
 }
 
