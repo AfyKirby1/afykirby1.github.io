@@ -12,6 +12,7 @@ import { AudioManager } from '../audio/AudioManager.js';
 import { SaveSystem } from './SaveSystem.js';
 import { Inventory } from '../ui/Inventory.js';
 import { SecurityUtils } from '../utils/SecurityUtils.js';
+import { NetworkManager } from './NetworkManager.js';
 // NPC system imports - comment out if not using NPCs
 import { NPCManager } from '../npc/NPC.js';
 import { NPCFactory } from '../npc/NPCConfig.js';
@@ -39,11 +40,13 @@ export class Game {
             this.loadFromSaveData(saveData);
         } else if (customWorldData) {
             // Load from custom world file
+            console.log('🎮 Game: Loading from custom world data');
             this.world = new World(null, customWorldData);
             this.player = new Player(this.world.width, this.world.height);
             this.camera = new Camera(this.width, this.height);
         } else {
             // Create new world with config
+            console.log('🎮 Game: Using default world generation');
             this.world = new World(worldConfig);
             this.player = new Player(this.world.width, this.world.height);
             this.camera = new Camera(this.width, this.height);
@@ -53,6 +56,11 @@ export class Game {
         this.ui = new UI();
         this.audioManager = new AudioManager();
         this.inventory = new Inventory(this);
+        
+        // Initialize multiplayer system
+        this.networkManager = new NetworkManager(this);
+        this.isMultiplayer = false;
+        this.otherPlayers = {};
         
         // Initialize NPC system (if available)
         this.npcManager = null;
@@ -223,6 +231,9 @@ export class Game {
         const worldDims = this.world.getDimensions();
         this.camera.update(playerPos.x, playerPos.y, worldDims.width, worldDims.height, this.input);
 
+        // Send position update to multiplayer server
+        this.sendPositionUpdate();
+
         // Update NPCs (if available)
         if (this.npcManager) {
             this.npcManager.update(deltaTime, this);
@@ -252,6 +263,9 @@ export class Game {
         // Render player
         this.player.render(this.ctx);
 
+        // Render other players in multiplayer
+        this.renderOtherPlayers();
+
         // Restore camera transform
         this.camera.restoreTransform(this.ctx);
     }
@@ -274,6 +288,127 @@ export class Game {
 
     getPlayerName() {
         return this.player.getName();
+    }
+
+    // Multiplayer methods
+    async connectToMultiplayer() {
+        const username = localStorage.getItem('runes_username');
+        if (!username) {
+            console.error('No username found. Please set a username first.');
+            return false;
+        }
+
+        try {
+            // Set up network manager callbacks
+            this.setupNetworkCallbacks();
+            
+            // Connect to server
+            const success = await this.networkManager.connect(username);
+            
+            if (success) {
+                this.isMultiplayer = true;
+                console.log('Connected to multiplayer server');
+                return true;
+            } else {
+                console.error('Failed to connect to multiplayer server');
+                return false;
+            }
+        } catch (error) {
+            console.error('Multiplayer connection error:', error);
+            return false;
+        }
+    }
+
+    disconnectFromMultiplayer() {
+        if (this.networkManager) {
+            this.networkManager.disconnect();
+            this.isMultiplayer = false;
+            this.otherPlayers = {};
+            console.log('Disconnected from multiplayer server');
+        }
+    }
+
+    setupNetworkCallbacks() {
+        // Connection status changes
+        this.networkManager.onConnectionStatusChange = (status, data) => {
+            console.log(`Multiplayer status: ${status}`);
+            
+            // Update UI or show notifications based on status
+            switch (status) {
+                case 'connected':
+                    console.log('Successfully connected to multiplayer');
+                    break;
+                case 'disconnected':
+                    console.log('Disconnected from multiplayer');
+                    break;
+                case 'reconnecting':
+                    console.log('Attempting to reconnect...');
+                    break;
+                case 'error':
+                    console.error('Multiplayer connection error');
+                    break;
+            }
+        };
+
+        // Player joined
+        this.networkManager.onPlayerJoined = (playerId, playerData) => {
+            console.log(`Player joined: ${playerData.name}`);
+            this.otherPlayers[playerId] = playerData;
+        };
+
+        // Player left
+        this.networkManager.onPlayerLeft = (playerId, playerName) => {
+            console.log(`Player left: ${playerName}`);
+            delete this.otherPlayers[playerId];
+        };
+
+        // Player position updates
+        this.networkManager.onPlayerPositionUpdate = (playerId, x, y) => {
+            if (this.otherPlayers[playerId]) {
+                this.otherPlayers[playerId].x = x;
+                this.otherPlayers[playerId].y = y;
+            }
+        };
+
+        // Error handling
+        this.networkManager.onError = (errorMessage) => {
+            console.error('Multiplayer error:', errorMessage);
+        };
+    }
+
+    renderOtherPlayers() {
+        if (!this.isMultiplayer) return;
+
+        const otherPlayers = this.networkManager.getOtherPlayers();
+        
+        for (const [playerId, playerData] of Object.entries(otherPlayers)) {
+            // Calculate screen position
+            const screenX = playerData.x - this.camera.x;
+            const screenY = playerData.y - this.camera.y;
+            
+            // Only render if player is on screen
+            if (screenX > -50 && screenX < this.width + 50 && 
+                screenY > -50 && screenY < this.height + 50) {
+                
+                // Render other player
+                this.ctx.save();
+                this.ctx.fillStyle = playerData.color || '#4ade80';
+                this.ctx.fillRect(screenX - 6, screenY - 6, 12, 12);
+                
+                // Render player name
+                this.ctx.fillStyle = '#ffffff';
+                this.ctx.font = '12px Arial';
+                this.ctx.textAlign = 'center';
+                this.ctx.fillText(playerData.name, screenX, screenY - 10);
+                this.ctx.restore();
+            }
+        }
+    }
+
+    sendPositionUpdate() {
+        if (this.isMultiplayer && this.networkManager) {
+            this.networkManager.sendPositionUpdate(this.player.x, this.player.y);
+        }
     }
 
     initializeHealthBar() {

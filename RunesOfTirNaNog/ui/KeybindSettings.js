@@ -150,6 +150,8 @@ export class KeybindSettings {
                         console.warn(`Invalid key code for ${action}: ${keyCode}`);
                         // Use default for this action
                         validated[action] = this.defaultKeybinds[action];
+                        // Clear invalid keybind from storage
+                        this.clearInvalidKeybind(action);
                     }
                 }
                 
@@ -169,6 +171,20 @@ export class KeybindSettings {
         
         // Return confirmation message
         return `Keybinds saved successfully!`;
+    }
+
+    clearInvalidKeybind(action) {
+        try {
+            const stored = localStorage.getItem('gameKeybinds');
+            if (stored) {
+                const keybinds = JSON.parse(stored);
+                delete keybinds[action];
+                localStorage.setItem('gameKeybinds', JSON.stringify(keybinds));
+                console.log(`Cleared invalid keybind for ${action}`);
+            }
+        } catch (e) {
+            console.error('Failed to clear invalid keybind:', e);
+        }
     }
 
     resetToDefaults() {

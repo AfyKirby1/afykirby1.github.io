@@ -1,7 +1,7 @@
 import { Game } from './Game.js';
 import { SaveSystem } from './SaveSystem.js';
 
-window.addEventListener('load', () => {
+window.addEventListener('load', async () => {
     try {
         let game;
         let worldConfig = null;
@@ -11,6 +11,8 @@ window.addEventListener('load', () => {
         const urlParams = new URLSearchParams(window.location.search);
         const isNewWorld = urlParams.get('new') === 'true';
         const slotParam = urlParams.get('slot');
+        const isMultiplayer = urlParams.get('multiplayer') === 'true';
+        const customWorld = urlParams.get('customWorld');
 
         if (isNewWorld) {
             // Load world config from sessionStorage
@@ -49,6 +51,59 @@ window.addEventListener('load', () => {
                 console.error('Invalid slot number');
                 game = new Game(null, null);
             }
+        } else if (isMultiplayer) {
+            // Load custom world for multiplayer
+            console.log('🌍 Loading custom world for multiplayer...');
+            try {
+                // Try to load the custom world data
+                console.log('🔍 Fetching world data from: ../server/worlds/world.json');
+                const worldDataResponse = await fetch('../server/worlds/world.json');
+                console.log('📡 Fetch response status:', worldDataResponse.status, worldDataResponse.statusText);
+                
+                if (worldDataResponse.ok) {
+                    const customWorldData = await worldDataResponse.json();
+                    console.log('✅ Custom world data loaded successfully:', customWorldData.metadata?.name || 'Tir na nÓg');
+                    console.log('📏 World dimensions:', customWorldData.worldWidth, 'x', customWorldData.worldHeight);
+                    console.log('🧱 Total tiles:', customWorldData.tiles?.length || 0);
+                    console.log('🎮 Creating game with custom world data...');
+                    game = new Game(null, null, customWorldData);
+                } else {
+                    console.warn('⚠️ Could not load custom world (HTTP', worldDataResponse.status, '), using default');
+                    console.warn('🔄 Falling back to default world generation');
+                    game = new Game(null, null);
+                }
+            } catch (error) {
+                console.warn('❌ Error loading custom world:', error);
+                console.warn('🔄 Using default world instead');
+                game = new Game(null, null);
+            }
+        } else if (customWorld) {
+            // Load custom world
+            console.log('🌍 Loading custom world:', customWorld);
+            try {
+                // Try to load the custom world data from the worlds directory
+                const worldPath = `../worlds/${customWorld}/world.json`;
+                console.log('🔍 Fetching world data from:', worldPath);
+                const worldDataResponse = await fetch(worldPath);
+                console.log('📡 Fetch response status:', worldDataResponse.status, worldDataResponse.statusText);
+                
+                if (worldDataResponse.ok) {
+                    const customWorldData = await worldDataResponse.json();
+                    console.log('✅ Custom world data loaded successfully:', customWorldData.metadata?.name || customWorld);
+                    console.log('📏 World dimensions:', customWorldData.worldWidth, 'x', customWorldData.worldHeight);
+                    console.log('🧱 Total tiles:', customWorldData.tiles?.length || 0);
+                    console.log('🎮 Creating game with custom world data...');
+                    game = new Game(null, null, customWorldData);
+                } else {
+                    console.error('❌ Failed to load custom world (HTTP', worldDataResponse.status, ')');
+                    alert(`Failed to load custom world: ${customWorld}\n\nMake sure you have placed world.json in: RunesOfTirNaNog/worlds/${customWorld}/world.json`);
+                    game = new Game(null, null);
+                }
+            } catch (error) {
+                console.error('❌ Error loading custom world:', error);
+                alert(`Failed to load custom world: ${customWorld}\n\nMake sure you have placed world.json in: RunesOfTirNaNog/worlds/${customWorld}/world.json`);
+                game = new Game(null, null);
+            }
         } else {
             // No parameters, create default world
             game = new Game(null, null);
@@ -56,9 +111,27 @@ window.addEventListener('load', () => {
 
         window.game = game;
 
+        // Initialize multiplayer if enabled
+        if (isMultiplayer) {
+            console.log('Multiplayer mode enabled - connecting to server...');
+            game.connectToMultiplayer().then(success => {
+                if (success) {
+                    console.log('Successfully connected to multiplayer server');
+                } else {
+                    console.error('Failed to connect to multiplayer server');
+                    console.error('Make sure the WebSocket server is running on ws://localhost:1234');
+                }
+            }).catch(error => {
+                console.error('Multiplayer connection error:', error);
+                console.error('Make sure the WebSocket server is running on ws://localhost:1234');
+            });
+        }
+
         // Make functions globally available for debugging
         window.setPlayerName = (name) => game.setPlayerName(name);
         window.getPlayerName = () => game.getPlayerName();
+        window.connectMultiplayer = () => game.connectToMultiplayer();
+        window.disconnectMultiplayer = () => game.disconnectFromMultiplayer();
 
         console.log('Runes of Tir na nÓg - Game initialized successfully');
         console.log('Components loaded:', {
@@ -69,10 +142,13 @@ window.addEventListener('load', () => {
             UI: '✓',
             GameLoop: '✓',
             NameTag: '✓',
-            SaveSystem: '✓'
+            SaveSystem: '✓',
+            NetworkManager: '✓'
         });
         console.log('Player name:', game.getPlayerName());
+        console.log('Multiplayer enabled:', isMultiplayer);
         console.log('Try: setPlayerName("Your Name") to change the player name');
+        console.log('Try: connectMultiplayer() to connect to server');
     } catch (error) {
         console.error('Failed to initialize game:', error);
     }

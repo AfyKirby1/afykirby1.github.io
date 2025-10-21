@@ -322,7 +322,7 @@ export class SecurityUtils {
             }
             
             // Validate each tile
-            const validTypes = ['grass', 'water', 'wall', 'cave'];
+            const validTypes = ['grass', 'water', 'wall', 'cave', 'mana'];
             for (const tile of worldData.tiles) {
                 if (!tile || typeof tile !== 'object') {
                     return false;

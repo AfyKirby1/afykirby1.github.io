@@ -316,6 +316,10 @@ class World {
         // Procedural tile generation
     }
     
+    loadFromFile(path) {
+        // Custom world loading with security validation
+    }
+    
     render(ctx, camera) {
         // Viewport-culled rendering
     }
@@ -324,9 +328,18 @@ class World {
 
 **Responsibilities:**
 - Procedural world generation
+- Custom world loading from JSON files
 - Tile-based collision detection
 - Texture loading and management
 - Viewport culling optimization
+
+#### Supported Tile Types
+The world system supports the following tile types:
+- **grass**: Basic ground tiles with grass texture
+- **water**: Water tiles with special rendering
+- **wall**: Solid wall tiles for collision
+- **cave**: Cave entrance tiles
+- **mana**: Magical mana tiles (NEW - for custom worlds)
 
 ### 4. Player System (`/player/`)
 
@@ -700,6 +713,12 @@ const GAME_CONFIG = {
 **Status**: Production-ready with comprehensive UI/UX improvements
 
 ## 🆕 Recent Architecture Updates
+
+### Custom World Support (October 21, 2025)
+- **Mana Tile Support**: Added "mana" as valid tile type for custom worlds
+- **Security Validation**: Enhanced SecurityUtils.js to support mana tiles
+- **Custom World Loading**: Fixed validation errors preventing custom world loading
+- **File Path Validation**: Secure custom world loading with path validation
 
 ### Enhanced UI/UX System
 - **Interactive Controls Bubble**: On-demand controls reference

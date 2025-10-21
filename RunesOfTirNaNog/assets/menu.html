@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     
     <!-- ✅ SECURITY FIX (VULN-006): Content Security Policy -->
-    <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' data: blob:; connect-src 'self'; base-uri 'self'; form-action 'self';">
+    <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' data: blob:; connect-src 'self' ws://localhost:1234 ws://127.0.0.1:1234; base-uri 'self'; form-action 'self';">
     <meta http-equiv="X-Content-Type-Options" content="nosniff">
     <meta http-equiv="Referrer-Policy" content="no-referrer">
     
@@ -306,6 +306,263 @@
                 0 6px 12px rgba(0, 0, 0, 0.4),
                 0 0 25px rgba(248, 113, 113, 0.4);
         }
+
+        /* Username input bar */
+        .username-container {
+            margin-bottom: 30px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .username-label {
+            color: #d4af37;
+            font-size: 1rem;
+            font-weight: bold;
+            font-family: 'Cinzel', serif;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            text-shadow: 0 0 10px rgba(212, 175, 55, 0.5);
+        }
+
+        .username-bar {
+            display: flex;
+            gap: 10px;
+            align-items: center;
+        }
+
+        .username-input {
+            background: linear-gradient(145deg, #2a2a3e, #1a1a2e);
+            border: 2px solid #d4af37;
+            color: #d4af37;
+            padding: 12px 20px;
+            font-size: 1rem;
+            font-family: 'Cinzel', serif;
+            border-radius: 8px;
+            min-width: 200px;
+            box-shadow: 
+                0 4px 8px rgba(0, 0, 0, 0.3),
+                0 0 15px rgba(212, 175, 55, 0.2);
+            transition: all 0.3s ease;
+        }
+
+        .username-input:focus {
+            outline: none;
+            border-color: #ffd700;
+            color: #ffd700;
+            box-shadow: 
+                0 6px 12px rgba(0, 0, 0, 0.4),
+                0 0 25px rgba(255, 215, 0, 0.4);
+        }
+
+        .username-input::placeholder {
+            color: rgba(212, 175, 55, 0.6);
+        }
+
+        .set-username-btn {
+            background: linear-gradient(145deg, #2d5a2d, #1a3a1a);
+            border: 2px solid #4ade80;
+            color: #4ade80;
+            padding: 12px 20px;
+            font-size: 1rem;
+            font-weight: bold;
+            font-family: 'Cinzel', serif;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            border-radius: 8px;
+            box-shadow: 
+                0 4px 8px rgba(0, 0, 0, 0.3),
+                0 0 15px rgba(74, 222, 128, 0.2);
+        }
+
+        .set-username-btn:hover {
+            background: linear-gradient(145deg, #3d6a3d, #2a4a2a);
+            border-color: #6ee7b7;
+            color: #6ee7b7;
+            transform: translateY(-2px);
+            box-shadow: 
+                0 6px 12px rgba(0, 0, 0, 0.4),
+                0 0 25px rgba(110, 231, 183, 0.4);
+        }
+
+        .set-username-btn:active {
+            transform: translateY(0px);
+            box-shadow: 
+                0 2px 4px rgba(0, 0, 0, 0.3),
+                0 0 15px rgba(74, 222, 128, 0.3);
+        }
+
+        .username-display {
+            color: #4ade80;
+            font-size: 0.9rem;
+            font-family: 'Cinzel', serif;
+            text-shadow: 0 0 8px rgba(74, 222, 128, 0.5);
+            margin-top: 5px;
+        }
+
+        /* Server connection UI */
+        .server-connection-container {
+            margin-bottom: 20px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .connection-status {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-family: 'Cinzel', serif;
+            font-size: 0.9rem;
+            font-weight: bold;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .status-indicator {
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            border: 2px solid;
+            animation: statusPulse 2s ease-in-out infinite;
+        }
+
+        .status-disconnected {
+            background: #ef4444;
+            border-color: #ef4444;
+            color: #ef4444;
+        }
+
+        .status-connecting {
+            background: #f59e0b;
+            border-color: #f59e0b;
+            color: #f59e0b;
+        }
+
+        .status-connected {
+            background: #4ade80;
+            border-color: #4ade80;
+            color: #4ade80;
+        }
+
+        .status-checking {
+            background: #3b82f6;
+            border-color: #3b82f6;
+            color: #3b82f6;
+        }
+
+        @keyframes statusPulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
+        }
+
+        .join-server-btn {
+            background: linear-gradient(145deg, #1e3a8a, #1e40af);
+            border: 2px solid #3b82f6;
+            color: #3b82f6;
+            padding: 12px 25px;
+            font-size: 1rem;
+            font-weight: bold;
+            font-family: 'Cinzel', serif;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            border-radius: 8px;
+            box-shadow: 
+                0 4px 8px rgba(0, 0, 0, 0.3),
+                0 0 15px rgba(59, 130, 246, 0.2);
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .join-server-btn:hover {
+            background: linear-gradient(145deg, #2563eb, #1d4ed8);
+            border-color: #60a5fa;
+            color: #60a5fa;
+            transform: translateY(-2px);
+            box-shadow: 
+                0 6px 12px rgba(0, 0, 0, 0.4),
+                0 0 25px rgba(96, 165, 250, 0.4);
+        }
+
+        .join-server-btn:active {
+            transform: translateY(0px);
+            box-shadow: 
+                0 2px 4px rgba(0, 0, 0, 0.3),
+                0 0 15px rgba(59, 130, 246, 0.3);
+        }
+
+        .join-server-btn:disabled {
+            background: linear-gradient(145deg, #374151, #1f2937);
+            border-color: #6b7280;
+            color: #6b7280;
+            cursor: not-allowed;
+            transform: none;
+            box-shadow: 
+                0 2px 4px rgba(0, 0, 0, 0.3),
+                0 0 8px rgba(107, 114, 128, 0.2);
+        }
+
+        .server-info {
+            font-size: 0.8rem;
+            color: rgba(212, 175, 55, 0.7);
+            font-family: 'Cinzel', serif;
+            text-align: center;
+            margin-top: 5px;
+        }
+
+        /* Enhanced error handling and user feedback */
+        .notification {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            background: rgba(26, 26, 46, 0.95);
+            border: 2px solid;
+            border-radius: 8px;
+            padding: 15px 20px;
+            font-family: 'Cinzel', serif;
+            font-weight: bold;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            z-index: 1000;
+            transform: translateX(400px);
+            transition: transform 0.3s ease;
+            max-width: 300px;
+        }
+
+        .notification.show {
+            transform: translateX(0);
+        }
+
+        .notification-success {
+            border-color: #4ade80;
+            color: #4ade80;
+            box-shadow: 0 0 15px rgba(74, 222, 128, 0.3);
+        }
+
+        .notification-error {
+            border-color: #ef4444;
+            color: #ef4444;
+            box-shadow: 0 0 15px rgba(239, 68, 68, 0.3);
+        }
+
+        .notification-info {
+            border-color: #3b82f6;
+            color: #3b82f6;
+            box-shadow: 0 0 15px rgba(59, 130, 246, 0.3);
+        }
+
+        .notification-warning {
+            border-color: #f59e0b;
+            color: #f59e0b;
+            box-shadow: 0 0 15px rgba(245, 158, 11, 0.3);
+        }
     </style>
 </head>
 <body>
@@ -348,6 +605,29 @@
     <!-- Main menu container -->
     <div class="menu-container">
         <h1 class="game-title">Runes of Tir na nÓg</h1>
+        
+        <!-- Username input section -->
+        <div class="username-container">
+            <div class="username-label">Player Name</div>
+            <div class="username-bar">
+                <input type="text" class="username-input" id="usernameInput" placeholder="Enter your name" maxlength="20">
+                <button class="set-username-btn" id="setUsernameBtn">Set</button>
+            </div>
+            <div class="username-display" id="usernameDisplay"></div>
+        </div>
+        
+        <!-- Server connection section -->
+        <div class="server-connection-container">
+            <div class="connection-status" id="connectionStatus">
+                <div class="status-indicator status-disconnected" id="statusIndicator"></div>
+                <span id="statusText">Disconnected</span>
+            </div>
+            <button class="join-server-btn" id="joinServerBtn">
+                <span>🌐</span>
+                <span id="joinServerText">Join Server</span>
+            </button>
+            <div class="server-info" id="serverInfo">Server: localhost:8000</div>
+        </div>
         
         <div class="menu-buttons">
             <button class="menu-button play-button" onclick="startGame()">
@@ -421,10 +701,352 @@
         window.quitGame = quitGame;
         window.openSettings = openSettings;
 
+        // Notification system
+        function showNotification(message, type = 'info', duration = 3000) {
+            const notification = document.createElement('div');
+            notification.className = `notification notification-${type}`;
+            notification.textContent = message;
+            
+            document.body.appendChild(notification);
+            
+            // Trigger animation
+            setTimeout(() => {
+                notification.classList.add('show');
+            }, 100);
+            
+            // Auto remove
+            setTimeout(() => {
+                notification.classList.remove('show');
+                setTimeout(() => {
+                    document.body.removeChild(notification);
+                }, 300);
+            }, duration);
+        }
+
+        // Enhanced menu flow integration
+        function initMenuFlowIntegration() {
+            // Check if user came from landing page with username
+            const urlParams = new URLSearchParams(window.location.search);
+            const fromLanding = urlParams.get('fromLanding');
+            
+            if (fromLanding === 'true') {
+                showNotification('Welcome to Runes of Tir na nÓg!', 'success', 2000);
+            }
+            
+            // Check if username exists, if not redirect to landing
+            const username = localStorage.getItem('runes_username');
+            if (!username) {
+                setTimeout(() => {
+                    showNotification('Please set a username first', 'warning', 2000);
+                    setTimeout(() => {
+                        window.location.href = '../landing.html';
+                    }, 2000);
+                }, 1000);
+            }
+        }
+
+        // Server connection management
+        function initServerConnectionSystem() {
+            const statusIndicator = document.getElementById('statusIndicator');
+            const statusText = document.getElementById('statusText');
+            const joinServerBtn = document.getElementById('joinServerBtn');
+            const joinServerText = document.getElementById('joinServerText');
+            const serverInfo = document.getElementById('serverInfo');
+            
+            let connectionState = 'disconnected'; // disconnected, connecting, connected, checking
+            let websocket = null;
+            let serverCheckInterval = null;
+            
+            // Update connection status display
+            function updateConnectionStatus(state, message) {
+                connectionState = state;
+                
+                // Remove all status classes
+                statusIndicator.classList.remove('status-disconnected', 'status-connecting', 'status-connected', 'status-checking');
+                
+                switch(state) {
+                    case 'disconnected':
+                        statusIndicator.classList.add('status-disconnected');
+                        statusText.textContent = 'Server Offline';
+                        joinServerBtn.disabled = true;
+                        joinServerText.textContent = 'Server Offline';
+                        serverInfo.textContent = 'Server: localhost:1234 (Offline)';
+                        break;
+                    case 'checking':
+                        statusIndicator.classList.add('status-checking');
+                        statusText.textContent = 'Checking Server...';
+                        joinServerBtn.disabled = true;
+                        joinServerText.textContent = 'Checking...';
+                        serverInfo.textContent = 'Checking server status...';
+                        break;
+                    case 'online':
+                        statusIndicator.classList.add('status-connected');
+                        statusText.textContent = 'Server Online';
+                        joinServerBtn.disabled = false;
+                        joinServerText.textContent = 'Join Server';
+                        serverInfo.textContent = 'Server: localhost:1234 (Online)';
+                        break;
+                    case 'connecting':
+                        statusIndicator.classList.add('status-connecting');
+                        statusText.textContent = 'Connecting...';
+                        joinServerBtn.disabled = true;
+                        joinServerText.textContent = 'Connecting...';
+                        serverInfo.textContent = 'Connecting to server...';
+                        break;
+                    case 'connected':
+                        statusIndicator.classList.add('status-connected');
+                        statusText.textContent = 'Connected';
+                        joinServerBtn.disabled = false;
+                        joinServerText.textContent = 'Disconnect';
+                        serverInfo.textContent = 'Connected to localhost:1234';
+                        break;
+                    case 'error':
+                        statusIndicator.classList.add('status-disconnected');
+                        statusText.textContent = message || 'Connection Failed';
+                        joinServerBtn.disabled = false;
+                        joinServerText.textContent = 'Retry';
+                        serverInfo.textContent = 'Connection failed - Click to retry';
+                        break;
+                }
+            }
+            
+            // Check if server is online
+            async function checkServerStatus() {
+                return new Promise((resolve) => {
+                    try {
+                        const testSocket = new WebSocket('ws://localhost:1234');
+                        const timeout = setTimeout(() => {
+                            testSocket.close();
+                            resolve(false);
+                        }, 3000); // 3 second timeout
+                        
+                        testSocket.onopen = () => {
+                            clearTimeout(timeout);
+                            testSocket.close();
+                            resolve(true);
+                        };
+                        
+                        testSocket.onerror = () => {
+                            clearTimeout(timeout);
+                            resolve(false);
+                        };
+                        
+                        testSocket.onclose = () => {
+                            clearTimeout(timeout);
+                        };
+                    } catch (error) {
+                        console.warn('WebSocket connection test failed:', error);
+                        resolve(false);
+                    }
+                });
+            }
+            
+            // Start periodic server checking
+            function startServerChecking() {
+                // Check immediately
+                checkServerStatus().then(isOnline => {
+                    updateConnectionStatus(isOnline ? 'online' : 'disconnected');
+                });
+                
+                // Check every 10 seconds
+                serverCheckInterval = setInterval(async () => {
+                    if (connectionState === 'disconnected' || connectionState === 'online') {
+                        updateConnectionStatus('checking');
+                        const isOnline = await checkServerStatus();
+                        updateConnectionStatus(isOnline ? 'online' : 'disconnected');
+                    }
+                }, 10000);
+            }
+            
+            // Stop server checking
+            function stopServerChecking() {
+                if (serverCheckInterval) {
+                    clearInterval(serverCheckInterval);
+                    serverCheckInterval = null;
+                }
+            }
+            
+            // Attempt to connect to server
+            function connectToServer() {
+                const username = localStorage.getItem('runes_username');
+                if (!username) {
+                    showNotification('Please set a username first!', 'error', 3000);
+                    return;
+                }
+                
+                if (connectionState === 'connected') {
+                    // Disconnect if already connected
+                    disconnectFromServer();
+                    return;
+                }
+                
+                if (connectionState === 'online') {
+                    updateConnectionStatus('connecting');
+                    showNotification('Connecting to server...', 'info', 2000);
+                } else {
+                    showNotification('Server is offline. Please start the server first.', 'error', 4000);
+                    return;
+                }
+                
+                // Store connection state for game
+                localStorage.setItem('runes_multiplayer_enabled', 'true');
+                
+                // Navigate to game with multiplayer enabled
+                setTimeout(() => {
+                    window.location.href = '../index.html?multiplayer=true';
+                }, 1500);
+            }
+            
+            // Disconnect from server
+            function disconnectFromServer() {
+                if (websocket) {
+                    websocket.close();
+                    websocket = null;
+                }
+                updateConnectionStatus('disconnected');
+                console.log('Disconnected from server');
+            }
+            
+            // Add ripple effect to join server button
+            function addRippleEffect(button) {
+                const ripple = document.createElement('span');
+                const rect = button.getBoundingClientRect();
+                const size = Math.max(rect.width, rect.height);
+                const x = rect.width / 2 - size / 2;
+                const y = rect.height / 2 - size / 2;
+                
+                ripple.style.width = ripple.style.height = size + 'px';
+                ripple.style.left = x + 'px';
+                ripple.style.top = y + 'px';
+                ripple.style.position = 'absolute';
+                ripple.style.borderRadius = '50%';
+                ripple.style.background = 'rgba(255, 255, 255, 0.3)';
+                ripple.style.transform = 'scale(0)';
+                ripple.style.animation = 'ripple 0.6s linear';
+                ripple.style.pointerEvents = 'none';
+                
+                button.style.position = 'relative';
+                button.style.overflow = 'hidden';
+                button.appendChild(ripple);
+                
+                setTimeout(() => {
+                    ripple.remove();
+                }, 600);
+            }
+            
+            // Event listeners
+            joinServerBtn.addEventListener('click', connectToServer);
+            
+            // Start server checking
+            startServerChecking();
+            
+            // Cleanup on page unload
+            window.addEventListener('beforeunload', stopServerChecking);
+        }
+
+        // Username management
+        function initUsernameSystem() {
+            const usernameInput = document.getElementById('usernameInput');
+            const setUsernameBtn = document.getElementById('setUsernameBtn');
+            const usernameDisplay = document.getElementById('usernameDisplay');
+            
+            // Load saved username
+            const savedUsername = localStorage.getItem('runes_username');
+            if (savedUsername) {
+                usernameInput.value = savedUsername;
+                usernameDisplay.textContent = `Playing as: ${savedUsername}`;
+            }
+            
+            // Set username functionality
+            function setUsername() {
+                const username = usernameInput.value.trim();
+                if (username && username.length >= 1 && username.length <= 20) {
+                    // Basic validation - only allow alphanumeric, spaces, and basic punctuation
+                    const validPattern = /^[a-zA-Z0-9\s\-_\.]+$/;
+                    if (validPattern.test(username)) {
+                        localStorage.setItem('runes_username', username);
+                        usernameDisplay.textContent = `Playing as: ${username}`;
+                        usernameInput.style.borderColor = '#4ade80';
+                        usernameInput.style.color = '#4ade80';
+                        
+                        // Reset styling after 2 seconds
+                        setTimeout(() => {
+                            usernameInput.style.borderColor = '#d4af37';
+                            usernameInput.style.color = '#d4af37';
+                        }, 2000);
+                    } else {
+                        showUsernameError('Invalid characters. Use letters, numbers, spaces, and basic punctuation only.');
+                    }
+                } else {
+                    showUsernameError('Username must be 1-20 characters long.');
+                }
+            }
+            
+            function showUsernameError(message) {
+                usernameDisplay.textContent = message;
+                usernameDisplay.style.color = '#ef4444';
+                usernameInput.style.borderColor = '#ef4444';
+                usernameInput.style.color = '#ef4444';
+                
+                // Reset styling after 3 seconds
+                setTimeout(() => {
+                    usernameDisplay.style.color = '#4ade80';
+                    usernameInput.style.borderColor = '#d4af37';
+                    usernameInput.style.color = '#d4af37';
+                    if (localStorage.getItem('runes_username')) {
+                        usernameDisplay.textContent = `Playing as: ${localStorage.getItem('runes_username')}`;
+                    } else {
+                        usernameDisplay.textContent = '';
+                    }
+                }, 3000);
+            }
+            
+            // Event listeners
+            setUsernameBtn.addEventListener('click', setUsername);
+            usernameInput.addEventListener('keypress', function(e) {
+                if (e.key === 'Enter') {
+                    setUsername();
+                }
+            });
+            
+            // Add ripple effect to username button
+            setUsernameBtn.addEventListener('click', function(e) {
+                const ripple = document.createElement('span');
+                const rect = this.getBoundingClientRect();
+                const size = Math.max(rect.width, rect.height);
+                const x = e.clientX - rect.left - size / 2;
+                const y = e.clientY - rect.top - size / 2;
+                
+                ripple.style.width = ripple.style.height = size + 'px';
+                ripple.style.left = x + 'px';
+                ripple.style.top = y + 'px';
+                ripple.style.position = 'absolute';
+                ripple.style.borderRadius = '50%';
+                ripple.style.background = 'rgba(255, 255, 255, 0.3)';
+                ripple.style.transform = 'scale(0)';
+                ripple.style.animation = 'ripple 0.6s linear';
+                ripple.style.pointerEvents = 'none';
+                
+                this.style.position = 'relative';
+                this.style.overflow = 'hidden';
+                this.appendChild(ripple);
+                
+                setTimeout(() => {
+                    ripple.remove();
+                }, 600);
+            });
+        }
+
         // Initialize on page load
         document.addEventListener('DOMContentLoaded', function() {
             // Initialize settings system
             initSettings();
+            // Initialize menu flow integration
+            initMenuFlowIntegration();
+            // Initialize username system
+            initUsernameSystem();
+            // Initialize server connection system
+            initServerConnectionSystem();
             // Add click ripple effect to buttons
             const buttons = document.querySelectorAll('.menu-button');
             buttons.forEach(button => {
