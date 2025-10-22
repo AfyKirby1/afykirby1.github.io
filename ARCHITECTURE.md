@@ -326,6 +326,52 @@ Editor Client → HTTP/WebSocket → Node.js Server → File System/World Data
 Real-time Collaboration → Server Broadcasting → Multiple Client Updates
 ```
 
+### War Room Collaboration System
+```
+Client Interface → HTTP API → DCS Server → File System/LocalStorage
+Team Notes → Real-time Editing → Auto-save → Server Sync
+Asset Management → Upload/Download → File System Storage → Metadata Tracking
+Resizable Panels → CSS Grid Layout → JavaScript Resizing → LocalStorage Persistence
+```
+
+## War Room Panel Resizing System
+
+### Technical Implementation
+The War Room features a sophisticated panel resizing system that allows users to customize their workspace layout:
+
+#### CSS Grid Layout
+- **3-Column Grid**: `auto 1fr auto` for desktop, responsive breakpoints for smaller screens
+- **Panel Positioning**: 
+  - Column 1: Checklist panel
+  - Column 2: Team Notes (spans rows 1-2)
+  - Column 3: Asset Gallery (row 1) and Music Library (row 2)
+
+#### JavaScript Resizing Logic
+```javascript
+// Real-time resizing with immediate visual feedback
+function doResize(e) {
+    const newHeight = startHeight + (e.clientY - startY);
+    notesCard.style.setProperty('height', newHeight + 'px', 'important');
+}
+```
+
+#### Key Features
+- **Real-time Updates**: Height changes are visible immediately during drag operations
+- **Persistent Storage**: User preferences saved to localStorage and restored on page load
+- **CSS Conflict Resolution**: Uses `setProperty()` with `!important` to override conflicting styles
+- **Responsive Design**: Minimum height (300px) and maximum height (80% viewport) constraints
+- **Touch Support**: Full mobile/tablet support with touch event handling
+
+#### Resizer Handle Design
+- **Visual Feedback**: Subtle gradient background with hover effects
+- **Accessibility**: Clear visual indicators and tooltip guidance
+- **Interaction**: 20px height for easy grabbing, expands to 24px on hover
+
+### Data Persistence
+- **localStorage**: Saves panel height preferences
+- **Server Sync**: Notes content synchronized with backend
+- **Fallback Handling**: Graceful degradation when localStorage unavailable
+
 ## Future Architecture Considerations
 - **Backend Integration**: Migration to dedicated backend services for authentication
 - **Database Systems**: User management, session storage, and game data persistence

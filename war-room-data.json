@@ -1,0 +1,29 @@
+{
+  "checklist": [
+    {
+      "id": "1761109844357",
+      "text": "derpsalt",
+      "completed": false,
+      "createdAt": "2025-10-22T05:10:44.358Z"
+    },
+    {
+      "id": "1761109926277",
+      "text": "Test task from browser",
+      "completed": false,
+      "createdAt": "2025-10-22T05:12:06.278Z"
+    },
+    {
+      "id": "1761110641516",
+      "text": "ello",
+      "completed": false,
+      "createdAt": "2025-10-22T05:24:01.519Z"
+    }
+  ],
+  "notes": {
+    "note-1": {
+      "title": "🎮 Game Development Notes",
+      "content": "<div class=\"note-section\">\n                        <h3>📋 CURRENT PRIORITIES:</h3>\n                        <ul>\n                            <li>Combat system needs balancing</li>\n                            <li>Multiplayer sync issues to resolve</li>\n                            <li>Audio implementation pending</li>\n                        </ul>\n                    </div>\n                    \n                    <div class=\"note-section\">\n                        <h3>💡 IDEAS:</h3>\n                        <ul>\n                            <li>Add day/night cycle for atmosphere</li>\n                            <li>Implement weather effects</li>\n                            <li>Create mini-games for NPCs</li>\n                        </ul>\n                    </div>\n                    \n                    <div class=\"note-section\">\n                        <h3>🐛 BUGS TO FIX:</h3>\n                        <ul>\n                            <li>Player sometimes clips through walls</li>\n                            <li>Inventory UI glitch on mobile</li>\n                            <li>Save file corruption issue</li>\n                        </ul>\n                    </div>\n                    \n                    <div class=\"note-section\">\n                        <h3>🎨 ART ASSETS NEEDED:</h3>\n                        <ul>\n                            <li>More character animations</li>\n                            <li>Environmental particle effects</li>\n                            <li>UI icons and buttons</li>\n                        </ul>\n                    </div>\n                    \n                    <div class=\"note-section\">\n                        <h3>📊 PROGRESS TRACKING:</h3>\n                        <ul>\n                            <li>World building: 70% complete</li>\n                            <li>Character development: 60% complete</li>\n                            <li>Audio implementation: 30% complete</li>\n                        </ul>\n                    </div>"
+    }
+  },
+  "notesUpdatedAt": "2025-10-22T05:36:12.671Z"
+}
