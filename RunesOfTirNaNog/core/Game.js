@@ -471,6 +471,12 @@ export class Game {
     }
     
     initializeNPCs() {
+        // Skip NPC initialization in multiplayer mode
+        if (this.isMultiplayer) {
+            console.log('NPC system disabled in multiplayer mode');
+            return;
+        }
+        
         if (!this.npcManager || !this.npcFactory) {
             console.log('NPC system not available - skipping NPC initialization');
             return;
