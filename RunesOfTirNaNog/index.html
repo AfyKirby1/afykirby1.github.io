@@ -2,7 +2,11 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="theme-color" content="#4a7c59">
     
     <!-- ✅ SECURITY FIX (VULN-006): Content Security Policy -->
     <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' data: blob:; connect-src 'self' wss://web-production-b1ed.up.railway.app/ws https://web-production-b1ed.up.railway.app ws://localhost:1234 ws://127.0.0.1:1234; base-uri 'self'; form-action 'self';">
@@ -477,6 +481,52 @@
             gap: 15px;
         }
 
+        /* Fullscreen Button */
+        .fullscreen-btn {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            width: 50px;
+            height: 50px;
+            background: rgba(0, 0, 0, 0.8);
+            border: 2px solid #d4af37;
+            border-radius: 50%;
+            color: #d4af37;
+            font-size: 20px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 2001;
+            user-select: none;
+            -webkit-user-select: none;
+            -webkit-touch-callout: none;
+        }
+
+        .fullscreen-btn::before {
+            content: '⛶';
+            font-size: 18px;
+        }
+
+        .fullscreen-btn:hover {
+            background: rgba(212, 175, 55, 0.2);
+            border-color: #ffd700;
+            color: #ffd700;
+            transform: scale(1.05);
+        }
+
+        .fullscreen-btn:active {
+            transform: scale(0.95);
+        }
+
+        /* Hide fullscreen button on desktop */
+        @media (hover: hover) and (pointer: fine) {
+            .fullscreen-btn {
+                display: none !important;
+            }
+        }
+
         .mobile-dpad {
             position: relative;
             width: 120px;
@@ -560,12 +610,72 @@
             .mobile-controls {
                 display: flex !important;
             }
+            
+            .fullscreen-btn {
+                display: flex !important;
+            }
+            
+            /* Adjust UI elements for mobile */
+            .game-title {
+                font-size: 1.5em;
+                padding: 8px 15px;
+            }
+            
+            .health-bar {
+                bottom: 100px; /* Move up to avoid mobile controls */
+            }
+            
+            .chat-container {
+                width: calc(100vw - 40px);
+                height: 250px;
+                bottom: 100px; /* Move up to avoid mobile controls */
+            }
+            
+            .controls-bubble {
+                bottom: 100px; /* Move up to avoid mobile controls */
+            }
         }
 
         /* Hide mobile controls on desktop */
         @media (hover: hover) and (pointer: fine) {
             .mobile-controls {
                 display: none !important;
+            }
+            
+            .fullscreen-btn {
+                display: none !important;
+            }
+        }
+
+        /* Additional mobile optimizations */
+        @media (max-width: 768px) {
+            .game-container {
+                touch-action: none; /* Prevent default touch behaviors */
+            }
+            
+            canvas {
+                touch-action: none;
+            }
+            
+            /* Prevent zoom on double tap */
+            * {
+                touch-action: manipulation;
+            }
+            
+            /* Larger touch targets */
+            .dpad-btn {
+                min-height: 44px;
+                min-width: 44px;
+            }
+            
+            .mobile-chat-btn {
+                min-height: 44px;
+                min-width: 44px;
+            }
+            
+            .fullscreen-btn {
+                min-height: 44px;
+                min-width: 44px;
             }
         }
     </style>
@@ -599,6 +709,9 @@
                 <button id="chatSend" class="chat-send">Send</button>
             </div>
         </div>
+
+        <!-- Fullscreen Button (Mobile Only) -->
+        <button id="fullscreenBtn" class="fullscreen-btn" style="display: none;" title="Enter Fullscreen"></button>
 
         <!-- Mobile Controls -->
         <div id="mobileControls" class="mobile-controls" style="display: none;">
@@ -925,6 +1038,20 @@
                 // Initialize chat system for multiplayer
                 if (isMultiplayer) {
                     initializeChatSystem(game);
+                    
+                    // Connect to multiplayer server
+                    console.log('Multiplayer mode enabled - connecting to server...');
+                    game.connectToMultiplayer().then(success => {
+                        if (success) {
+                            console.log('✅ Successfully connected to multiplayer server');
+                        } else {
+                            console.error('❌ Failed to connect to multiplayer server');
+                            console.error('Make sure the WebSocket server is running on wss://web-production-b1ed.up.railway.app/ws');
+                        }
+                    }).catch(error => {
+                        console.error('❌ Multiplayer connection error:', error);
+                        console.error('Make sure the WebSocket server is running on wss://web-production-b1ed.up.railway.app/ws');
+                    });
                 }
 
                 // Initialize mobile controls
@@ -933,6 +1060,18 @@
                 // Make functions globally available for debugging
                 window.setPlayerName = (name) => game.setPlayerName(name);
                 window.getPlayerName = () => game.getPlayerName();
+                window.connectMultiplayer = () => game.connectToMultiplayer();
+                window.disconnectMultiplayer = () => game.disconnectFromMultiplayer();
+                window.getNetworkStatus = () => {
+                    if (game.networkManager) {
+                        return {
+                            isConnected: game.networkManager.isConnected,
+                            socket: game.networkManager.socket?.readyState,
+                            playerId: game.networkManager.playerId
+                        };
+                    }
+                    return { error: 'NetworkManager not found' };
+                };
 
                 console.log('Runes of Tir na nÓg - Game initialized successfully');
                 console.log('Components loaded:', {
@@ -1069,6 +1208,8 @@
                 this.mobileControls = document.getElementById('mobileControls');
                 this.dpadButtons = document.querySelectorAll('.dpad-btn');
                 this.mobileChatBtn = document.getElementById('mobileChatBtn');
+                this.fullscreenBtn = document.getElementById('fullscreenBtn');
+                this.isFullscreen = false;
                 
                 this.setupEventListeners();
                 this.detectMobileDevice();
@@ -1117,6 +1258,38 @@
                     e.preventDefault();
                     this.openMobileChat();
                 });
+
+                // Fullscreen button events
+                this.fullscreenBtn.addEventListener('touchstart', (e) => {
+                    e.preventDefault();
+                    this.toggleFullscreen();
+                });
+                
+                this.fullscreenBtn.addEventListener('mousedown', (e) => {
+                    e.preventDefault();
+                    this.toggleFullscreen();
+                });
+
+                // Listen for fullscreen changes
+                document.addEventListener('fullscreenchange', () => {
+                    this.isFullscreen = !!document.fullscreenElement;
+                    this.updateFullscreenButton();
+                });
+
+                document.addEventListener('webkitfullscreenchange', () => {
+                    this.isFullscreen = !!document.webkitFullscreenElement;
+                    this.updateFullscreenButton();
+                });
+
+                document.addEventListener('mozfullscreenchange', () => {
+                    this.isFullscreen = !!document.mozFullScreenElement;
+                    this.updateFullscreenButton();
+                });
+
+                document.addEventListener('MSFullscreenChange', () => {
+                    this.isFullscreen = !!document.msFullscreenElement;
+                    this.updateFullscreenButton();
+                });
             }
             
             handleDpadPress(direction, pressed) {
@@ -1130,11 +1303,54 @@
                     window.chatManager.openChat();
                 }
             }
+
+            toggleFullscreen() {
+                if (!this.isFullscreen) {
+                    this.enterFullscreen();
+                } else {
+                    this.exitFullscreen();
+                }
+            }
+
+            enterFullscreen() {
+                const element = document.documentElement;
+                
+                if (element.requestFullscreen) {
+                    element.requestFullscreen();
+                } else if (element.webkitRequestFullscreen) {
+                    element.webkitRequestFullscreen();
+                } else if (element.mozRequestFullScreen) {
+                    element.mozRequestFullScreen();
+                } else if (element.msRequestFullscreen) {
+                    element.msRequestFullscreen();
+                }
+            }
+
+            exitFullscreen() {
+                if (document.exitFullscreen) {
+                    document.exitFullscreen();
+                } else if (document.webkitExitFullscreen) {
+                    document.webkitExitFullscreen();
+                } else if (document.mozCancelFullScreen) {
+                    document.mozCancelFullScreen();
+                } else if (document.msExitFullscreen) {
+                    document.msExitFullscreen();
+                }
+            }
+
+            updateFullscreenButton() {
+                if (this.fullscreenBtn) {
+                    this.fullscreenBtn.title = this.isFullscreen ? 'Exit Fullscreen' : 'Enter Fullscreen';
+                    // Update CSS pseudo-element content
+                    this.fullscreenBtn.style.setProperty('--icon', this.isFullscreen ? '"⛶"' : '"⛶"');
+                }
+            }
             
             detectMobileDevice() {
                 // Show mobile controls on touch devices
                 if ('ontouchstart' in window || navigator.maxTouchPoints > 0) {
                     this.mobileControls.style.display = 'flex';
+                    this.fullscreenBtn.style.display = 'flex';
                     console.log('Mobile controls enabled - Touch device detected');
                 } else {
                     console.log('Desktop device detected - Mobile controls hidden');
