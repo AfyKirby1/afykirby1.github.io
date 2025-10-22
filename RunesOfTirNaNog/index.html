@@ -464,6 +464,110 @@
         .chat-send:hover {
             background: #ffd700;
         }
+
+        /* Mobile Controls Styles */
+        .mobile-controls {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            z-index: 2000;
+            display: flex;
+            flex-direction: column;
+            align-items: flex-end;
+            gap: 15px;
+        }
+
+        .mobile-dpad {
+            position: relative;
+            width: 120px;
+            height: 120px;
+            background: rgba(0, 0, 0, 0.7);
+            border: 2px solid #d4af37;
+            border-radius: 50%;
+            display: grid;
+            grid-template-columns: 1fr 1fr 1fr;
+            grid-template-rows: 1fr 1fr 1fr;
+            grid-template-areas: 
+                "upLeft up upRight"
+                "left center right"
+                "downLeft down downRight";
+        }
+
+        .dpad-center {
+            grid-area: center;
+            background: rgba(212, 175, 55, 0.3);
+            border-radius: 50%;
+            margin: 5px;
+        }
+
+        .dpad-btn {
+            background: rgba(0, 0, 0, 0.8);
+            border: 1px solid #d4af37;
+            color: #d4af37;
+            font-size: 16px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            user-select: none;
+            -webkit-user-select: none;
+            -webkit-touch-callout: none;
+        }
+
+        .dpad-btn:active {
+            background: #d4af37;
+            color: #000000;
+            transform: scale(0.95);
+        }
+
+        .dpad-up { grid-area: up; }
+        .dpad-down { grid-area: down; }
+        .dpad-left { grid-area: left; }
+        .dpad-right { grid-area: right; }
+        .dpad-up-left { grid-area: upLeft; }
+        .dpad-up-right { grid-area: upRight; }
+        .dpad-down-left { grid-area: downLeft; }
+        .dpad-down-right { grid-area: downRight; }
+
+        .mobile-chat-btn {
+            width: 60px;
+            height: 60px;
+            background: rgba(0, 0, 0, 0.8);
+            border: 2px solid #d4af37;
+            border-radius: 50%;
+            color: #d4af37;
+            font-size: 24px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            user-select: none;
+            -webkit-user-select: none;
+            -webkit-touch-callout: none;
+        }
+
+        .mobile-chat-btn:active {
+            background: #d4af37;
+            color: #000000;
+            transform: scale(0.95);
+        }
+
+        /* Mobile responsive - show controls on touch devices */
+        @media (hover: none) and (pointer: coarse) {
+            .mobile-controls {
+                display: flex !important;
+            }
+        }
+
+        /* Hide mobile controls on desktop */
+        @media (hover: hover) and (pointer: fine) {
+            .mobile-controls {
+                display: none !important;
+            }
+        }
     </style>
 </head>
 <body>
@@ -494,6 +598,25 @@
                 <input type="text" id="chatInput" class="chat-input" placeholder="Type a message..." maxlength="200">
                 <button id="chatSend" class="chat-send">Send</button>
             </div>
+        </div>
+
+        <!-- Mobile Controls -->
+        <div id="mobileControls" class="mobile-controls" style="display: none;">
+            <!-- D-pad -->
+            <div class="mobile-dpad">
+                <div class="dpad-center"></div>
+                <button class="dpad-btn dpad-up" data-direction="up">↑</button>
+                <button class="dpad-btn dpad-down" data-direction="down">↓</button>
+                <button class="dpad-btn dpad-left" data-direction="left">←</button>
+                <button class="dpad-btn dpad-right" data-direction="right">→</button>
+                <button class="dpad-btn dpad-up-left" data-direction="upLeft">↖</button>
+                <button class="dpad-btn dpad-up-right" data-direction="upRight">↗</button>
+                <button class="dpad-btn dpad-down-left" data-direction="downLeft">↙</button>
+                <button class="dpad-btn dpad-down-right" data-direction="downRight">↘</button>
+            </div>
+            
+            <!-- Chat Button -->
+            <button id="mobileChatBtn" class="mobile-chat-btn">💬</button>
         </div>
 
         <!-- Pause Menu -->
@@ -804,6 +927,9 @@
                     initializeChatSystem(game);
                 }
 
+                // Initialize mobile controls
+                initializeMobileControls(game);
+
                 // Make functions globally available for debugging
                 window.setPlayerName = (name) => game.setPlayerName(name);
                 window.getPlayerName = () => game.getPlayerName();
@@ -934,6 +1060,90 @@
         function initializeChatSystem(game) {
             window.chatManager = new ChatManager(game);
             console.log('Chat system initialized - Press T to open chat');
+        }
+
+        // Mobile Controls System
+        class MobileControlsManager {
+            constructor(game) {
+                this.game = game;
+                this.mobileControls = document.getElementById('mobileControls');
+                this.dpadButtons = document.querySelectorAll('.dpad-btn');
+                this.mobileChatBtn = document.getElementById('mobileChatBtn');
+                
+                this.setupEventListeners();
+                this.detectMobileDevice();
+            }
+            
+            setupEventListeners() {
+                // D-pad button events
+                this.dpadButtons.forEach(btn => {
+                    const direction = btn.dataset.direction;
+                    
+                    // Touch events
+                    btn.addEventListener('touchstart', (e) => {
+                        e.preventDefault();
+                        this.handleDpadPress(direction, true);
+                    });
+                    
+                    btn.addEventListener('touchend', (e) => {
+                        e.preventDefault();
+                        this.handleDpadPress(direction, false);
+                    });
+                    
+                    // Mouse events (for testing on desktop)
+                    btn.addEventListener('mousedown', (e) => {
+                        e.preventDefault();
+                        this.handleDpadPress(direction, true);
+                    });
+                    
+                    btn.addEventListener('mouseup', (e) => {
+                        e.preventDefault();
+                        this.handleDpadPress(direction, false);
+                    });
+                    
+                    // Prevent context menu
+                    btn.addEventListener('contextmenu', (e) => {
+                        e.preventDefault();
+                    });
+                });
+                
+                // Mobile chat button
+                this.mobileChatBtn.addEventListener('touchstart', (e) => {
+                    e.preventDefault();
+                    this.openMobileChat();
+                });
+                
+                this.mobileChatBtn.addEventListener('mousedown', (e) => {
+                    e.preventDefault();
+                    this.openMobileChat();
+                });
+            }
+            
+            handleDpadPress(direction, pressed) {
+                if (this.game.input) {
+                    this.game.input.setMobileDpadState(direction, pressed);
+                }
+            }
+            
+            openMobileChat() {
+                if (window.chatManager) {
+                    window.chatManager.openChat();
+                }
+            }
+            
+            detectMobileDevice() {
+                // Show mobile controls on touch devices
+                if ('ontouchstart' in window || navigator.maxTouchPoints > 0) {
+                    this.mobileControls.style.display = 'flex';
+                    console.log('Mobile controls enabled - Touch device detected');
+                } else {
+                    console.log('Desktop device detected - Mobile controls hidden');
+                }
+            }
+        }
+        
+        function initializeMobileControls(game) {
+            window.mobileControlsManager = new MobileControlsManager(game);
         }
     </script>
 </body>

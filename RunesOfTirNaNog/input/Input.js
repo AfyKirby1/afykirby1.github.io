@@ -47,6 +47,18 @@ export class Input {
         this.keybinds = this.loadKeybinds();
         this.keyActions = {};
         
+        // Mobile D-pad state
+        this.mobileDpad = {
+            up: false,
+            down: false,
+            left: false,
+            right: false,
+            upLeft: false,
+            upRight: false,
+            downLeft: false,
+            downRight: false
+        };
+        
         this.setupEventListeners();
     }
 
@@ -293,6 +305,20 @@ export class Input {
             y += 1;
         }
         
+        // Add mobile D-pad input
+        if (this.mobileDpad.left || this.mobileDpad.upLeft || this.mobileDpad.downLeft) {
+            x -= 1;
+        }
+        if (this.mobileDpad.right || this.mobileDpad.upRight || this.mobileDpad.downRight) {
+            x += 1;
+        }
+        if (this.mobileDpad.up || this.mobileDpad.upLeft || this.mobileDpad.upRight) {
+            y -= 1;
+        }
+        if (this.mobileDpad.down || this.mobileDpad.downLeft || this.mobileDpad.downRight) {
+            y += 1;
+        }
+        
         return { x, y };
     }
 
@@ -373,6 +399,23 @@ export class Input {
 
     setupGamepad() {
         console.log('Gamepad support not yet implemented');
+    }
+
+    // Mobile D-pad control methods
+    setMobileDpadState(direction, pressed) {
+        if (this.mobileDpad.hasOwnProperty(direction)) {
+            this.mobileDpad[direction] = pressed;
+        }
+    }
+    
+    getMobileDpadState() {
+        return { ...this.mobileDpad };
+    }
+    
+    resetMobileDpad() {
+        Object.keys(this.mobileDpad).forEach(key => {
+            this.mobileDpad[key] = false;
+        });
     }
 
     cleanup() {
