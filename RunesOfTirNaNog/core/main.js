@@ -55,9 +55,9 @@ window.addEventListener('load', async () => {
             // Load custom world for multiplayer
             console.log('🌍 Loading custom world for multiplayer...');
             try {
-                // Try to load the custom world data
-                console.log('🔍 Fetching world data from: ../server/worlds/world.json');
-                const worldDataResponse = await fetch('../server/worlds/world.json');
+                // Try to load the custom world data from Railway server
+                console.log('🔍 Fetching world data from: https://web-production-b1ed.up.railway.app/worlds/world.json');
+                const worldDataResponse = await fetch('https://web-production-b1ed.up.railway.app/worlds/world.json');
                 console.log('📡 Fetch response status:', worldDataResponse.status, worldDataResponse.statusText);
                 
                 if (worldDataResponse.ok) {
