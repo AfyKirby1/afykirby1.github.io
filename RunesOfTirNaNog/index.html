@@ -635,9 +635,9 @@
                     // Load custom world for multiplayer
                     console.log('🌍 Loading custom world for multiplayer...');
                     try {
-                        // Try to load the custom world data from GitHub Pages
-                        console.log('🔍 Fetching world data from: worlds/world.json');
-                        const worldDataResponse = await fetch('worlds/world.json');
+                        // Try to load the custom world data from Railway server
+                        console.log('🔍 Fetching world data from: https://web-production-b1ed.up.railway.app/worlds/world.json');
+                        const worldDataResponse = await fetch('https://web-production-b1ed.up.railway.app/worlds/world.json');
                         console.log('📡 Fetch response status:', worldDataResponse.status, worldDataResponse.statusText);
                         console.log('📡 Response headers:', Object.fromEntries(worldDataResponse.headers.entries()));
                         
