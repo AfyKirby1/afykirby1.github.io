@@ -14,6 +14,16 @@ window.addEventListener('load', async () => {
         const isMultiplayer = urlParams.get('multiplayer') === 'true';
         const customWorld = urlParams.get('customWorld');
 
+        // DEBUG: Log URL parameters immediately
+        console.log('🔍 DEBUG: URL parameters detected:', {
+            isMultiplayer,
+            customWorld,
+            isNewWorld,
+            slotParam,
+            fullURL: window.location.href,
+            searchParams: window.location.search
+        });
+
         if (isNewWorld) {
             // Load world config from sessionStorage
             const configJson = sessionStorage.getItem('worldConfig');
