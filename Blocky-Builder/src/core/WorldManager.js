@@ -12,6 +12,9 @@ class WorldManager {
         this.viewY = 0; // Start at world origin
         this.zoom = 0.3; // Start with a smaller zoom to see more of the world
         this.showGrid = true;
+        this.gridColor = 'white'; // Default grid color
+        this.betaMode = false; // Beta features disabled by default
+        this.showTooltips = true; // Tooltips enabled by default
         
         this.initializeWorld();
     }
@@ -87,7 +90,8 @@ class WorldManager {
             viewX: this.viewX,
             viewY: this.viewY,
             zoom: this.zoom,
-            showGrid: this.showGrid
+            showGrid: this.showGrid,
+            gridColor: this.gridColor
         };
     }
 
@@ -98,7 +102,8 @@ class WorldManager {
         this.viewX = data.viewX || 0;
         this.viewY = data.viewY || 0;
         this.zoom = data.zoom || 1;
-        this.showGrid = data.showGrid !== undefined ? data.showGrid : true;
+        // Don't override showGrid from saved world data - preserve user preference
+        // this.showGrid = data.showGrid !== undefined ? data.showGrid : true;
     }
 
     createWorld(width, height) {

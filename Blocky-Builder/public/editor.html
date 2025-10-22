@@ -41,6 +41,15 @@
                 <button class="tool-btn" onclick="selectTool('npc')" id="npcBtn" title="Manage NPCs (N)">🧙 NPCs</button>
             </div>
 
+            <div class="tool-section" id="betaToolsSection" style="display: none;">
+                <h3>🧪 BETA Tools</h3>
+                <button class="tool-btn" onclick="selectTool('magicwand')" id="magicwandBtn" title="Magic Wand - Select similar tiles">🪄 Magic Wand</button>
+                <button class="tool-btn" onclick="selectTool('gradient')" id="gradientBtn" title="Gradient - Create smooth transitions">🌈 Gradient</button>
+                <button class="tool-btn" onclick="selectTool('pattern')" id="patternBtn" title="Pattern - Apply repeating patterns">🔲 Pattern</button>
+                <button class="tool-btn" onclick="selectTool('brush')" id="brushBtn" title="Brush - Paint with custom brushes">🖌️ Brush</button>
+                <button class="tool-btn" onclick="selectTool('debug')" id="debugBtn" title="Debug - Show debug information">🐛 Debug</button>
+            </div>
+
             <div class="tool-section">
                 <h3>📁 Project</h3>
                 <button class="tool-btn" onclick="showProjectPanel()" id="projectBtn" title="Project Settings">⚙️ Setup</button>
@@ -162,6 +171,12 @@
                         </label>
                     </div>
                     <div style="margin-bottom: 10px;">
+                        <label>Grid Color:</label>
+                        <button id="gridColorButton" onclick="cycleGridColor()" style="width: 100%; padding: 8px; background: #1a1a1a; border: 2px solid #666; color: #fff; margin-top: 5px; cursor: pointer; border-radius: 4px;">
+                            ⚪ White
+                        </button>
+                    </div>
+                    <div style="margin-bottom: 10px;">
                         <label style="display: flex; align-items: center; gap: 10px;">
                             <input type="checkbox" id="minimapToggle" onchange="toggleMinimap()">
                             <span>Show minimap</span>
@@ -172,6 +187,28 @@
                             <input type="checkbox" id="tooltipsToggle" onchange="toggleTooltips()">
                             <span>Show tooltips</span>
                         </label>
+                    </div>
+                    
+                    <div id="betaSettingsSection" style="margin-bottom: 10px; display: none;">
+                        <h4 style="color: #ff6b6b; margin-bottom: 10px;">🧪 BETA Settings</h4>
+                        <div style="margin-bottom: 10px;">
+                            <label style="display: flex; align-items: center; gap: 10px;">
+                                <input type="checkbox" id="experimentalRenderingToggle" onchange="toggleExperimentalRendering()">
+                                <span>Experimental Rendering</span>
+                            </label>
+                        </div>
+                        <div style="margin-bottom: 10px;">
+                            <label style="display: flex; align-items: center; gap: 10px;">
+                                <input type="checkbox" id="debugInfoToggle" onchange="toggleDebugInfo()">
+                                <span>Show Debug Info</span>
+                            </label>
+                        </div>
+                        <div style="margin-bottom: 10px;">
+                            <label style="display: flex; align-items: center; gap: 10px;">
+                                <input type="checkbox" id="performanceModeToggle" onchange="togglePerformanceMode()">
+                                <span>Performance Mode</span>
+                            </label>
+                        </div>
                     </div>
                 </div>
 

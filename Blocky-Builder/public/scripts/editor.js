@@ -76,21 +76,77 @@ class BlockyBuilderEditor {
         
         // Load other settings
         const savedShowGrid = localStorage.getItem('blockyBuilder_showGrid');
-        if (savedShowGrid !== null) {
-            const showGridToggle = document.getElementById('showGridToggle');
-            if (showGridToggle) {
-                showGridToggle.checked = savedShowGrid === 'true';
-                this.worldManager.showGrid = savedShowGrid === 'true';
+        const showGridToggle = document.getElementById('showGridToggle');
+        if (showGridToggle) {
+            // Use saved value if available, otherwise keep current value (don't override)
+            if (savedShowGrid !== null) {
+                const showGridValue = savedShowGrid === 'true';
+                showGridToggle.checked = showGridValue;
+                this.worldManager.showGrid = showGridValue;
+            } else {
+                // No saved preference - sync checkbox with current worldManager value
+                showGridToggle.checked = this.worldManager.showGrid;
             }
         }
         
+        // Load grid color setting
+        const savedGridColor = localStorage.getItem('blockyBuilder_gridColor');
+        if (savedGridColor) {
+            this.worldManager.gridColor = savedGridColor;
+            this.updateGridColorButton();
+        }
+        
         const savedShowMinimap = localStorage.getItem('blockyBuilder_showMinimap');
-        if (savedShowMinimap !== null) {
-            const minimapToggle = document.getElementById('minimapToggle');
-            const minimapSection = document.getElementById('minimapSection');
-            if (minimapToggle && minimapSection) {
-                minimapToggle.checked = savedShowMinimap === 'true';
-                minimapSection.style.display = savedShowMinimap === 'true' ? 'block' : 'none';
+        const minimapToggle = document.getElementById('minimapToggle');
+        const minimapSection = document.getElementById('minimapSection');
+        if (minimapToggle && minimapSection) {
+            if (savedShowMinimap !== null) {
+                // Load saved preference
+                const showMinimapValue = savedShowMinimap === 'true';
+                minimapToggle.checked = showMinimapValue;
+                minimapSection.style.display = showMinimapValue ? 'block' : 'none';
+            } else {
+                // No saved preference - use default (minimap visible by default)
+                minimapToggle.checked = true;
+                minimapSection.style.display = 'block';
+            }
+        }
+        
+        // Load beta mode setting
+        const savedBetaMode = localStorage.getItem('blockyBuilder_betaMode');
+        const betaModeToggle = document.getElementById('betaModeToggle');
+        if (betaModeToggle) {
+            if (savedBetaMode !== null) {
+                const betaModeValue = savedBetaMode === 'true';
+                betaModeToggle.checked = betaModeValue;
+                this.worldManager.betaMode = betaModeValue;
+            } else {
+                // No saved preference - use default (beta mode off)
+                betaModeToggle.checked = false;
+                this.worldManager.betaMode = false;
+            }
+            
+            // Show/hide beta sections based on loaded setting
+            const betaToolsSection = document.getElementById('betaToolsSection');
+            const betaSettingsSection = document.getElementById('betaSettingsSection');
+            const shouldShow = this.worldManager.betaMode;
+            
+            if (betaToolsSection) betaToolsSection.style.display = shouldShow ? 'block' : 'none';
+            if (betaSettingsSection) betaSettingsSection.style.display = shouldShow ? 'block' : 'none';
+        }
+        
+        // Load tooltips setting
+        const savedShowTooltips = localStorage.getItem('blockyBuilder_showTooltips');
+        const tooltipsToggle = document.getElementById('tooltipsToggle');
+        if (tooltipsToggle) {
+            if (savedShowTooltips !== null) {
+                const showTooltipsValue = savedShowTooltips === 'true';
+                tooltipsToggle.checked = showTooltipsValue;
+                this.worldManager.showTooltips = showTooltipsValue;
+            } else {
+                // No saved preference - use default (tooltips on)
+                tooltipsToggle.checked = true;
+                this.worldManager.showTooltips = true;
             }
         }
         
@@ -102,13 +158,18 @@ class BlockyBuilderEditor {
         
         // Initial render
         this.renderer.render();
+        
+        // Enable tooltips if setting is on
+        if (this.worldManager.showTooltips) {
+            this.enableTooltips();
+        }
     }
 
     setupRightTilePalette() {
         const tileTypes = {
-            grass: { name: 'Grass', color: '#4CAF50', texture: 'assets/Ground_Texture_1.png' },
-            water: { name: 'Water', color: '#2196F3', texture: 'assets/Water_Texture.png' },
-            cave: { name: 'Cave', color: '#795548', texture: 'assets/Cave_Texture_1.png' },
+            grass: { name: 'Grass', color: '#4CAF50', texture: '../assets/Ground_Texture_1.png' },
+            water: { name: 'Water', color: '#2196F3', texture: '../assets/Water_Texture.png' },
+            cave: { name: 'Cave', color: '#795548', texture: '../assets/Cave_Texture_1.png' },
             wall: { name: 'Wall', color: '#9E9E9E', texture: null } // No texture for wall, use color
         };
 
@@ -166,6 +227,125 @@ class BlockyBuilderEditor {
         }
         
         this.showToast(`Selected ${type} tile`, 'info');
+    }
+
+    updateGridColorButton() {
+        const button = document.getElementById('gridColorButton');
+        if (button) {
+            const colorIcons = {
+                'white': '⚪',
+                'black': '⚫',
+                'green': '🟢',
+                'brown': '🟤',
+                'yellow': '🟡'
+            };
+            const colorNames = {
+                'white': 'White',
+                'black': 'Black',
+                'green': 'Green',
+                'brown': 'Brown',
+                'yellow': 'Yellow'
+            };
+            
+            button.textContent = `${colorIcons[this.worldManager.gridColor]} ${colorNames[this.worldManager.gridColor]}`;
+        }
+    }
+
+    enableTooltips() {
+        // Add tooltips to various UI elements
+        const tooltips = [
+            { selector: '#showGridToggle', text: 'Toggle grid lines on/off' },
+            { selector: '#gridColorButton', text: 'Click to cycle through grid colors' },
+            { selector: '#minimapToggle', text: 'Show/hide the minimap' },
+            { selector: '#betaModeToggle', text: 'Enable experimental BETA features' },
+            { selector: '#tooltipsToggle', text: 'Show/hide tooltips on hover' },
+            { selector: '.tile-option', text: 'Click to select this tile type' },
+            { selector: '.tool-btn', text: 'Click to select this tool' }
+        ];
+
+        tooltips.forEach(tooltip => {
+            const elements = document.querySelectorAll(tooltip.selector);
+            elements.forEach(element => {
+                element.setAttribute('title', tooltip.text);
+            });
+        });
+    }
+
+    disableTooltips() {
+        // Remove tooltips from UI elements
+        const selectors = ['#showGridToggle', '#gridColorButton', '#minimapToggle', '#betaModeToggle', '#tooltipsToggle', '.tile-option', '.tool-btn'];
+        
+        selectors.forEach(selector => {
+            const elements = document.querySelectorAll(selector);
+            elements.forEach(element => {
+                element.removeAttribute('title');
+            });
+        });
+    }
+
+    showDebugInfo() {
+        // Add debug info display
+        let debugInfo = document.getElementById('debugInfo');
+        if (!debugInfo) {
+            debugInfo = document.createElement('div');
+            debugInfo.id = 'debugInfo';
+            debugInfo.style.cssText = `
+                position: fixed;
+                top: 10px;
+                right: 10px;
+                background: rgba(0, 0, 0, 0.8);
+                color: #00ff00;
+                padding: 10px;
+                border-radius: 5px;
+                font-family: monospace;
+                font-size: 12px;
+                z-index: 1000;
+                border: 1px solid #00ff00;
+            `;
+            document.body.appendChild(debugInfo);
+        }
+        
+        // Update debug info periodically
+        this.debugInterval = setInterval(() => {
+            if (debugInfo && this.worldManager) {
+                debugInfo.innerHTML = `
+                    <div>FPS: ${Math.round(1000 / (Date.now() - (this.lastFrameTime || Date.now())))}</div>
+                    <div>Tiles: ${this.worldManager.tiles.length}</div>
+                    <div>Zoom: ${this.worldManager.zoom.toFixed(2)}</div>
+                    <div>View: (${this.worldManager.viewX.toFixed(0)}, ${this.worldManager.viewY.toFixed(0)})</div>
+                    <div>Grid: ${this.worldManager.showGrid ? 'ON' : 'OFF'}</div>
+                    <div>Beta: ${this.worldManager.betaMode ? 'ON' : 'OFF'}</div>
+                `;
+                this.lastFrameTime = Date.now();
+            }
+        }, 100);
+    }
+
+    hideDebugInfo() {
+        const debugInfo = document.getElementById('debugInfo');
+        if (debugInfo) {
+            debugInfo.remove();
+        }
+        if (this.debugInterval) {
+            clearInterval(this.debugInterval);
+            this.debugInterval = null;
+        }
+    }
+
+    enablePerformanceMode() {
+        // Enable performance optimizations
+        if (this.renderer) {
+            this.renderer.enablePerformanceMode();
+        }
+        this.showToast('Performance optimizations enabled', 'info');
+    }
+
+    disablePerformanceMode() {
+        // Disable performance optimizations
+        if (this.renderer) {
+            this.renderer.disablePerformanceMode();
+        }
+        this.showToast('Performance optimizations disabled', 'info');
     }
 
     updateWorldStats() {
@@ -306,7 +486,7 @@ class BlockyBuilderEditor {
             
             console.log('World saved to server:', result.path);
         } catch (error) {
-            console.warn('Failed to save world to server:', error);
+            console.log('Server save not available (GitHub Pages mode) - using localStorage only');
             // Don't show error to user since localStorage save succeeded
         }
     }
@@ -494,7 +674,30 @@ function resetSettings() {
 }
 
 function toggleBetaMode() {
-    window.editor.showToast('BETA mode toggle coming soon!', 'info');
+    const betaModeToggle = document.getElementById('betaModeToggle');
+    if (window.editor && window.editor.worldManager) {
+        window.editor.worldManager.betaMode = betaModeToggle.checked;
+        window.editor.showToast(`BETA mode ${betaModeToggle.checked ? 'enabled' : 'disabled'}`, 'success');
+        
+        // Save to localStorage
+        localStorage.setItem('blockyBuilder_betaMode', betaModeToggle.checked);
+        
+        // Show/hide beta sections
+        const betaToolsSection = document.getElementById('betaToolsSection');
+        const betaSettingsSection = document.getElementById('betaSettingsSection');
+        
+        if (betaModeToggle.checked) {
+            // Enable beta features
+            if (betaToolsSection) betaToolsSection.style.display = 'block';
+            if (betaSettingsSection) betaSettingsSection.style.display = 'block';
+            window.editor.showToast('BETA features: Advanced tools, experimental rendering, debug info', 'info');
+        } else {
+            // Disable beta features
+            if (betaToolsSection) betaToolsSection.style.display = 'none';
+            if (betaSettingsSection) betaSettingsSection.style.display = 'none';
+            window.editor.showToast('BETA features disabled', 'info');
+        }
+    }
 }
 
 function toggleAutoSave() {
@@ -526,7 +729,23 @@ function toggleMinimap() {
 }
 
 function toggleTooltips() {
-    window.editor.showToast('Tooltips toggle coming soon!', 'info');
+    const tooltipsToggle = document.getElementById('tooltipsToggle');
+    if (window.editor && window.editor.worldManager) {
+        window.editor.worldManager.showTooltips = tooltipsToggle.checked;
+        window.editor.showToast(`Tooltips ${tooltipsToggle.checked ? 'enabled' : 'disabled'}`, 'success');
+        
+        // Save to localStorage
+        localStorage.setItem('blockyBuilder_showTooltips', tooltipsToggle.checked);
+        
+        // Apply tooltips changes
+        if (tooltipsToggle.checked) {
+            // Enable tooltips on UI elements
+            window.editor.enableTooltips();
+        } else {
+            // Disable tooltips
+            window.editor.disableTooltips();
+        }
+    }
 }
 
 function undo() {
@@ -778,17 +997,21 @@ function loadWorldList() {
     
     worldList.innerHTML = '<div class="loading">Loading worlds...</div>';
     
-    // Fetch worlds from server
+    // Try server first, fallback to localStorage
     fetch('/api/worlds')
-        .then(response => response.json())
+        .then(response => {
+            if (!response.ok) {
+                throw new Error('Server not available');
+            }
+            return response.json();
+        })
         .then(response => {
             // Handle server response format
             const worlds = response.worlds || response || [];
             
             if (!Array.isArray(worlds)) {
                 console.error('Invalid worlds response:', response);
-                worldList.innerHTML = '<div class="loading">Error loading worlds</div>';
-                return;
+                throw new Error('Invalid server response');
             }
             
             worldList.innerHTML = '';
@@ -853,25 +1076,40 @@ function loadWorldList() {
             });
         })
         .catch(error => {
-            console.error('Error loading worlds:', error);
-            // Check if there's a locally cached world as fallback
+            console.log('Server not available (GitHub Pages mode) - showing cached world only');
+            
+            // Fallback to localStorage only
+            worldList.innerHTML = '';
+            
+            // Check for cached world
             const cachedWorld = localStorage.getItem('blockyBuilderWorld');
             if (cachedWorld) {
                 try {
                     const worldData = JSON.parse(cachedWorld);
-                    worldList.innerHTML = `
-                        <button class="world-load-btn cached-world" onclick="loadCachedWorld()">
-                            <div class="world-btn-content">
-                                <div class="world-btn-name">Cached World (Local)</div>
-                                <div class="world-btn-details">Last edited: Recently</div>
-                            </div>
-                        </button>
-                    `;
+                    const cachedButton = document.createElement('button');
+                    cachedButton.className = 'world-load-btn cached-world';
+                    cachedButton.onclick = () => loadCachedWorld();
+                    
+                    const buttonContent = document.createElement('div');
+                    buttonContent.className = 'world-btn-content';
+                    
+                    const name = document.createElement('div');
+                    name.className = 'world-btn-name';
+                    name.textContent = `${worldData.worldName || 'Cached World'} (Local)`;
+                    
+                    const details = document.createElement('div');
+                    details.className = 'world-btn-details';
+                    details.textContent = `Last edited: Recently • ${worldData.worldWidth || 'Unknown'}x${worldData.worldHeight || 'Unknown'} tiles`;
+                    
+                    buttonContent.appendChild(name);
+                    buttonContent.appendChild(details);
+                    cachedButton.appendChild(buttonContent);
+                    worldList.appendChild(buttonContent);
                 } catch (e) {
-                    worldList.innerHTML = '<div class="loading">Error loading worlds</div>';
+                    worldList.innerHTML = '<div class="loading">No saved worlds found</div>';
                 }
             } else {
-                worldList.innerHTML = '<div class="loading">Error loading worlds</div>';
+                worldList.innerHTML = '<div class="loading">No saved worlds found</div>';
             }
         });
 }
@@ -1011,14 +1249,76 @@ function loadWorldFromFile(input) {
     reader.readAsText(file);
 }
 
+function toggleExperimentalRendering() {
+    const toggle = document.getElementById('experimentalRenderingToggle');
+    if (window.editor) {
+        window.editor.showToast(`Experimental Rendering ${toggle.checked ? 'enabled' : 'disabled'}`, 'success');
+        localStorage.setItem('blockyBuilder_experimentalRendering', toggle.checked);
+        
+        if (toggle.checked) {
+            // Enable experimental rendering features
+            window.editor.renderer.enableExperimentalRendering();
+        } else {
+            // Disable experimental rendering features
+            window.editor.renderer.disableExperimentalRendering();
+        }
+    }
+}
+
+function toggleDebugInfo() {
+    const toggle = document.getElementById('debugInfoToggle');
+    if (window.editor) {
+        window.editor.showToast(`Debug Info ${toggle.checked ? 'enabled' : 'disabled'}`, 'success');
+        localStorage.setItem('blockyBuilder_debugInfo', toggle.checked);
+        
+        if (toggle.checked) {
+            // Show debug info
+            window.editor.showDebugInfo();
+        } else {
+            // Hide debug info
+            window.editor.hideDebugInfo();
+        }
+    }
+}
+
+function togglePerformanceMode() {
+    const toggle = document.getElementById('performanceModeToggle');
+    if (window.editor) {
+        window.editor.showToast(`Performance Mode ${toggle.checked ? 'enabled' : 'disabled'}`, 'success');
+        localStorage.setItem('blockyBuilder_performanceMode', toggle.checked);
+        
+        if (toggle.checked) {
+            // Enable performance optimizations
+            window.editor.enablePerformanceMode();
+        } else {
+            // Disable performance optimizations
+            window.editor.disablePerformanceMode();
+        }
+    }
+}
+
+function cycleGridColor() {
+    if (window.editor && window.editor.worldManager) {
+        const colors = ['white', 'black', 'green', 'brown', 'yellow'];
+        const currentIndex = colors.indexOf(window.editor.worldManager.gridColor);
+        const nextIndex = (currentIndex + 1) % colors.length;
+        
+        window.editor.worldManager.gridColor = colors[nextIndex];
+        window.editor.updateGridColorButton();
+        window.editor.renderer.render();
+        window.editor.showToast(`Grid color changed to ${colors[nextIndex]}`, 'success');
+        
+        // Save to localStorage
+        localStorage.setItem('blockyBuilder_gridColor', colors[nextIndex]);
+    }
+}
+
 // Initialize editor when DOM is loaded
 document.addEventListener('DOMContentLoaded', () => {
-    console.log('🔍 DEBUG: DOM loaded, initializing editor...');
     window.editor = new BlockyBuilderEditor();
     
     // Show project setup modal immediately for better UX
     setTimeout(() => {
-        console.log('🔍 DEBUG: Showing project panel...');
         showProjectPanel();
     }, 100); // Reduced delay for more immediate feel
 });

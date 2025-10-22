@@ -12,15 +12,17 @@ class Renderer {
         this.texturesLoaded = false;
         this.backgroundColor = '#0a0a0a'; // Default background color
         this.isPanning = false; // Performance optimization flag
+        this.experimentalRendering = false; // Beta feature flag
+        this.performanceMode = false; // Performance optimization flag
         
         this.loadTextures();
     }
 
     async loadTextures() {
         const textureFiles = {
-            grass: 'assets/Ground_Texture_1.png',
-            water: 'assets/Water_Texture.png',
-            cave: 'assets/Cave_Texture_1.png'
+            grass: '../assets/Ground_Texture_1.png',
+            water: '../assets/Water_Texture.png',
+            cave: '../assets/Cave_Texture_1.png'
         };
 
         const loadPromises = Object.entries(textureFiles).map(([type, path]) => {
@@ -70,13 +72,13 @@ class Renderer {
         this.ctx.scale(this.worldManager.zoom, this.worldManager.zoom);
         this.ctx.translate(-worldCenterX + this.worldManager.viewX, -worldCenterY + this.worldManager.viewY);
 
-        // Render grid FIRST (behind tiles)
-        if (this.worldManager.showGrid && this.worldManager.zoom > 0.5 && !this.isPanning) {
+        // Render tiles first
+        this.renderTiles();
+
+        // Render grid ON TOP of tiles - now in transformed coordinate space
+        if (this.worldManager.showGrid && !this.isPanning) {
             this.renderGrid();
         }
-
-        // Render tiles ON TOP of grid
-        this.renderTiles();
 
         this.ctx.restore();
 
@@ -135,40 +137,59 @@ class Renderer {
         const worldWidth = this.worldManager.worldWidth * tileSize;
         const worldHeight = this.worldManager.worldHeight * tileSize;
         
-        // Calculate visible area with pan offset
-        const worldCenterX = worldWidth / 2;
-        const worldCenterY = worldHeight / 2;
-        const visibleWidth = this.canvas.width / this.worldManager.zoom;
-        const visibleHeight = this.canvas.height / this.worldManager.zoom;
+        // Get grid color from worldManager
+        const gridColorMap = {
+            'white': 'rgba(255, 255, 255, 1.0)',
+            'black': 'rgba(0, 0, 0, 1.0)',
+            'green': 'rgba(0, 255, 0, 1.0)',
+            'brown': 'rgba(139, 69, 19, 1.0)',
+            'yellow': 'rgba(255, 255, 0, 1.0)'
+        };
         
-        const startX = Math.max(0, worldCenterX - visibleWidth / 2 + this.worldManager.viewX);
-        const startY = Math.max(0, worldCenterY - visibleHeight / 2 + this.worldManager.viewY);
-        const endX = Math.min(worldWidth, worldCenterX + visibleWidth / 2 + this.worldManager.viewX);
-        const endY = Math.min(worldHeight, worldCenterY + visibleHeight / 2 + this.worldManager.viewY);
+        // Draw grid lines across the entire visible world
+        this.ctx.strokeStyle = gridColorMap[this.worldManager.gridColor] || 'rgba(255, 255, 255, 1.0)';
+        this.ctx.lineWidth = 2; // Thicker lines
 
-        this.ctx.strokeStyle = 'rgba(255, 255, 255, 0.1)';
-        this.ctx.lineWidth = 1;
-
-        // Draw vertical grid lines
-        for (let x = startX; x <= endX; x += tileSize) {
+        // Draw vertical grid lines (every tileSize pixels)
+        for (let x = 0; x <= worldWidth; x += tileSize) {
             this.ctx.beginPath();
-            this.ctx.moveTo(x, startY);
-            this.ctx.lineTo(x, endY);
+            this.ctx.moveTo(x, 0);
+            this.ctx.lineTo(x, worldHeight);
             this.ctx.stroke();
         }
 
-        // Draw horizontal grid lines
-        for (let y = startY; y <= endY; y += tileSize) {
+        // Draw horizontal grid lines (every tileSize pixels)
+        for (let y = 0; y <= worldHeight; y += tileSize) {
             this.ctx.beginPath();
-            this.ctx.moveTo(startX, y);
-            this.ctx.lineTo(endX, y);
+            this.ctx.moveTo(0, y);
+            this.ctx.lineTo(worldWidth, y);
             this.ctx.stroke();
         }
         
         // Draw world boundary
-        this.ctx.strokeStyle = 'rgba(212, 175, 55, 0.3)';
-        this.ctx.lineWidth = 2;
+        this.ctx.strokeStyle = 'rgba(255, 0, 0, 1.0)'; // Bright red boundary
+        this.ctx.lineWidth = 4; // Thicker boundary
         this.ctx.strokeRect(0, 0, worldWidth, worldHeight);
+    }
+
+    enableExperimentalRendering() {
+        this.experimentalRendering = true;
+        console.log('Experimental rendering enabled');
+    }
+
+    disableExperimentalRendering() {
+        this.experimentalRendering = false;
+        console.log('Experimental rendering disabled');
+    }
+
+    enablePerformanceMode() {
+        this.performanceMode = true;
+        console.log('Performance mode enabled');
+    }
+
+    disablePerformanceMode() {
+        this.performanceMode = false;
+        console.log('Performance mode disabled');
     }
 
     renderMinimap() {

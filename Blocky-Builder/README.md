@@ -85,6 +85,24 @@ npm start
 - **Auto-installation** of dependencies
 - **Professional launcher** with status updates
 
+### **🔧 Advanced Grid System**
+- **Dynamic Grid Colors** - Cycle through White, Black, Green, Brown, Yellow
+- **Persistent Settings** - All preferences saved to localStorage
+- **Visual Grid Lines** - Thick, visible grid lines that render properly
+- **Grid Toggle** - Easy on/off with visual feedback
+
+### **⚙️ Enhanced Settings System**
+- **Fixed Settings Persistence** - All settings properly save and load
+- **Beta Mode Features** - Experimental tools and settings when enabled
+- **Tooltips System** - Helpful hover tooltips (can be disabled)
+- **Debug Overlay** - Real-time performance stats in beta mode
+
+### **🧪 Beta Features**
+- **Beta Tools Panel** - Magic Wand, Gradient, Pattern, Brush, Debug tools
+- **Beta Settings** - Experimental Rendering, Debug Info, Performance Mode
+- **Debug Information** - Real-time FPS, tile count, zoom, and system status
+- **Experimental Features** - Ready for advanced functionality
+
 ## 🎮 **How to Use**
 
 ### **1. Landing Page**

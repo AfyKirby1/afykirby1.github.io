@@ -2,6 +2,49 @@
 
 All notable changes to Blocky Builder will be documented in this file.
 
+## [V 0.07] - 2025-10-22
+
+### 🔧 Grid System & Settings Overhaul
+
+#### Grid System Fixes
+- **Fixed Grid Rendering Order** - Grid now renders on top of tiles instead of behind them, making grid lines visible
+- **Improved Grid Visibility** - Increased line thickness from 1px to 2px and made lines fully opaque
+- **Enhanced Grid Colors** - Added dynamic grid color system with 5 color options
+- **Grid Color Cycling** - Click-to-cycle button in settings: White → Black → Green → Brown → Yellow
+- **Persistent Grid Preferences** - Grid color and visibility settings saved to localStorage
+
+#### Settings System Fixes
+- **Fixed Minimap Persistence** - Minimap checkbox now properly syncs with saved preferences on page refresh
+- **Fixed Beta Mode Functionality** - Beta mode toggle now actually shows/hides beta features instead of placeholder message
+- **Fixed Tooltips System** - Tooltips now work properly with hover functionality on UI elements
+- **Settings State Management** - All settings now properly load from localStorage on startup
+
+#### Beta Features Implementation
+- **Beta Tools Panel** - Added 5 experimental tools when beta mode is enabled:
+  - 🪄 Magic Wand - Select similar tiles
+  - 🌈 Gradient - Create smooth transitions
+  - 🔲 Pattern - Apply repeating patterns
+  - 🖌️ Brush - Paint with custom brushes
+  - 🐛 Debug - Show debug information
+- **Beta Settings Panel** - Added 3 beta settings when beta mode is enabled:
+  - Experimental Rendering - Enable advanced rendering features
+  - Show Debug Info - Display real-time debug overlay
+  - Performance Mode - Enable performance optimizations
+- **Debug Info Overlay** - Real-time display showing FPS, tile count, zoom, view position, and system status
+- **Beta State Persistence** - Beta mode and all beta settings save to localStorage
+
+#### Technical Improvements
+- **WorldManager Enhancements** - Added gridColor, betaMode, and showTooltips properties
+- **Renderer Improvements** - Added experimental rendering and performance mode flags
+- **UI State Management** - Proper initialization and synchronization of all UI elements with saved preferences
+- **Code Cleanup** - Removed excessive debug logging for production-ready code
+
+#### User Experience Improvements
+- **Visual Feedback** - All toggles now provide immediate visual feedback and success messages
+- **Tooltips Integration** - Helpful tooltips on all major UI elements (can be disabled in settings)
+- **Settings Organization** - Better grouping of settings with clear visual hierarchy
+- **Persistent Preferences** - All user preferences maintained across browser sessions
+
 ## [V 0.06] - 2025-10-15
 
 ### 🎨 UI/UX Enhancement Update
