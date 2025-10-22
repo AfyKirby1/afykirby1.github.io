@@ -99,10 +99,9 @@ export class Game {
         const container = this.canvas.parentElement;
         const containerRect = container.getBoundingClientRect();
         
-        // Account for border and padding
-        const borderWidth = 12; // Match the border in CSS
-        const availableWidth = containerRect.width - (borderWidth * 2);
-        const availableHeight = containerRect.height - (borderWidth * 2);
+        // Set canvas size to fill entire container (no borders)
+        const availableWidth = containerRect.width;
+        const availableHeight = containerRect.height;
         
         // Set canvas size to fill container
         this.canvas.width = availableWidth;
