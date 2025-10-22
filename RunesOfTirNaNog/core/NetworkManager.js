@@ -164,8 +164,8 @@ export class NetworkManager {
             case 'chat_history':
                 this.handleChatHistory(data);
                 break;
-            case 'error':
-                this.handleServerError(data);
+            case 'system_message':
+                this.handleSystemMessage(data);
                 break;
             default:
                 console.warn('Unknown message type:', messageType);
@@ -238,13 +238,25 @@ export class NetworkManager {
         const x = data.x;
         const y = data.y;
         
+        // Validate position values
+        if (typeof x !== 'number' || typeof y !== 'number' || 
+            isNaN(x) || isNaN(y) || !isFinite(x) || !isFinite(y)) {
+            console.warn(`Invalid position data for player ${playerId}:`, { x, y });
+            return;
+        }
+        
+        // Clamp position to reasonable bounds (assuming world size)
+        const clampedX = Math.max(0, Math.min(2000, x));
+        const clampedY = Math.max(0, Math.min(2000, y));
+        
         if (this.otherPlayers[playerId]) {
-            this.otherPlayers[playerId].x = x;
-            this.otherPlayers[playerId].y = y;
+            this.otherPlayers[playerId].x = clampedX;
+            this.otherPlayers[playerId].y = clampedY;
+            console.log(`Updated position for ${this.otherPlayers[playerId].name}: (${clampedX}, ${clampedY})`);
         }
         
         if (this.onPlayerPositionUpdate) {
-            this.onPlayerPositionUpdate(playerId, x, y);
+            this.onPlayerPositionUpdate(playerId, clampedX, clampedY);
         }
     }
     
@@ -392,6 +404,23 @@ export class NetworkManager {
                 }
             }
         }, this.reconnectDelay);
+    }
+    
+    /**
+     * Handle system messages from server
+     */
+    handleSystemMessage(data) {
+        console.log('System message:', data.message || data.text || 'No message content');
+        
+        // Handle different types of system messages
+        if (data.message_type === 'player_name_update') {
+            // Update player name if needed
+            if (data.player_id && data.new_name) {
+                if (this.otherPlayers[data.player_id]) {
+                    this.otherPlayers[data.player_id].name = data.new_name;
+                }
+            }
+        }
     }
     
     /**

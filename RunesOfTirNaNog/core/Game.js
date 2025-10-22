@@ -291,10 +291,24 @@ export class Game {
 
     // Multiplayer methods
     async connectToMultiplayer() {
-        const username = localStorage.getItem('runes_username');
+        let username = localStorage.getItem('runes_username');
+        
+        // If no username, try to get from player object
         if (!username) {
-            console.error('No username found. Please set a username first.');
-            return false;
+            username = this.player.getName();
+            if (username && username !== 'Player') {
+                localStorage.setItem('runes_username', username);
+                console.log(`Using player name as username: ${username}`);
+            } else {
+                console.error('No username found. Please set a username first.');
+                return false;
+            }
+        }
+
+        // Ensure player object has the same name
+        if (this.player.getName() !== username) {
+            this.player.setName(username);
+            console.log(`Synchronized player name with username: ${username}`);
         }
 
         try {
@@ -306,7 +320,7 @@ export class Game {
             
             if (success) {
                 this.isMultiplayer = true;
-                console.log('Connected to multiplayer server');
+                console.log(`Connected to multiplayer server as: ${username}`);
                 return true;
             } else {
                 console.error('Failed to connect to multiplayer server');
@@ -351,7 +365,23 @@ export class Game {
 
         // Player joined
         this.networkManager.onPlayerJoined = (playerId, playerData) => {
-            console.log(`Player joined: ${playerData.name}`);
+            console.log(`Player joined: ${playerData.name} at position (${playerData.x}, ${playerData.y})`);
+            
+            // Check if this is the default spawn position (100, 100) and distribute players
+            if (playerData.x === 100 && playerData.y === 100) {
+                const spawnPoint = this.getDistributedSpawnPoint();
+                playerData.x = spawnPoint.x;
+                playerData.y = spawnPoint.y;
+                console.log(`Redistributed ${playerData.name} from default spawn to: (${spawnPoint.x}, ${spawnPoint.y})`);
+            }
+            // Also handle invalid positions
+            else if (typeof playerData.x !== 'number' || typeof playerData.y !== 'number') {
+                const spawnPoint = this.getDistributedSpawnPoint();
+                playerData.x = spawnPoint.x;
+                playerData.y = spawnPoint.y;
+                console.warn(`Invalid position for ${playerData.name}, using distributed spawn: (${spawnPoint.x}, ${spawnPoint.y})`);
+            }
+            
             this.otherPlayers[playerId] = playerData;
         };
 
@@ -381,27 +411,74 @@ export class Game {
         const otherPlayers = this.networkManager.getOtherPlayers();
         
         for (const [playerId, playerData] of Object.entries(otherPlayers)) {
-            // Calculate screen position
-            const screenX = playerData.x - this.camera.x;
-            const screenY = playerData.y - this.camera.y;
+            // Use world coordinates directly since camera transform is already applied
+            const worldX = playerData.x;
+            const worldY = playerData.y;
+            
+            // Calculate screen bounds for culling (accounting for camera transform)
+            const screenX = (worldX - this.camera.x) * this.camera.zoom;
+            const screenY = (worldY - this.camera.y) * this.camera.zoom;
             
             // Only render if player is on screen
             if (screenX > -50 && screenX < this.width + 50 && 
                 screenY > -50 && screenY < this.height + 50) {
                 
-                // Render other player
+                // Render other player using the same character sprite as local player
                 this.ctx.save();
-                this.ctx.fillStyle = playerData.color || '#4ade80';
-                this.ctx.fillRect(screenX - 6, screenY - 6, 12, 12);
+                
+                // Use the same character image as the local player
+                const characterImage = this.player.characterImage;
+                const size = this.player.size;
+                
+                if (characterImage.complete && characterImage.naturalWidth > 0) {
+                    // Calculate image dimensions to match local player
+                    const imageSize = size * 1.5;
+                    
+                    // Draw the character image centered
+                    this.ctx.drawImage(
+                        characterImage,
+                        worldX - imageSize / 2,
+                        worldY - imageSize / 2,
+                        imageSize,
+                        imageSize
+                    );
+                } else {
+                    // Fallback to colored square if image isn't loaded
+                    this.ctx.fillStyle = playerData.color || '#4ade80';
+                    this.ctx.fillRect(worldX - 6, worldY - 6, 12, 12);
+                }
                 
                 // Render player name
                 this.ctx.fillStyle = '#ffffff';
                 this.ctx.font = '12px Arial';
                 this.ctx.textAlign = 'center';
-                this.ctx.fillText(playerData.name, screenX, screenY - 10);
+                this.ctx.fillText(playerData.name, worldX, worldY - 20);
                 this.ctx.restore();
             }
         }
+    }
+
+    getDistributedSpawnPoint() {
+        // Define multiple spawn points around the world
+        const spawnPoints = [
+            { x: 100, y: 100 },   // Center-left
+            { x: 200, y: 150 },  // Center-right
+            { x: 150, y: 200 },  // Bottom-center
+            { x: 80, y: 80 },    // Top-left
+            { x: 220, y: 120 },  // Top-right
+            { x: 120, y: 250 },  // Bottom-left
+            { x: 180, y: 180 },  // Bottom-right
+            { x: 160, y: 90 }    // Top-center
+        ];
+        
+        // Get the number of existing players to determine spawn point
+        const playerCount = Object.keys(this.otherPlayers).length;
+        const spawnIndex = playerCount % spawnPoints.length;
+        
+        const spawnPoint = spawnPoints[spawnIndex];
+        console.log(`Distributing spawn point ${spawnIndex + 1}/${spawnPoints.length} for player ${playerCount + 1}: (${spawnPoint.x}, ${spawnPoint.y})`);
+        
+        return spawnPoint;
     }
 
     sendPositionUpdate() {
