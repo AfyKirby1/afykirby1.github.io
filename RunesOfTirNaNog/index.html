@@ -593,6 +593,17 @@
                 const isNewWorld = urlParams.get('new') === 'true';
                 const slotParam = urlParams.get('slot');
                 const customWorldParam = urlParams.get('customWorld');
+                const isMultiplayer = urlParams.get('multiplayer') === 'true';
+
+                // DEBUG: Log URL parameters immediately
+                console.log('🔍 DEBUG: URL parameters detected:', {
+                    isMultiplayer,
+                    customWorldParam,
+                    isNewWorld,
+                    slotParam,
+                    fullURL: window.location.href,
+                    searchParams: window.location.search
+                });
 
                 if (customWorldParam) {
                     // ✅ SECURITY FIX (VULN-004): Validate URL parameter
@@ -619,6 +630,36 @@
                             alert(`Failed to load custom world: ${sanitized}\n\nMake sure you have placed world.json in:\nRunesOfTirNaNog/worlds/${sanitized}/world.json\n\nAnd that the server is running on the correct port.`);
                             game = new Game(null, null);
                         }
+                    }
+                } else if (isMultiplayer) {
+                    // Load custom world for multiplayer
+                    console.log('🌍 Loading custom world for multiplayer...');
+                    try {
+                        // Try to load the custom world data from Railway server
+                        console.log('🔍 Fetching world data from: https://web-production-b1ed.up.railway.app/worlds/world.json');
+                        const worldDataResponse = await fetch('https://web-production-b1ed.up.railway.app/worlds/world.json');
+                        console.log('📡 Fetch response status:', worldDataResponse.status, worldDataResponse.statusText);
+                        console.log('📡 Response headers:', Object.fromEntries(worldDataResponse.headers.entries()));
+                        
+                        if (worldDataResponse.ok) {
+                            const customWorldData = await worldDataResponse.json();
+                            console.log('✅ Custom world data loaded successfully:', customWorldData.metadata?.name || 'Tir na nÓg');
+                            console.log('📏 World dimensions:', customWorldData.worldWidth, 'x', customWorldData.worldHeight);
+                            console.log('🧱 Total tiles:', customWorldData.tiles?.length || 0);
+                            console.log('🎮 Creating game with custom world data...');
+                            game = new Game(null, null, customWorldData);
+                        } else {
+                            console.warn('⚠️ Could not load custom world (HTTP', worldDataResponse.status, '), using default');
+                            console.warn('🔄 Falling back to default world generation');
+                            const responseText = await worldDataResponse.text();
+                            console.warn('📄 Response body:', responseText);
+                            game = new Game(null, null);
+                        }
+                    } catch (error) {
+                        console.warn('❌ Error loading custom world:', error);
+                        console.warn('🔄 Using default world instead');
+                        console.warn('❌ Error details:', error.message, error.stack);
+                        game = new Game(null, null);
                     }
                 } else if (isNewWorld) {
                     // Load world config from sessionStorage
