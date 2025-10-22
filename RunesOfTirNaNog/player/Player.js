@@ -16,10 +16,11 @@ export class Player {
         this.legSwingSpeed = Math.PI * 2 / 0.5;
         this.isOnWater = false;
         this.waterSoundCooldown = 0;
-        this.nameTag = new NameTag('Thor', this.x, this.y, {
-            color: '#d4af37',
-            backgroundColor: 'rgba(139,90,43,0.8)',
-            borderColor: '#ffd700',
+        // Get username from localStorage or use default
+        const username = localStorage.getItem('runes_username') || 'Player';
+        this.nameTag = new NameTag(username, this.x, this.y, {
+            color: '#ffffff',
+            showBackground: false,
             fontSize: 12
         });
         
