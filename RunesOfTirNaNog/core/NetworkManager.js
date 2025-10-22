@@ -23,6 +23,10 @@ export class NetworkManager {
         this.onPlayerPositionUpdate = null;
         this.onError = null;
         
+        // Chat callbacks
+        this.onChatMessage = null;
+        this.onChatHistory = null;
+        
         // Position update throttling
         this.lastPositionUpdate = 0;
         this.positionUpdateInterval = 100; // Update every 100ms
@@ -154,6 +158,12 @@ export class NetworkManager {
             case 'pong':
                 this.handlePong(data);
                 break;
+            case 'chat_message':
+                this.handleChatMessage(data);
+                break;
+            case 'chat_history':
+                this.handleChatHistory(data);
+                break;
             case 'error':
                 this.handleServerError(data);
                 break;
@@ -244,6 +254,36 @@ export class NetworkManager {
     handlePong(data) {
         const latency = Date.now() - data.timestamp;
         console.log(`Server ping: ${latency}ms`);
+    }
+    
+    /**
+     * Handle chat messages from server
+     */
+    handleChatMessage(data) {
+        if (this.onChatMessage) {
+            this.onChatMessage(data);
+        }
+    }
+    
+    /**
+     * Handle chat history from server
+     */
+    handleChatHistory(data) {
+        if (this.onChatHistory) {
+            this.onChatHistory(data);
+        }
+    }
+    
+    /**
+     * Send chat message to server
+     */
+    sendChatMessage(message) {
+        const chatData = {
+            type: 'chat_message',
+            message: message
+        };
+        
+        this.sendMessage(chatData);
     }
     
     /**
