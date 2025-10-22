@@ -4,7 +4,13 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased] - 2025-01-27
 
+### Added
+- **Grid Toggle Feature**: Added ability to show/hide grid lines overlay in Video Settings
+- **Real-time Settings Sync**: Grid toggle changes apply immediately without requiring game restart
+- **Settings Persistence**: Grid setting is saved to localStorage and restored on game start
+
 ### Fixed
+- **Quit to Menu Navigation**: Fixed "Quit to Menu" button to navigate to main menu (`assets/menu.html`) instead of landing page
 - **Main Page Navigation**: Fixed Runes of Tir Na Nog button to point to internal landing page instead of GitHub Pages URL
 - **Custom World Loading**: Fixed world path resolution from `../worlds/` to `worlds/` for proper server file structure
 - **Custom World Loading**: Fixed "Invalid tile type: mana" error by adding "mana" to valid tile types in SecurityUtils.js

@@ -4,11 +4,31 @@
 
 **Runes of Tir na nÓg** is an enhanced top-down RPG prototype built with vanilla JavaScript, featuring modular architecture, pixel art graphics, and comprehensive UI systems.
 
-## 🎯 Current Status: **CUSTOM WORLD SUPPORT ENHANCED**
+## 🎯 Current Status: **GRID TOGGLE & NAVIGATION FIXES**
 
 ### ✅ Recently Completed Features
 
-#### 1. Custom World Support Enhancement (v1.3) 🌍 NEW!
+#### 1. Grid Toggle Feature (v1.4) 🎮 NEW!
+- **Location**: `world/World.js`, `ui/VideoSettings.js`, `core/Game.js`
+- **Features**:
+  - **Grid Toggle**: Added ability to show/hide grid lines overlay in Video Settings
+  - **Real-time Sync**: Grid changes apply immediately without game restart
+  - **Settings Persistence**: Grid setting saved to localStorage and restored on start
+  - **UI Integration**: Grid toggle appears in Video Settings with checkbox and ON/OFF status
+  - **Default State**: Grid lines enabled by default for better tile visibility
+- **Technical**: Added `showGrid` property, `toggleGrid()`, `setGridVisibility()` methods
+- **User Experience**: Instant visual feedback when toggling grid lines
+
+#### 2. Navigation Fixes (v1.4) 🧭 NEW!
+- **Location**: `ui/PauseMenu.js`
+- **Features**:
+  - **Quit to Menu Fix**: Fixed "Quit to Menu" button to navigate to main menu (`assets/menu.html`)
+  - **Proper Navigation**: No longer incorrectly redirects to landing page
+  - **Auto-save**: Game still auto-saves before quitting to menu
+- **Technical**: Updated `quitToMenu()` method navigation path
+- **User Experience**: Proper menu navigation flow restored
+
+#### 3. Custom World Support Enhancement (v1.3) 🌍
 - **Location**: `utils/SecurityUtils.js`, `world/World.js`
 - **Features**:
   - **Mana Tile Support**: Added "mana" as valid tile type for custom worlds

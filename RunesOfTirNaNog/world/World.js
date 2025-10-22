@@ -16,6 +16,7 @@ export class World {
         this.groundTexture = null;
         this.waterTexture = null;
         this.caveTexture = null;
+        this.showGrid = true; // Grid lines toggle - enabled by default
         
         // Check if loading from custom world data
         if (customWorldData) {
@@ -435,7 +436,7 @@ export class World {
                 }
 
                 // Add grid lines for pattern (only on actual tiles, not pure fog zone)
-                if (distance <= maxDistance) {
+                if (distance <= maxDistance && this.showGrid) {
                     ctx.strokeStyle = '#2a3a2a'; // Dark green grid lines
                     ctx.lineWidth = 1;
                     ctx.strokeRect(tileX, tileY, this.tileSize, this.tileSize);
@@ -453,6 +454,15 @@ export class World {
             return this.tiles[tileIndex];
         }
         return null;
+    }
+
+    toggleGrid() {
+        this.showGrid = !this.showGrid;
+        return this.showGrid;
+    }
+
+    setGridVisibility(visible) {
+        this.showGrid = visible;
     }
 
     getDimensions() {

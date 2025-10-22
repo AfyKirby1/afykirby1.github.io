@@ -93,6 +93,24 @@ export class Game {
         
         // Start the game loop
         this.gameLoop.start();
+        
+        // Load and sync video settings
+        this.loadVideoSettings();
+    }
+
+    // Load and sync video settings with world
+    loadVideoSettings() {
+        const showGrid = localStorage.getItem('showGrid');
+        if (showGrid !== null) {
+            this.world.setGridVisibility(showGrid === 'true');
+        }
+    }
+
+    // Sync VideoSettings with World
+    syncVideoSettings(videoSettings) {
+        if (videoSettings && this.world) {
+            this.world.setGridVisibility(videoSettings.getShowGrid());
+        }
     }
 
     resizeCanvas() {

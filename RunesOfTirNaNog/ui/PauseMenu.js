@@ -234,9 +234,9 @@ class PauseMenu {
         // Auto-save before quitting
         this.game.autoSave();
         this.hide();
-        // Navigate back to landing page
-        console.log('PauseMenu: Navigating to landing.html');
-        window.location.href = 'landing.html';
+        // Navigate back to main menu
+        console.log('PauseMenu: Navigating to assets/menu.html');
+        window.location.href = 'assets/menu.html';
     }
 
     toggle() {

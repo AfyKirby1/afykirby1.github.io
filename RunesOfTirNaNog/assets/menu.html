@@ -668,6 +668,11 @@
             settingsPanel.registerCategory('gameplay', gameplaySettings);
             settingsPanel.registerCategory('keybinds', keybindSettings);
             
+            // Load settings
+            videoSettings.load();
+            gameplaySettings.load();
+            keybindSettings.load();
+            
             // Inject settings styles
             const style = document.createElement('style');
             style.textContent = settingsPanel.getStyles() + gameplaySettings.getStyles() + keybindSettings.getStyles();

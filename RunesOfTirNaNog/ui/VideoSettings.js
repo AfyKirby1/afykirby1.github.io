@@ -5,10 +5,12 @@ export class VideoSettings {
     constructor() {
         this.renderDistance = 32; // Default
         this.fogIntensity = 75; // Default 75%
+        this.showGrid = true; // Default grid lines enabled
         this.renderDistanceSlider = null;
         this.renderDistanceValue = null;
         this.fogSlider = null;
         this.fogValue = null;
+        this.gridToggle = null;
     }
 
     load() {
@@ -45,15 +47,22 @@ export class VideoSettings {
                 this.fogIntensity = 75;
             }
         }
+        
+        // Load and validate grid setting
+        const showGridRaw = localStorage.getItem('showGrid');
+        if (showGridRaw !== null) {
+            this.showGrid = showGridRaw === 'true';
+        }
     }
 
     save() {
         // Save to localStorage
         localStorage.setItem('renderDistance', this.renderDistance);
         localStorage.setItem('fogIntensity', this.fogIntensity);
+        localStorage.setItem('showGrid', this.showGrid);
         
         // Return confirmation message
-        return `Render Distance: ${this.renderDistance}x${this.renderDistance} tiles\nFog Intensity: ${this.fogIntensity}%`;
+        return `Render Distance: ${this.renderDistance}x${this.renderDistance} tiles\nFog Intensity: ${this.fogIntensity}%\nGrid Lines: ${this.showGrid ? 'ON' : 'OFF'}`;
     }
 
     render() {
@@ -79,6 +88,15 @@ export class VideoSettings {
                 </div>
                 <p class="setting-description">Fades tiles at render distance edges (0% = no fog, 100% = full fog)</p>
             </div>
+
+            <div class="setting-item">
+                <label for="showGrid">Grid Lines:</label>
+                <div class="toggle-container">
+                    <input type="checkbox" id="showGrid" ${this.showGrid ? 'checked' : ''}>
+                    <span id="gridToggleValue">${this.showGrid ? 'ON' : 'OFF'}</span>
+                </div>
+                <p class="setting-description">Show/hide grid lines overlay on tiles</p>
+            </div>
         `;
 
         // Store references to elements
@@ -87,6 +105,8 @@ export class VideoSettings {
             this.renderDistanceValue = document.getElementById('renderDistanceValue');
             this.fogSlider = document.getElementById('fogIntensity');
             this.fogValue = document.getElementById('fogIntensityValue');
+            this.gridToggle = document.getElementById('showGrid');
+            this.gridToggleValue = document.getElementById('gridToggleValue');
             
             if (this.renderDistanceSlider && this.renderDistanceValue) {
                 // Update value display when slider moves
@@ -101,6 +121,17 @@ export class VideoSettings {
                 this.fogSlider.addEventListener('input', () => {
                     this.fogIntensity = parseInt(this.fogSlider.value);
                     this.fogValue.textContent = `${this.fogIntensity}%`;
+                });
+            }
+
+            if (this.gridToggle && this.gridToggleValue) {
+                // Update value display when toggle changes
+                this.gridToggle.addEventListener('change', () => {
+                    this.showGrid = this.gridToggle.checked;
+                    this.gridToggleValue.textContent = this.showGrid ? 'ON' : 'OFF';
+                    
+                    // Sync with game immediately
+                    this.syncWithGame();
                 });
             }
         }, 0);
@@ -119,6 +150,27 @@ export class VideoSettings {
         }
         if (this.valueElement) {
             this.valueElement.textContent = `${value}x${value} tiles`;
+        }
+    }
+
+    getShowGrid() {
+        return this.showGrid;
+    }
+
+    setShowGrid(value) {
+        this.showGrid = value;
+        if (this.gridToggle) {
+            this.gridToggle.checked = value;
+        }
+        if (this.gridToggleValue) {
+            this.gridToggleValue.textContent = value ? 'ON' : 'OFF';
+        }
+    }
+
+    syncWithGame() {
+        // Sync settings with the game immediately
+        if (window.game && window.game.syncVideoSettings) {
+            window.game.syncVideoSettings(this);
         }
     }
 }

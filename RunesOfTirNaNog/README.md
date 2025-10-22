@@ -146,6 +146,7 @@ The game features a comprehensive settings menu with multiple categories:
 ### Video Settings
 - **Render Distance**: Adjust how many tiles are rendered around the player (16x16 to 128x128)
 - **Edge Fog Intensity**: Control fog effect at render distance edges (0% to 100%)
+- **Grid Lines**: Toggle grid overlay on/off for better tile visibility
 
 ### Keybind Settings
 - **Movement Controls**: WASD, Arrow Keys, Sprint, Crouch
@@ -161,6 +162,7 @@ The game features a comprehensive settings menu with multiple categories:
 - **Click to Rebind**: Click any keybind button to set a new key
 - **Visual Feedback**: Animated buttons during key capture
 - **Reset to Defaults**: One-click restore to original keybinds
+- **Real-time Sync**: Video settings (like grid toggle) apply immediately without restart
 - **Persistent Storage**: Settings saved automatically to browser storage
 - **Category Navigation**: Easy switching between Video and Keybind settings
 
