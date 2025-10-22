@@ -119,11 +119,11 @@ window.addEventListener('load', async () => {
                     console.log('Successfully connected to multiplayer server');
                 } else {
                     console.error('Failed to connect to multiplayer server');
-                    console.error('Make sure the WebSocket server is running on ws://localhost:1234');
+                    console.error('Make sure the WebSocket server is running on wss://web-production-b1ed.up.railway.app');
                 }
             }).catch(error => {
                 console.error('Multiplayer connection error:', error);
-                console.error('Make sure the WebSocket server is running on ws://localhost:1234');
+                console.error('Make sure the WebSocket server is running on wss://web-production-b1ed.up.railway.app');
             });
         }
 

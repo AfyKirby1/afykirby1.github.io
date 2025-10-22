@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     
     <!-- ✅ SECURITY FIX (VULN-006): Content Security Policy -->
-    <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' data: blob:; connect-src 'self' ws://localhost:1234 ws://127.0.0.1:1234; base-uri 'self'; form-action 'self';">
+    <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' data: blob:; connect-src 'self' wss://web-production-b1ed.up.railway.app ws://localhost:1234 ws://127.0.0.1:1234; base-uri 'self'; form-action 'self';">
     <meta http-equiv="X-Content-Type-Options" content="nosniff">
     <meta http-equiv="Referrer-Policy" content="no-referrer">
     
@@ -770,7 +770,7 @@
                         statusText.textContent = 'Server Offline';
                         joinServerBtn.disabled = true;
                         joinServerText.textContent = 'Server Offline';
-                        serverInfo.textContent = 'Server: localhost:1234 (Offline)';
+                        serverInfo.textContent = 'Server: Railway (Offline)';
                         break;
                     case 'checking':
                         statusIndicator.classList.add('status-checking');
@@ -784,7 +784,7 @@
                         statusText.textContent = 'Server Online';
                         joinServerBtn.disabled = false;
                         joinServerText.textContent = 'Join Server';
-                        serverInfo.textContent = 'Server: localhost:1234 (Online)';
+                        serverInfo.textContent = 'Server: Railway (Online)';
                         break;
                     case 'connecting':
                         statusIndicator.classList.add('status-connecting');
@@ -798,7 +798,7 @@
                         statusText.textContent = 'Connected';
                         joinServerBtn.disabled = false;
                         joinServerText.textContent = 'Disconnect';
-                        serverInfo.textContent = 'Connected to localhost:1234';
+                        serverInfo.textContent = 'Connected to Railway';
                         break;
                     case 'error':
                         statusIndicator.classList.add('status-disconnected');
@@ -814,7 +814,7 @@
             async function checkServerStatus() {
                 return new Promise((resolve) => {
                     try {
-                        const testSocket = new WebSocket('ws://localhost:1234');
+                        const testSocket = new WebSocket('wss://web-production-b1ed.up.railway.app');
                         const timeout = setTimeout(() => {
                             testSocket.close();
                             resolve(false);

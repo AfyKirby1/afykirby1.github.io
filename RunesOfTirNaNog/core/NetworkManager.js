@@ -31,9 +31,9 @@ export class NetworkManager {
     /**
      * Connect to the multiplayer server
      * @param {string} username - Player's username
-     * @param {string} serverUrl - WebSocket server URL (default: ws://localhost:1234)
+     * @param {string} serverUrl - WebSocket server URL (default: wss://web-production-b1ed.up.railway.app)
      */
-    async connect(username, serverUrl = 'ws://localhost:1234') {
+    async connect(username, serverUrl = 'wss://web-production-b1ed.up.railway.app') {
         try {
             console.log(`Connecting to multiplayer server: ${serverUrl}`);
             
@@ -59,7 +59,7 @@ export class NetworkManager {
             console.error('Failed to connect to server:', error);
             console.error('Server URL:', serverUrl);
             console.error('Error details:', error.message);
-            console.error('Make sure the WebSocket server is running on ws://localhost:1234');
+            console.error('Make sure the WebSocket server is running on wss://web-production-b1ed.up.railway.app');
             this.handleConnectionError(error);
             return false;
         }
