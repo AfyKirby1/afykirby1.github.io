@@ -814,7 +814,7 @@
             async function checkServerStatus() {
                 return new Promise((resolve) => {
                     try {
-                        const testSocket = new WebSocket('wss://web-production-b1ed.up.railway.app');
+                        const testSocket = new WebSocket('wss://web-production-b1ed.up.railway.app/ws');
                         const timeout = setTimeout(() => {
                             testSocket.close();
                             resolve(false);
