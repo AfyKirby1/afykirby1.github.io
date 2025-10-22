@@ -472,7 +472,10 @@ export class Game {
     
     initializeNPCs() {
         // Skip NPC initialization in multiplayer mode
-        if (this.isMultiplayer) {
+        const urlParams = new URLSearchParams(window.location.search);
+        const isMultiplayer = urlParams.get('multiplayer') === 'true';
+        
+        if (isMultiplayer) {
             console.log('NPC system disabled in multiplayer mode');
             return;
         }
