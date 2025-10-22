@@ -1,0 +1,350 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    
+    <!-- ✅ SECURITY FIX (VULN-006): Content Security Policy -->
+    <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' data: blob:; connect-src 'self' ws://localhost:1234 ws://127.0.0.1:1234; base-uri 'self'; form-action 'self';">
+    <meta http-equiv="X-Content-Type-Options" content="nosniff">
+    <meta http-equiv="Referrer-Policy" content="no-referrer">
+    
+    <title>Login - Runes of Tir na nÓg</title>
+    <link rel="icon" type="image/x-icon" href="favicon.ico">
+    <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;700;900&display=swap" rel="stylesheet">
+    <style>
+        *{margin:0;padding:0;box-sizing:border-box}
+        body{
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(45deg, #1a4d5c, #2d5a3f, #4a2d52, #1e3a5f);
+            background-size: 400% 400%;
+            animation: aurora 15s ease infinite;
+            color: #fff;
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+            position: relative;
+        }
+
+        body::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: 
+                radial-gradient(ellipse at 20% 30%, rgba(100, 200, 180, 0.3) 0%, transparent 50%),
+                radial-gradient(ellipse at 80% 60%, rgba(180, 100, 150, 0.3) 0%, transparent 50%),
+                radial-gradient(ellipse at 50% 80%, rgba(100, 150, 200, 0.3) 0%, transparent 50%);
+            animation: shimmer 10s ease-in-out infinite alternate;
+            pointer-events: none;
+        }
+
+        @keyframes aurora {
+            0% { background-position: 0% 50%; }
+            25% { background-position: 50% 75%; }
+            50% { background-position: 100% 50%; }
+            75% { background-position: 50% 25%; }
+            100% { background-position: 0% 50%; }
+        }
+
+        @keyframes shimmer {
+            0% { opacity: 0.5; transform: translateY(0); }
+            100% { opacity: 0.8; transform: translateY(-20px); }
+        }
+        
+        /* Back arrow styling */
+        .back-arrow {
+            position: absolute;
+            top: 20px;
+            left: 20px;
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            color: rgba(255, 255, 255, 0.9);
+            padding: 10px 20px;
+            font-size: 0.9rem;
+            font-weight: 500;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            border-radius: 20px;
+            box-shadow: 0 4px 16px 0 rgba(31, 38, 135, 0.2);
+            text-decoration: none;
+            display: inline-block;
+            z-index: 1000;
+        }
+
+        .back-arrow:hover {
+            background: rgba(255, 255, 255, 0.15);
+            border-color: rgba(255, 255, 255, 0.3);
+            color: rgba(255, 255, 255, 1);
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px 0 rgba(31, 38, 135, 0.3);
+        }
+
+        .back-arrow:active {
+            transform: translateY(0px);
+            box-shadow: 0 2px 8px 0 rgba(31, 38, 135, 0.2);
+        }
+
+        .login-container{
+            position: relative;
+            text-align: center;
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.18);
+            border-radius: 20px;
+            padding: 60px 40px;
+            box-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.37);
+            min-width: 400px;
+            max-width: 500px;
+            z-index: 1;
+        }
+        
+        .login-title{
+            font-size: 2.5rem;
+            font-weight: 700;
+            margin-bottom: 30px;
+            color: rgba(255, 255, 255, 0.95);
+            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.3);
+            letter-spacing: -1px;
+        }
+        
+        .login-form {
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+            align-items: center;
+        }
+        
+        .form-group {
+            width: 100%;
+            text-align: left;
+        }
+        
+        .form-label {
+            color: rgba(255, 255, 255, 0.9);
+            font-size: 0.9rem;
+            font-weight: 500;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            margin-bottom: 8px;
+            display: block;
+        }
+        
+        .form-input {
+            width: 100%;
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            color: rgba(255, 255, 255, 0.95);
+            padding: 12px 16px;
+            font-size: 1rem;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            border-radius: 12px;
+            box-shadow: 0 4px 16px 0 rgba(31, 38, 135, 0.2);
+            transition: all 0.3s ease;
+        }
+        
+        .form-input:focus {
+            outline: none;
+            border-color: rgba(255, 255, 255, 0.4);
+            background: rgba(255, 255, 255, 0.15);
+            box-shadow: 0 6px 20px 0 rgba(31, 38, 135, 0.3);
+        }
+        
+        .form-input::placeholder {
+            color: rgba(255, 255, 255, 0.6);
+        }
+        
+        .login-button {
+            background: rgba(255, 255, 255, 0.15);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            color: rgba(255, 255, 255, 0.95);
+            padding: 15px 40px;
+            font-size: 1.1rem;
+            font-weight: 600;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            border-radius: 20px;
+            box-shadow: 0 6px 20px 0 rgba(31, 38, 135, 0.3);
+            min-width: 200px;
+        }
+        
+        .login-button:hover {
+            background: rgba(255, 255, 255, 0.2);
+            border-color: rgba(255, 255, 255, 0.4);
+            color: rgba(255, 255, 255, 1);
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px 0 rgba(31, 38, 135, 0.4);
+        }
+        
+        .login-button:active {
+            transform: translateY(0px);
+            box-shadow: 0 4px 15px 0 rgba(31, 38, 135, 0.3);
+        }
+        
+        .error-message {
+            color: #ff6b6b;
+            font-size: 0.9rem;
+            margin-top: 10px;
+            min-height: 20px;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+        
+        .success-message {
+            color: #51cf66;
+            font-size: 0.9rem;
+            margin-top: 10px;
+            min-height: 20px;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+        
+        .footer-text {
+            margin-top: 20px;
+            font-size: 0.8rem;
+            color: rgba(255, 255, 255, 0.7);
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+    </style>
+    <meta name="description" content="Login to Runes of Tir na nÓg - Access exclusive admin tools and features.">
+    <meta property="og:title" content="Login - Runes of Tir na nÓg">
+    <meta property="og:description" content="Login to access exclusive admin tools and features">
+    <meta property="og:type" content="website">
+</head>
+<body>
+    <a href="landing.html" class="back-arrow">← Back</a>
+    
+    <div class="login-container">
+        <div class="login-title">Login</div>
+        
+        <form class="login-form" id="loginForm">
+            <div class="form-group">
+                <label for="username" class="form-label">Username</label>
+                <input type="text" id="username" name="username" class="form-input" placeholder="Enter your username" required>
+            </div>
+            
+            <div class="form-group">
+                <label for="password" class="form-label">Password</label>
+                <input type="password" id="password" name="password" class="form-input" placeholder="Enter your password" required>
+            </div>
+            
+            <button type="submit" class="login-button">🔐 Login</button>
+            
+            <div class="error-message" id="errorMessage"></div>
+            <div class="success-message" id="successMessage"></div>
+        </form>
+        
+        <div class="footer-text">Access exclusive admin tools and features</div>
+    </div>
+    
+    <script>
+        // Simple login system for demo purposes
+        // In a real application, this would connect to a secure backend
+        
+        const VALID_CREDENTIALS = [
+            { username: 'admin', password: 'admin123' },
+            { username: 'ry', password: 'password123' },
+            { username: 'friend1', password: 'friend123' },
+            { username: 'friend2', password: 'friend123' }
+        ];
+        
+        function initLoginSystem() {
+            const loginForm = document.getElementById('loginForm');
+            const errorMessage = document.getElementById('errorMessage');
+            const successMessage = document.getElementById('successMessage');
+            
+            loginForm.addEventListener('submit', function(e) {
+                e.preventDefault();
+                
+                const username = document.getElementById('username').value.trim();
+                const password = document.getElementById('password').value;
+                
+                // Clear previous messages
+                errorMessage.textContent = '';
+                successMessage.textContent = '';
+                
+                // Validate credentials
+                const isValid = VALID_CREDENTIALS.some(cred => 
+                    cred.username === username && cred.password === password
+                );
+                
+                if (isValid) {
+                    // Store login state
+                    localStorage.setItem('runes_logged_in', 'true');
+                    localStorage.setItem('runes_username', username);
+                    
+                    successMessage.textContent = 'Login successful! Redirecting...';
+                    
+                    // Redirect to admin page after short delay
+                    setTimeout(() => {
+                        window.location.href = 'admin.html';
+                    }, 1500);
+                } else {
+                    errorMessage.textContent = 'Invalid username or password';
+                }
+            });
+            
+            // Add ripple effect to login button
+            const loginButton = document.querySelector('.login-button');
+            loginButton.addEventListener('click', function(e) {
+                const ripple = document.createElement('span');
+                const rect = this.getBoundingClientRect();
+                const size = Math.max(rect.width, rect.height);
+                const x = e.clientX - rect.left - size / 2;
+                const y = e.clientY - rect.top - size / 2;
+                
+                ripple.style.width = ripple.style.height = size + 'px';
+                ripple.style.left = x + 'px';
+                ripple.style.top = y + 'px';
+                ripple.style.position = 'absolute';
+                ripple.style.borderRadius = '50%';
+                ripple.style.background = 'rgba(255, 255, 255, 0.3)';
+                ripple.style.transform = 'scale(0)';
+                ripple.style.animation = 'ripple 0.6s linear';
+                ripple.style.pointerEvents = 'none';
+                
+                this.style.position = 'relative';
+                this.style.overflow = 'hidden';
+                this.appendChild(ripple);
+                
+                setTimeout(() => {
+                    ripple.remove();
+                }, 600);
+            });
+        }
+        
+        // Check if already logged in
+        function checkLoginStatus() {
+            const isLoggedIn = localStorage.getItem('runes_logged_in') === 'true';
+            if (isLoggedIn) {
+                // If already logged in, redirect to admin page
+                window.location.href = 'admin.html';
+            }
+        }
+        
+        // Initialize when page loads
+        document.addEventListener('DOMContentLoaded', function() {
+            checkLoginStatus();
+            initLoginSystem();
+        });
+        
+        // CSS for ripple effect
+        const style = document.createElement('style');
+        style.textContent = `
+            @keyframes ripple {
+                to {
+                    transform: scale(4);
+                    opacity: 0;
+                }
+            }
+        `;
+        document.head.appendChild(style);
+    </script>
+</body>
+</html>
