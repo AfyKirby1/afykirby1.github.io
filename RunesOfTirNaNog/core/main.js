@@ -54,11 +54,13 @@ window.addEventListener('load', async () => {
         } else if (isMultiplayer) {
             // Load custom world for multiplayer
             console.log('🌍 Loading custom world for multiplayer...');
+            console.log('🔍 URL params:', { isMultiplayer, customWorld, isNewWorld, slotParam });
             try {
                 // Try to load the custom world data from Railway server
                 console.log('🔍 Fetching world data from: https://web-production-b1ed.up.railway.app/worlds/world.json');
                 const worldDataResponse = await fetch('https://web-production-b1ed.up.railway.app/worlds/world.json');
                 console.log('📡 Fetch response status:', worldDataResponse.status, worldDataResponse.statusText);
+                console.log('📡 Response headers:', Object.fromEntries(worldDataResponse.headers.entries()));
                 
                 if (worldDataResponse.ok) {
                     const customWorldData = await worldDataResponse.json();
@@ -70,11 +72,14 @@ window.addEventListener('load', async () => {
                 } else {
                     console.warn('⚠️ Could not load custom world (HTTP', worldDataResponse.status, '), using default');
                     console.warn('🔄 Falling back to default world generation');
+                    const responseText = await worldDataResponse.text();
+                    console.warn('📄 Response body:', responseText);
                     game = new Game(null, null);
                 }
             } catch (error) {
                 console.warn('❌ Error loading custom world:', error);
                 console.warn('🔄 Using default world instead');
+                console.warn('❌ Error details:', error.message, error.stack);
                 game = new Game(null, null);
             }
         } else if (customWorld) {
