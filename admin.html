@@ -110,6 +110,90 @@
             margin-bottom: 30px;
         }
         
+        .war-room-banner {
+            grid-column: 1 / -1;
+            background: linear-gradient(145deg, #1a1a2e, #16213e);
+            border: 2px solid #ff6b6b;
+            border-radius: 12px;
+            padding: 25px;
+            transition: all 0.3s ease;
+            cursor: pointer;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .war-room-banner::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: linear-gradient(135deg, 
+                rgba(255, 107, 107, 0.1) 0%, 
+                rgba(74, 222, 128, 0.1) 25%, 
+                rgba(59, 130, 246, 0.1) 50%, 
+                rgba(168, 85, 247, 0.1) 75%, 
+                rgba(255, 215, 0, 0.1) 100%);
+            border-radius: 12px;
+            pointer-events: none;
+            opacity: 0.3;
+        }
+        
+        .war-room-banner:hover {
+            border-color: #ff8c42;
+            transform: translateY(-5px);
+            box-shadow: 0 8px 16px rgba(0, 0, 0, 0.4), 0 0 25px rgba(255, 140, 66, 0.3);
+        }
+        
+        .war-room-content {
+            position: relative;
+            z-index: 1;
+            display: flex;
+            align-items: center;
+            gap: 20px;
+        }
+        
+        .war-room-icon {
+            font-size: 3rem;
+            background: linear-gradient(45deg, #ff6b6b, #ff8c42, #ffd700);
+            -webkit-background-clip: text;
+            background-clip: text;
+            -webkit-text-fill-color: transparent;
+            filter: drop-shadow(0 0 10px rgba(255, 107, 107, 0.5));
+        }
+        
+        .war-room-text {
+            flex: 1;
+        }
+        
+        .war-room-title {
+            color: #ff6b6b;
+            font-size: 1.8rem;
+            font-weight: bold;
+            margin-bottom: 8px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            text-shadow: 0 0 10px rgba(255, 107, 107, 0.5);
+        }
+        
+        .war-room-description {
+            color: rgba(255, 255, 255, 0.9);
+            font-size: 1rem;
+            line-height: 1.4;
+        }
+        
+        .war-room-arrow {
+            font-size: 2rem;
+            color: #ff8c42;
+            transition: transform 0.3s ease;
+        }
+        
+        .war-room-banner:hover .war-room-arrow {
+            transform: translateX(10px);
+        }
+        
         .tool-card {
             background: linear-gradient(145deg, #2a2a3e, #1a1a2e);
             border: 2px solid #d4af37;
@@ -231,6 +315,23 @@
         </div>
         
         <div class="admin-tools">
+            <div class="war-room-banner" onclick="window.location.href='war-room.html'">
+                <div class="war-room-content">
+                    <span class="war-room-icon">⚔️</span>
+                    <div class="war-room-text">
+                        <div class="war-room-title">The War Room</div>
+                        <div class="war-room-description">Strategic planning and tactical operations center for team collaboration, asset management, and project coordination.</div>
+                    </div>
+                    <span class="war-room-arrow">→</span>
+                </div>
+            </div>
+            
+            <div class="tool-card" onclick="window.location.href='Blocky-Builder/index.html'">
+                <span class="tool-icon">🗺️</span>
+                <div class="tool-title">World Builder</div>
+                <div class="tool-description">Create and edit game worlds, levels, and environments.</div>
+            </div>
+            
             <div class="tool-card" onclick="alert('Server Management tool - Coming Soon!')">
                 <span class="tool-icon">🖥️</span>
                 <div class="tool-title">Server Management</div>
@@ -247,30 +348,6 @@
                 <span class="tool-icon">📝</span>
                 <div class="tool-title">Content Management</div>
                 <div class="tool-description">Manage game content, announcements, and community updates.</div>
-            </div>
-            
-            <div class="tool-card" onclick="alert('World Builder tool - Coming Soon!')">
-                <span class="tool-icon">🗺️</span>
-                <div class="tool-title">World Builder</div>
-                <div class="tool-description">Create and edit game worlds, levels, and environments.</div>
-            </div>
-            
-            <div class="tool-card coming-soon">
-                <span class="tool-icon">⚙️</span>
-                <div class="tool-title">Advanced Settings</div>
-                <div class="tool-description">Configure advanced game settings and system parameters.</div>
-            </div>
-            
-            <div class="tool-card coming-soon">
-                <span class="tool-icon">🔧</span>
-                <div class="tool-title">Debug Tools</div>
-                <div class="tool-description">Access debugging tools and system diagnostics.</div>
-            </div>
-            
-            <div class="tool-card" onclick="window.location.href='war-room.html'">
-                <span class="tool-icon">⚔️</span>
-                <div class="tool-title">The War Room</div>
-                <div class="tool-description">Strategic planning and tactical operations center.</div>
             </div>
         </div>
         
@@ -292,41 +369,52 @@
                 localStorage.removeItem('runes_logged_in');
                 localStorage.removeItem('runes_username');
                 
-                // Redirect to landing page
-                window.location.href = 'landing.html';
+                // Redirect to main index page
+                window.location.href = 'index.html';
             });
             
-            // Add ripple effect to tool cards
+            // Add ripple effect to tool cards and war room banner
             const toolCards = document.querySelectorAll('.tool-card');
-            toolCards.forEach(card => {
+            const warRoomBanner = document.querySelector('.war-room-banner');
+            
+            [].forEach.call(toolCards, card => {
                 card.addEventListener('click', function(e) {
                     if (this.classList.contains('coming-soon')) return;
-                    
-                    const ripple = document.createElement('span');
-                    const rect = this.getBoundingClientRect();
-                    const size = Math.max(rect.width, rect.height);
-                    const x = e.clientX - rect.left - size / 2;
-                    const y = e.clientY - rect.top - size / 2;
-                    
-                    ripple.style.width = ripple.style.height = size + 'px';
-                    ripple.style.left = x + 'px';
-                    ripple.style.top = y + 'px';
-                    ripple.style.position = 'absolute';
-                    ripple.style.borderRadius = '50%';
-                    ripple.style.background = 'rgba(255, 255, 255, 0.3)';
-                    ripple.style.transform = 'scale(0)';
-                    ripple.style.animation = 'ripple 0.6s linear';
-                    ripple.style.pointerEvents = 'none';
-                    
-                    this.style.position = 'relative';
-                    this.style.overflow = 'hidden';
-                    this.appendChild(ripple);
-                    
-                    setTimeout(() => {
-                        ripple.remove();
-                    }, 600);
+                    addRippleEffect(this, e);
                 });
             });
+            
+            if (warRoomBanner) {
+                warRoomBanner.addEventListener('click', function(e) {
+                    addRippleEffect(this, e);
+                });
+            }
+            
+            function addRippleEffect(element, e) {
+                const ripple = document.createElement('span');
+                const rect = element.getBoundingClientRect();
+                const size = Math.max(rect.width, rect.height);
+                const x = e.clientX - rect.left - size / 2;
+                const y = e.clientY - rect.top - size / 2;
+                
+                ripple.style.width = ripple.style.height = size + 'px';
+                ripple.style.left = x + 'px';
+                ripple.style.top = y + 'px';
+                ripple.style.position = 'absolute';
+                ripple.style.borderRadius = '50%';
+                ripple.style.background = 'rgba(255, 255, 255, 0.3)';
+                ripple.style.transform = 'scale(0)';
+                ripple.style.animation = 'ripple 0.6s linear';
+                ripple.style.pointerEvents = 'none';
+                
+                element.style.position = 'relative';
+                element.style.overflow = 'hidden';
+                element.appendChild(ripple);
+                
+                setTimeout(() => {
+                    ripple.remove();
+                }, 600);
+            }
         }
         
         // Check login status

@@ -243,6 +243,9 @@ The DCS portfolio supports multiple distinct project types:
   - Team notes and idea sharing
   - Full-quality image upload/download
   - Progress tracking and export functionality
+  - Image viewer modal with navigation controls
+  - Download and delete actions within viewer
+  - Keyboard navigation and accessibility features
 
 ### CSS Architecture
 - **Methodology**: Component-based styling with consistent design tokens
@@ -332,6 +335,7 @@ Client Interface → HTTP API → DCS Server → File System/LocalStorage
 Team Notes → Real-time Editing → Auto-save → Server Sync
 Asset Management → Upload/Download → File System Storage → Metadata Tracking
 Resizable Panels → CSS Grid Layout → JavaScript Resizing → LocalStorage Persistence
+Image Viewer → Modal Display → Navigation Controls → Download/Delete Actions
 ```
 
 ## War Room Panel Resizing System

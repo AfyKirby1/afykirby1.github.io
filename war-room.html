@@ -1210,6 +1210,146 @@
         .hidden-input {
             display: none;
         }
+
+        /* Image Viewer Modal */
+        .image-viewer-modal {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.95);
+            backdrop-filter: blur(10px);
+            z-index: 10000;
+            display: none;
+            align-items: center;
+            justify-content: center;
+            opacity: 0;
+            transition: opacity 0.3s ease;
+        }
+
+        .image-viewer-modal.show {
+            display: flex;
+            opacity: 1;
+        }
+
+        .image-viewer-content {
+            position: relative;
+            max-width: 90%;
+            max-height: 90%;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 20px;
+        }
+
+        .image-viewer-image {
+            max-width: 100%;
+            max-height: 70vh;
+            object-fit: contain;
+            border-radius: 10px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.8);
+            transition: transform 0.3s ease;
+        }
+
+        .image-viewer-image:hover {
+            transform: scale(1.05);
+        }
+
+        .image-viewer-controls {
+            display: flex;
+            gap: 15px;
+            align-items: center;
+        }
+
+        .image-viewer-btn {
+            background: rgba(255, 255, 255, 0.1);
+            border: 2px solid rgba(255, 255, 255, 0.2);
+            color: rgba(255, 255, 255, 0.9);
+            padding: 10px 20px;
+            font-size: 0.9rem;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            border-radius: 8px;
+            backdrop-filter: blur(10px);
+        }
+
+        .image-viewer-btn:hover {
+            background: rgba(255, 255, 255, 0.2);
+            border-color: rgba(255, 255, 255, 0.4);
+            color: rgba(255, 255, 255, 1);
+            transform: translateY(-2px);
+        }
+
+        .image-viewer-close {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            background: rgba(255, 107, 107, 0.9);
+            border: 2px solid rgba(255, 107, 107, 1);
+            color: white;
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            font-size: 1.5rem;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .image-viewer-close:hover {
+            background: rgba(255, 107, 107, 1);
+            transform: scale(1.1);
+        }
+
+        .image-viewer-title {
+            color: rgba(255, 255, 255, 0.9);
+            font-size: 1.2rem;
+            font-weight: 500;
+            text-align: center;
+            max-width: 80%;
+            word-wrap: break-word;
+        }
+
+        .image-viewer-nav {
+            position: absolute;
+            top: 50%;
+            transform: translateY(-50%);
+            background: rgba(255, 255, 255, 0.1);
+            border: 2px solid rgba(255, 255, 255, 0.2);
+            color: rgba(255, 255, 255, 0.9);
+            width: 50px;
+            height: 50px;
+            border-radius: 50%;
+            font-size: 1.5rem;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            backdrop-filter: blur(10px);
+        }
+
+        .image-viewer-nav:hover {
+            background: rgba(255, 255, 255, 0.2);
+            border-color: rgba(255, 255, 255, 0.4);
+            transform: translateY(-50%) scale(1.1);
+        }
+
+        .image-viewer-nav.prev {
+            left: 20px;
+        }
+
+        .image-viewer-nav.next {
+            right: 20px;
+        }
+
+        .image-viewer-nav.hidden {
+            display: none;
+        }
     </style>
 </head>
 <body>
@@ -1220,6 +1360,7 @@
             <div class="dropdown-menu" id="quickActionsDropdown">
                 <button class="dropdown-item" onclick="exportData()">📤 Export War Room Data</button>
                 <button class="dropdown-item" onclick="clearCompleted()">🧹 Clear Completed Tasks</button>
+                <button class="dropdown-item" onclick="clearNotesCache()">🗑️ Clear Notes Cache</button>
                 <button class="dropdown-item" onclick="saveToLocal()">💾 Save to Local Storage</button>
                 <button class="dropdown-item" onclick="loadFromLocal()">📥 Load from Local Storage</button>
             </div>
@@ -1289,50 +1430,6 @@
                     <input type="text" class="note-title-input" placeholder="Note title..." id="noteTitleInput">
                     
                     <div class="note-content-editor" contenteditable="true" id="noteContentEditor" placeholder="Add your ideas, notes, and thoughts here...">
-                        <div class="note-section">
-                            <h3>📋 CURRENT PRIORITIES:</h3>
-                            <ul>
-                                <li>Combat system needs balancing</li>
-                                <li>Multiplayer sync issues to resolve</li>
-                                <li>Audio implementation pending</li>
-                            </ul>
-                        </div>
-                        
-                        <div class="note-section">
-                            <h3>💡 IDEAS:</h3>
-                            <ul>
-                                <li>Add day/night cycle for atmosphere</li>
-                                <li>Implement weather effects</li>
-                                <li>Create mini-games for NPCs</li>
-                            </ul>
-                        </div>
-                        
-                        <div class="note-section">
-                            <h3>🐛 BUGS TO FIX:</h3>
-                            <ul>
-                                <li>Player sometimes clips through walls</li>
-                                <li>Inventory UI glitch on mobile</li>
-                                <li>Save file corruption issue</li>
-                            </ul>
-                        </div>
-                        
-                        <div class="note-section">
-                            <h3>🎨 ART ASSETS NEEDED:</h3>
-                            <ul>
-                                <li>More character animations</li>
-                                <li>Environmental particle effects</li>
-                                <li>UI icons and buttons</li>
-                            </ul>
-                        </div>
-                        
-                        <div class="note-section">
-                            <h3>📊 PROGRESS TRACKING:</h3>
-                            <ul>
-                                <li>World building: 70% complete</li>
-                                <li>Character development: 60% complete</li>
-                                <li>Audio implementation: 30% complete</li>
-                            </ul>
-                        </div>
                     </div>
                 </div>
                 
@@ -1355,7 +1452,7 @@
                 
                 <div class="image-gallery" id="imageGallery">
                     <div class="image-item">
-                        <img src="dcs.png" alt="DCS Logo">
+                        <img src="dcs.png" alt="DCS Logo" onclick="openImageViewer('dcs.png', 'DCS Logo')" style="cursor: pointer;">
                         <button class="remove-btn" onclick="removeImage(this)">×</button>
                     </div>
                 </div>
@@ -1377,6 +1474,23 @@
                 </div>
             </div>
 
+        </div>
+    </div>
+
+    <!-- Image Viewer Modal -->
+    <div class="image-viewer-modal" id="imageViewerModal">
+        <div class="image-viewer-content">
+            <button class="image-viewer-close" onclick="closeImageViewer()">×</button>
+            <button class="image-viewer-nav prev" onclick="previousImage()" id="prevBtn">‹</button>
+            <button class="image-viewer-nav next" onclick="nextImage()" id="nextBtn">›</button>
+            
+            <img class="image-viewer-image" id="viewerImage" src="" alt="">
+            <div class="image-viewer-title" id="viewerTitle"></div>
+            
+            <div class="image-viewer-controls">
+                <button class="image-viewer-btn" onclick="downloadCurrentImage()">📥 Download</button>
+                <button class="image-viewer-btn" onclick="deleteCurrentImage()">🗑️ Delete</button>
+            </div>
         </div>
     </div>
 
@@ -1561,7 +1675,7 @@
             const newItem = document.createElement('div');
             newItem.className = 'image-item';
             newItem.innerHTML = `
-                <img src="/api/war-room/image/${filename}" alt="${originalName}" loading="lazy">
+                <img src="/api/war-room/image/${filename}" alt="${originalName}" loading="lazy" onclick="openImageViewer('${filename}', '${originalName}')" style="cursor: pointer;">
                 <button class="remove-btn" onclick="removeImage('${filename}', this)">×</button>
                 <button class="download-btn" onclick="downloadImage('${filename}', '${originalName}')" title="Download full quality">⬇️</button>
             `;
@@ -1848,6 +1962,148 @@
             }
         });
 
+        // Clear notes cache function
+        function clearNotesCache() {
+            if (confirm('Are you sure you want to clear all cached notes? This will reload fresh notes from the server.')) {
+                // Clear localStorage cache
+                localStorage.removeItem('warRoomNotes');
+                localStorage.removeItem('warRoomCurrentNoteId');
+                
+                // Clear global variables
+                window.notes = {};
+                window.currentNoteId = 'note-1';
+                window.notesLoaded = false;
+                
+                // Reset current variables
+                notes = {};
+                currentNoteId = 'note-1';
+                
+                // Reload the page to get fresh notes from server
+                location.reload();
+            }
+        }
+
+        // Image Viewer functionality
+        let currentImageIndex = 0;
+        let imageList = [];
+
+        function openImageViewer(filename, originalName) {
+            // Build list of all images in the gallery
+            imageList = [];
+            const gallery = document.getElementById('imageGallery');
+            const images = gallery.querySelectorAll('img');
+            
+            images.forEach((img, index) => {
+                const imgSrc = img.src;
+                const imgAlt = img.alt;
+                imageList.push({
+                    src: imgSrc,
+                    alt: imgAlt,
+                    filename: imgSrc.split('/').pop(),
+                    originalName: imgAlt
+                });
+                
+                // Find current image index
+                if (img.src.includes(filename)) {
+                    currentImageIndex = index;
+                }
+            });
+            
+            // Show the modal
+            const modal = document.getElementById('imageViewerModal');
+            const viewerImage = document.getElementById('viewerImage');
+            const viewerTitle = document.getElementById('viewerTitle');
+            const prevBtn = document.getElementById('prevBtn');
+            const nextBtn = document.getElementById('nextBtn');
+            
+            viewerImage.src = `/api/war-room/image/${filename}`;
+            viewerTitle.textContent = originalName;
+            
+            // Update navigation buttons
+            prevBtn.classList.toggle('hidden', imageList.length <= 1);
+            nextBtn.classList.toggle('hidden', imageList.length <= 1);
+            
+            modal.classList.add('show');
+            
+            // Prevent body scroll
+            document.body.style.overflow = 'hidden';
+        }
+
+        function closeImageViewer() {
+            const modal = document.getElementById('imageViewerModal');
+            modal.classList.remove('show');
+            
+            // Restore body scroll
+            document.body.style.overflow = '';
+        }
+
+        function previousImage() {
+            if (imageList.length <= 1) return;
+            
+            currentImageIndex = (currentImageIndex - 1 + imageList.length) % imageList.length;
+            const currentImage = imageList[currentImageIndex];
+            
+            const viewerImage = document.getElementById('viewerImage');
+            const viewerTitle = document.getElementById('viewerTitle');
+            
+            viewerImage.src = currentImage.src;
+            viewerTitle.textContent = currentImage.originalName;
+        }
+
+        function nextImage() {
+            if (imageList.length <= 1) return;
+            
+            currentImageIndex = (currentImageIndex + 1) % imageList.length;
+            const currentImage = imageList[currentImageIndex];
+            
+            const viewerImage = document.getElementById('viewerImage');
+            const viewerTitle = document.getElementById('viewerTitle');
+            
+            viewerImage.src = currentImage.src;
+            viewerTitle.textContent = currentImage.originalName;
+        }
+
+        function downloadCurrentImage() {
+            const currentImage = imageList[currentImageIndex];
+            if (currentImage) {
+                downloadImage(currentImage.filename, currentImage.originalName);
+            }
+        }
+
+        function deleteCurrentImage() {
+            const currentImage = imageList[currentImageIndex];
+            if (currentImage && confirm('Are you sure you want to delete this image?')) {
+                removeImage(currentImage.filename, null);
+                closeImageViewer();
+            }
+        }
+
+        // Close modal when clicking outside
+        document.addEventListener('click', function(event) {
+            const modal = document.getElementById('imageViewerModal');
+            if (event.target === modal) {
+                closeImageViewer();
+            }
+        });
+
+        // Keyboard navigation
+        document.addEventListener('keydown', function(event) {
+            const modal = document.getElementById('imageViewerModal');
+            if (!modal.classList.contains('show')) return;
+            
+            switch(event.key) {
+                case 'Escape':
+                    closeImageViewer();
+                    break;
+                case 'ArrowLeft':
+                    previousImage();
+                    break;
+                case 'ArrowRight':
+                    nextImage();
+                    break;
+            }
+        });
+
         // Load checklist from server
         async function loadChecklist() {
             const container = document.getElementById('checklistContainer');
@@ -1997,16 +2253,8 @@
                                     });
                                 }
                                 
-                                // Load current note early
-                                const currentNote = cachedNotes[cachedNoteId];
-                                if (currentNote) {
-                                    const titleInput = document.getElementById('noteTitleInput');
-                                    const contentEditor = document.getElementById('noteContentEditor');
-                                    if (titleInput && contentEditor) {
-                                        titleInput.value = currentNote.title;
-                                        contentEditor.innerHTML = currentNote.content;
-                                    }
-                                }
+                                // Don't populate text editor with cached content
+                                // Let the server sync handle fresh content loading
                                 
                                 // Mark notes as loaded
                                 window.notesLoaded = true;
@@ -2099,55 +2347,13 @@
                 }
             }
 
-            // Initialize with default note if none exist
+            // Initialize with empty note if none exist
             if (Object.keys(notes).length === 0) {
                 notes['note-1'] = {
-                    title: '🎮 Game Development Notes',
-                    content: `<div class="note-section">
-                        <h3>📋 CURRENT PRIORITIES:</h3>
-                        <ul>
-                            <li>Combat system needs balancing</li>
-                            <li>Multiplayer sync issues to resolve</li>
-                            <li>Audio implementation pending</li>
-                        </ul>
-                    </div>
-                    
-                    <div class="note-section">
-                        <h3>💡 IDEAS:</h3>
-                        <ul>
-                            <li>Add day/night cycle for atmosphere</li>
-                            <li>Implement weather effects</li>
-                            <li>Create mini-games for NPCs</li>
-                        </ul>
-                    </div>
-                    
-                    <div class="note-section">
-                        <h3>🐛 BUGS TO FIX:</h3>
-                        <ul>
-                            <li>Player sometimes clips through walls</li>
-                            <li>Inventory UI glitch on mobile</li>
-                            <li>Save file corruption issue</li>
-                        </ul>
-                    </div>
-                    
-                    <div class="note-section">
-                        <h3>🎨 ART ASSETS NEEDED:</h3>
-                        <ul>
-                            <li>More character animations</li>
-                            <li>Environmental particle effects</li>
-                            <li>UI icons and buttons</li>
-                        </ul>
-                    </div>
-                    
-                    <div class="note-section">
-                        <h3>📊 PROGRESS TRACKING:</h3>
-                        <ul>
-                            <li>World building: 70% complete</li>
-                            <li>Character development: 60% complete</li>
-                            <li>Audio implementation: 30% complete</li>
-                        </ul>
-                    </div>`
+                    title: 'New Note',
+                    content: ''
                 };
+                currentNoteId = 'note-1';
                 // Save the default note to server
                 await saveNotesToServer();
             }
@@ -2244,6 +2450,9 @@
                         selectNote(remainingNotes[0]);
                     }
                 }
+                
+                // Update the notes list UI to reflect the deletion
+                loadNotesList();
                 
                 await saveNotesToServer();
             }
