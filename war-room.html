@@ -1451,10 +1451,7 @@
                 <input type="file" id="imageInput" class="hidden-input" multiple accept="image/*" onchange="handleImageUpload(event)">
                 
                 <div class="image-gallery" id="imageGallery">
-                    <div class="image-item">
-                        <img src="dcs.png" alt="DCS Logo" onclick="openImageViewer('dcs.png', 'DCS Logo')" style="cursor: pointer;">
-                        <button class="remove-btn" onclick="removeImage(this)">×</button>
-                    </div>
+                    <!-- Images will be loaded dynamically from localStorage -->
                 </div>
             </div>
 
@@ -1661,10 +1658,12 @@
             const newItem = document.createElement('div');
             newItem.className = 'image-item';
             
-            // Get the base64 data from localStorage
+            // Get the image data from localStorage
             const images = JSON.parse(localStorage.getItem('warRoomImages') || '[]');
             const imageData = images.find(img => img.filename === filename);
-            const imageSrc = imageData ? imageData.data : '/api/war-room/image/' + filename;
+            
+            // Use the data if it's base64, otherwise use the relative path
+            const imageSrc = imageData ? imageData.data : `war-room-assets/${filename}`;
             
             newItem.innerHTML = `
                 <img src="${imageSrc}" alt="${originalName}" loading="lazy" onclick="openImageViewer('${filename}', '${originalName}')" style="cursor: pointer;">
@@ -1916,31 +1915,52 @@
         // Load existing assets from server
         async function loadExistingAssets() {
             try {
-                const response = await fetch('/api/war-room/images');
-                if (response.ok) {
-                    const assets = await response.json();
+                // Load images from localStorage for static hosting
+                let images = JSON.parse(localStorage.getItem('warRoomImages') || '[]');
+                
+                // If no images in localStorage, initialize with existing assets
+                if (images.length === 0) {
+                    images = await initializeExistingAssets();
+                }
+                
+                // Clear existing gallery
+                const gallery = document.getElementById('imageGallery');
+                if (gallery) {
+                    gallery.innerHTML = '';
                     
-                    // Clear existing gallery
-                    const gallery = document.getElementById('imageGallery');
-                    if (gallery) {
-                        gallery.innerHTML = '';
-                        
-                        // Add each asset to the gallery
-                        assets.forEach(asset => {
-                            // Use filename as originalName if originalName is not available
-                            const originalName = asset.originalName || asset.filename || 'Asset';
-                            addImageToGallery(asset.filename, originalName);
-                        });
-                        
-                        console.log(`Loaded ${assets.length} existing assets`);
-                    }
-                } else {
-                    console.log('No existing assets found or server not available');
+                    // Add each asset to the gallery
+                    images.forEach(imageData => {
+                        addImageToGallery(imageData.filename, imageData.filename);
+                    });
+                    
+                    console.log(`Loaded ${images.length} existing assets from localStorage`);
                 }
             } catch (error) {
                 console.log('Could not load existing assets:', error);
-                // This is normal if the server isn't running
             }
+        }
+
+        // Initialize localStorage with existing assets from war-room-assets directory
+        async function initializeExistingAssets() {
+            const existingAssets = [
+                '8b540276a6e3e066f1961fa1cf9a2901.png',
+                'e10503e96f1a17c6a30fb82e40cfb428.png',
+                '60a5ba4f3b5937695a52932d55d2db36.png'
+            ];
+            
+            const images = [];
+            for (const filename of existingAssets) {
+                // Create a placeholder entry for existing assets
+                images.push({
+                    filename: filename,
+                    data: `war-room-assets/${filename}`, // Use relative path for existing assets
+                    uploadedAt: new Date().toISOString()
+                });
+            }
+            
+            // Save to localStorage
+            localStorage.setItem('warRoomImages', JSON.stringify(images));
+            return images;
         }
 
         // Quick Actions dropdown functionality
