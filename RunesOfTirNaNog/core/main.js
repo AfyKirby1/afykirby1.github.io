@@ -1,6 +1,9 @@
 import { Game } from './Game.js';
 import { SaveSystem } from './SaveSystem.js';
 
+// SUPER OBVIOUS DEBUG MESSAGE
+console.log('🚨🚨🚨 MAIN.JS LOADED - DEBUG VERSION ACTIVE 🚨🚨🚨');
+
 window.addEventListener('load', async () => {
     try {
         let game;
