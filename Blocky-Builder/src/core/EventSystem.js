@@ -167,6 +167,17 @@ class EventSystem {
             return; // Block all tool shortcuts
         }
         
+        // Don't process tool shortcuts when typing in input fields
+        const activeElement = document.activeElement;
+        if (activeElement && (
+            activeElement.tagName === 'INPUT' || 
+            activeElement.tagName === 'TEXTAREA' || 
+            activeElement.tagName === 'SELECT' ||
+            activeElement.contentEditable === 'true'
+        )) {
+            return; // Block tool shortcuts when typing
+        }
+        
         // Tool shortcuts
         switch (e.key.toLowerCase()) {
             case 'd':

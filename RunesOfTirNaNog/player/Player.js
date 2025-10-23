@@ -21,7 +21,7 @@ export class Player {
             this.y = gameHeight / 2;
             console.log('📍 Player spawned at world center (no world data)');
         }
-        this.size = 12;
+        this.size = 18; // Increased from 12 for larger appearance
         this.speed = 3;
         this.color = '#ff6b6b';
         this.direction = 'down';
@@ -33,6 +33,18 @@ export class Player {
         this.legSwingSpeed = Math.PI * 2 / 0.5;
         this.isOnWater = false;
         this.waterSoundCooldown = 0;
+        
+        // Combat properties
+        this.health = 10;
+        this.maxHealth = 10;
+        this.attackDamage = 1;
+        this.attackRange = 30;
+        this.attackCooldown = 1000; // 1 second
+        this.lastAttackTime = 0;
+        this.isAttacking = false;
+        
+        // Damage numbers system
+        this.damageNumbers = [];
         // Get username from localStorage or use default
         const username = localStorage.getItem('runes_username') || 'Player';
         this.nameTag = new NameTag(username, this.x, this.y, {
@@ -126,6 +138,19 @@ export class Player {
 
         this.nameTag.setPosition(this.x, this.y);
         this.nameTag.update();
+        
+        // Handle attack input
+        if (input.isAttackPressed() && Date.now() - this.lastAttackTime >= this.attackCooldown) {
+            this.attack();
+        }
+        
+        // Update attack animation
+        if (this.isAttacking && Date.now() - this.lastAttackTime > 200) {
+            this.isAttacking = false;
+        }
+        
+        // Update damage numbers
+        this.updateDamageNumbers();
     }
 
     render(ctx) {
@@ -153,6 +178,19 @@ export class Player {
 
         // Always render the name tag
         this.nameTag.render(ctx);
+        
+        // Render attack animation
+        if (this.isAttacking) {
+            this.renderAttackEffect(ctx, centerX, centerY);
+        }
+        
+        // Render health bar above character (if game.ui available)
+        if (this.game && this.game.ui && this.game.ui.healthBar) {
+            this.game.ui.healthBar.renderAboveCharacter(ctx, this.x, this.y, this.game.camera);
+        }
+        
+        // Render damage numbers
+        this.renderDamageNumbers(ctx);
     }
 
     renderFallbackCharacter(ctx, centerX, centerY, size) {
@@ -232,5 +270,178 @@ export class Player {
 
     getName() {
         return this.nameTag.name;
+    }
+    
+    /**
+     * Attack nearby NPCs
+     */
+    attack() {
+        this.lastAttackTime = Date.now();
+        this.isAttacking = true;
+        
+        console.log(`⚔️ Player attacks!`);
+        
+        // Find nearby NPCs to attack
+        if (this.game && this.game.npcManager) {
+            const nearbyNPCs = this.game.npcManager.getNPCsNearPlayer(this, this.attackRange);
+            
+            for (const npc of nearbyNPCs) {
+                // Only attack hostile NPCs
+                if (npc.behavior === 'hostile' && npc.health > 0) {
+                    npc.takeDamage(this.attackDamage);
+                    console.log(`⚔️ Player deals ${this.attackDamage} damage to ${npc.name}!`);
+                }
+            }
+        }
+    }
+    
+    /**
+     * Take damage from NPCs
+     */
+    takeDamage(amount) {
+        this.health = Math.max(0, this.health - amount);
+        console.log(`💔 Player takes ${amount} damage! Health: ${this.health}/${this.maxHealth}`);
+        
+        // Add floating damage number
+        this.addDamageNumber(amount, this.x, this.y - 20);
+        
+        // Update health bar
+        if (this.game && this.game.ui) {
+            this.game.ui.updateHealth(this.health, this.maxHealth);
+        }
+        
+        // Check for death
+        if (this.health <= 0) {
+            console.log('💀 Player has died!');
+            // TODO: Implement death/respawn logic
+        }
+    }
+    
+    /**
+     * Heal the player
+     */
+    heal(amount) {
+        this.health = Math.min(this.maxHealth, this.health + amount);
+        console.log(`💚 Player heals ${amount} HP! Health: ${this.health}/${this.maxHealth}`);
+        
+        // Update health bar
+        if (this.game && this.game.ui) {
+            this.game.ui.updateHealth(this.health, this.maxHealth);
+        }
+    }
+    
+    /**
+     * Render attack effect
+     */
+    renderAttackEffect(ctx, centerX, centerY) {
+        const attackTime = Date.now() - this.lastAttackTime;
+        const progress = Math.min(attackTime / 200, 1); // 200ms attack duration
+        
+        // RuneScape Classic style: Simple weapon swing animation
+        ctx.strokeStyle = '#8B4513'; // Brown weapon color
+        ctx.lineWidth = 2;
+        ctx.beginPath();
+        
+        // Draw weapon swing based on direction
+        const weaponLength = this.size * 0.8;
+        let startX, startY, endX, endY;
+        
+        switch (this.direction) {
+            case 'up':
+                startX = centerX;
+                startY = centerY;
+                endX = centerX + Math.sin(progress * Math.PI) * weaponLength;
+                endY = centerY - weaponLength;
+                break;
+            case 'down':
+                startX = centerX;
+                startY = centerY;
+                endX = centerX - Math.sin(progress * Math.PI) * weaponLength;
+                endY = centerY + weaponLength;
+                break;
+            case 'left':
+                startX = centerX;
+                startY = centerY;
+                endX = centerX - weaponLength;
+                endY = centerY + Math.sin(progress * Math.PI) * weaponLength;
+                break;
+            case 'right':
+                startX = centerX;
+                startY = centerY;
+                endX = centerX + weaponLength;
+                endY = centerY - Math.sin(progress * Math.PI) * weaponLength;
+                break;
+            default:
+                startX = centerX;
+                startY = centerY;
+                endX = centerX;
+                endY = centerY;
+        }
+        
+        ctx.moveTo(startX, startY);
+        ctx.lineTo(endX, endY);
+        ctx.stroke();
+        
+        // Add simple hit effect at weapon tip
+        if (progress > 0.5) {
+            ctx.fillStyle = '#FFD700';
+            ctx.beginPath();
+            ctx.arc(endX, endY, 2, 0, Math.PI * 2);
+            ctx.fill();
+        }
+    }
+    
+    /**
+     * Add damage number floating above player
+     */
+    addDamageNumber(amount, x, y) {
+        this.damageNumbers.push({
+            amount: amount,
+            x: x,
+            y: y,
+            startTime: Date.now(),
+            duration: 1000, // 1 second
+            velocity: { x: (Math.random() - 0.5) * 2, y: -2 }
+        });
+    }
+    
+    /**
+     * Update damage numbers animation
+     */
+    updateDamageNumbers() {
+        const now = Date.now();
+        this.damageNumbers = this.damageNumbers.filter(dmg => {
+            const elapsed = now - dmg.startTime;
+            if (elapsed >= dmg.duration) {
+                return false; // Remove expired damage numbers
+            }
+            
+            // Update position
+            dmg.x += dmg.velocity.x;
+            dmg.y += dmg.velocity.y;
+            dmg.velocity.y += 0.1; // Gravity effect
+            
+            return true;
+        });
+    }
+    
+    /**
+     * Render floating damage numbers
+     */
+    renderDamageNumbers(ctx) {
+        ctx.save();
+        ctx.font = 'bold 12px Arial';
+        ctx.textAlign = 'center';
+        
+        this.damageNumbers.forEach(dmg => {
+            const elapsed = Date.now() - dmg.startTime;
+            const progress = elapsed / dmg.duration;
+            const alpha = 1 - progress;
+            
+            ctx.fillStyle = `rgba(255, 0, 0, ${alpha})`;
+            ctx.fillText(`-${dmg.amount}`, dmg.x, dmg.y);
+        });
+        
+        ctx.restore();
     }
 }

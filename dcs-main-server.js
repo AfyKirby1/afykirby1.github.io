@@ -90,7 +90,8 @@ const musicUpload = multer({
 });
 
 // Middleware
-app.use(express.json());
+app.use(express.json({ limit: '5mb' })); // Increased from default ~100kb to 5MB
+app.use(express.urlencoded({ limit: '5mb', extended: true }));
 
 // Enable CORS for local development (must be before other middleware)
 app.use((req, res, next) => {

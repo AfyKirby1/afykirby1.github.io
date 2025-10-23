@@ -43,13 +43,25 @@ export class Game {
             console.log('🎮 Game: Loading from custom world data');
             this.world = new World(null, customWorldData);
             this.player = new Player(this.world.width, this.world.height, this.world);
+            this.player.game = this; // Give player reference to game instance
             this.camera = new Camera(this.width, this.height);
         } else {
             // Create new world with config
             console.log('🎮 Game: Using default world generation');
             this.world = new World(worldConfig);
             this.player = new Player(this.world.width, this.world.height, this.world);
+            this.player.game = this; // Give player reference to game instance
             this.camera = new Camera(this.width, this.height);
+        }
+
+        // Default to maximum zoom on touch devices (mobile)
+        try {
+            const isTouch = ('ontouchstart' in window) || (navigator.maxTouchPoints > 0);
+            if (!saveData && isTouch && this.camera) {
+                this.camera.setZoom(this.camera.maxZoom);
+            }
+        } catch (e) {
+            // Ignore environment issues
         }
         
         this.input = new Input(this.canvas);
@@ -169,7 +181,7 @@ export class Game {
                 e.stopPropagation();
                 this.toggleAudio();
                 return;
-            } else if (e.code === 'KeyE' || e.code === 'Space') {
+            } else if (e.code === 'KeyE') {
                 e.preventDefault();
                 e.stopPropagation();
                 this.handleInteraction();
@@ -189,9 +201,15 @@ export class Game {
         // Pause when window loses focus (and auto-save)
         window.addEventListener('blur', () => {
             if (!this.isPaused) {
-                this.pauseMenu.show();
-                this.pause();
-                this.autoSave();
+                // In multiplayer, don't pause - just auto-save
+                if (this.isMultiplayer) {
+                    this.autoSave();
+                } else {
+                    // In single-player, show pause menu and pause
+                    this.pauseMenu.show();
+                    this.pause();
+                    this.autoSave();
+                }
             }
         });
 
@@ -210,7 +228,13 @@ export class Game {
     }
 
     togglePause() {
-        this.pauseMenu.toggle();
+        // In multiplayer, open the compact menu instead of pausing
+        if (this.isMultiplayer && window.gameControls) {
+            window.gameControls.toggleCompactPause();
+        } else {
+            // In single-player, use the traditional pause menu
+            this.pauseMenu.toggle();
+        }
     }
 
     quitToMenu() {
@@ -996,6 +1020,7 @@ export class Game {
         
         // Restore player
         this.player = new Player(this.width, this.height, this.world);
+        this.player.game = this; // Give player reference to game instance
         if (saveData.playerState.position) {
             this.player.x = saveData.playerState.position.x;
             this.player.y = saveData.playerState.position.y;

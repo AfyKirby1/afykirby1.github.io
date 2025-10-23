@@ -62,6 +62,15 @@ class BlockyBuilderEditor {
         // Setup right tile palette
         this.setupRightTilePalette();
         
+        // Setup tile creation event listeners
+        document.getElementById('add-tile-btn').addEventListener('click', () => this.openAddTileModal());
+        document.getElementById('closeTileModal').addEventListener('click', () => this.closeAddTileModal());
+        document.getElementById('addTileForm').addEventListener('submit', (e) => this.handleSaveTile(e));
+        
+        // Setup tile preview updates
+        document.getElementById('tileColor').addEventListener('input', () => this.updateTilePreview());
+        document.getElementById('tileTexture').addEventListener('change', () => this.updateTilePreview());
+        
         // Setup world stats
         this.updateWorldStats();
         
@@ -170,13 +179,25 @@ class BlockyBuilderEditor {
         }
     }
 
-    setupRightTilePalette() {
-        const tileTypes = {
+    async setupRightTilePalette() {
+        const defaultTileTypes = {
             grass: { name: 'Grass', color: '#4CAF50', texture: '../assets/Ground_Texture_1.png' },
             water: { name: 'Water', color: '#2196F3', texture: '../assets/Water_Texture.png' },
             cave: { name: 'Cave', color: '#795548', texture: '../assets/Cave_Texture_1.png' },
             wall: { name: 'Wall', color: '#9E9E9E', texture: null } // No texture for wall, use color
         };
+
+        let customTileTypes = {};
+        try {
+            const response = await fetch('../tiles.json');
+            if (response.ok) {
+                customTileTypes = await response.json();
+            }
+        } catch (error) {
+            console.warn('Could not load custom tiles.json:', error);
+        }
+
+        const tileTypes = { ...defaultTileTypes, ...customTileTypes };
 
         const rightPalette = document.getElementById('rightTilePalette');
         
@@ -524,7 +545,13 @@ class BlockyBuilderEditor {
                         wanderRadius: npc.wanderRadius,
                         patrolPoints: npc.patrolPoints,
                         color: npc.color,
-                        interactable: true
+                        interactable: true,
+                        // Add combat properties if they exist
+                        health: npc.health,
+                        maxHealth: npc.maxHealth,
+                        detectionRadius: npc.detectionRadius,
+                        attackDamage: npc.attackDamage,
+                        attackCooldown: npc.attackCooldown
                     };
                     
                     // Add custom image fields if NPC is custom
@@ -660,6 +687,134 @@ class BlockyBuilderEditor {
         setTimeout(() => {
             toast.classList.remove('show');
         }, 3000);
+    }
+
+    // Tile creation methods
+    openAddTileModal() {
+        document.getElementById('addTileModal').style.display = 'flex';
+    }
+
+    closeAddTileModal() {
+        document.getElementById('addTileModal').style.display = 'none';
+        // Reset form
+        document.getElementById('addTileForm').reset();
+        // Reset preview
+        this.resetTilePreview();
+    }
+
+    updateTilePreview() {
+        const preview = document.getElementById('tilePreview');
+        const colorInput = document.getElementById('tileColor');
+        const textureInput = document.getElementById('tileTexture');
+        
+        if (!preview) return;
+        
+        // Clear existing content
+        preview.innerHTML = '';
+        
+        // Check if a texture file is selected
+        if (textureInput.files && textureInput.files[0]) {
+            const file = textureInput.files[0];
+            const reader = new FileReader();
+            
+            reader.onload = (e) => {
+                const img = document.createElement('img');
+                img.src = e.target.result;
+                img.style.width = '100%';
+                img.style.height = '100%';
+                img.style.objectFit = 'cover';
+                preview.appendChild(img);
+            };
+            
+            reader.readAsDataURL(file);
+        } else {
+            // Show fallback color
+            preview.style.backgroundColor = colorInput.value;
+            const colorText = document.createElement('div');
+            colorText.textContent = colorInput.value;
+            colorText.style.color = this.getContrastColor(colorInput.value);
+            colorText.style.fontSize = '10px';
+            colorText.style.fontWeight = 'bold';
+            colorText.style.textAlign = 'center';
+            preview.appendChild(colorText);
+        }
+    }
+
+    resetTilePreview() {
+        const preview = document.getElementById('tilePreview');
+        if (preview) {
+            preview.innerHTML = '<div class="tile-preview-placeholder">Select a texture to see preview</div>';
+            preview.style.backgroundColor = '';
+        }
+    }
+
+    getContrastColor(hexColor) {
+        // Convert hex to RGB
+        const r = parseInt(hexColor.slice(1, 3), 16);
+        const g = parseInt(hexColor.slice(3, 5), 16);
+        const b = parseInt(hexColor.slice(5, 7), 16);
+        
+        // Calculate luminance
+        const luminance = (0.299 * r + 0.587 * g + 0.114 * b) / 255;
+        
+        // Return black or white based on luminance
+        return luminance > 0.5 ? '#000000' : '#ffffff';
+    }
+
+    async handleSaveTile(e) {
+        e.preventDefault();
+        const tileName = document.getElementById('tileName').value;
+        const tileColor = document.getElementById('tileColor').value;
+        const tileTextureFile = document.getElementById('tileTexture').files[0];
+
+        if (!tileName || !tileColor || !tileTextureFile) {
+            this.showToast('Please fill in all fields', 'error');
+            return;
+        }
+
+        try {
+            // 1. Upload the texture file
+            const formData = new FormData();
+            formData.append('texture', tileTextureFile);
+
+            const uploadResponse = await fetch('/api/upload-tile-texture', {
+                method: 'POST',
+                body: formData,
+            });
+            const uploadResult = await uploadResponse.json();
+
+            if (!uploadResult.success) {
+                this.showToast('Error uploading texture: ' + uploadResult.message, 'error');
+                return;
+            }
+
+            // 2. Save the tile metadata
+            const tileData = {
+                name: tileName,
+                color: tileColor,
+                texture: uploadResult.path,
+            };
+            
+            const tileId = tileName.toLowerCase().replace(/\s+/g, '_');
+
+            const saveResponse = await fetch('/api/add-tile', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ id: tileId, data: tileData }),
+            });
+            const saveResult = await saveResponse.json();
+
+            if (saveResult.success) {
+                this.showToast('Tile saved successfully!', 'success');
+                this.closeAddTileModal();
+                this.setupRightTilePalette(); // Refresh the palette
+            } else {
+                this.showToast('Error saving tile: ' + saveResult.message, 'error');
+            }
+        } catch (error) {
+            console.error('Error saving tile:', error);
+            this.showToast('Error saving tile: ' + error.message, 'error');
+        }
     }
 }
 
@@ -867,6 +1022,24 @@ function redo() {
 
 function openStatisticsPanel() {
     window.editor.showToast('Statistics panel coming soon!', 'info');
+}
+
+function toggleStatisticsPanel() {
+    const statisticsSection = document.getElementById('statisticsSection');
+    const checkbox = document.getElementById('statisticsPanelToggle');
+    if (statisticsSection && checkbox) {
+        statisticsSection.style.display = checkbox.checked ? 'block' : 'none';
+        window.editor.showToast(`Statistics panel ${checkbox.checked ? 'shown' : 'hidden'}`, 'success');
+    }
+}
+
+function toggleShortcutsPanel() {
+    const shortcutsSection = document.getElementById('shortcutsSection');
+    const checkbox = document.getElementById('shortcutsPanelToggle');
+    if (shortcutsSection && checkbox) {
+        shortcutsSection.style.display = checkbox.checked ? 'block' : 'none';
+        window.editor.showToast(`Shortcuts panel ${checkbox.checked ? 'shown' : 'hidden'}`, 'success');
+    }
 }
 
 function openNPCPanel() {

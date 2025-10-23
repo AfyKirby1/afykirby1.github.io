@@ -79,6 +79,9 @@
             
             <div class="tool-section">
                 <h3>🎨 Tile Palette</h3>
+                <div class="tile-palette-header">
+                    <button id="add-tile-btn" class="tool-btn" title="Add New Tile">➕ Add Tile</button>
+                </div>
                 <div class="tile-palette" id="rightTilePalette">
                     <!-- Tile palette will be populated by JavaScript -->
                 </div>
@@ -107,12 +110,12 @@
                 <button class="tool-btn" onclick="openSettingsPanel()" title="Open settings panel">🔧 Settings</button>
             </div>
 
-            <div class="tool-section">
+            <div class="tool-section" id="statisticsSection" style="display: none;">
                 <h3>📊 Statistics</h3>
                 <button class="tool-btn" onclick="openStatisticsPanel()" title="View editing statistics">📈 View Stats</button>
             </div>
 
-            <div class="tool-section">
+            <div class="tool-section" id="shortcutsSection" style="display: none;">
                 <h3>⌨️ Shortcuts</h3>
                 <div style="font-size: 11px; color: #888; line-height: 1.4;">
                     <div><strong>Tiles:</strong> 1=Grass, 2=Water, 3=Cave</div>
@@ -172,6 +175,18 @@
                         <label style="display: flex; align-items: center; gap: 10px;">
                             <input type="checkbox" id="tooltipsToggle" onchange="toggleTooltips()">
                             <span>Show tooltips</span>
+                        </label>
+                    </div>
+                    <div style="margin-bottom: 10px;">
+                        <label style="display: flex; align-items: center; gap: 10px;">
+                            <input type="checkbox" id="statisticsPanelToggle" onchange="toggleStatisticsPanel()">
+                            <span>Show Statistics Panel</span>
+                        </label>
+                    </div>
+                    <div style="margin-bottom: 10px;">
+                        <label style="display: flex; align-items: center; gap: 10px;">
+                            <input type="checkbox" id="shortcutsPanelToggle" onchange="toggleShortcutsPanel()">
+                            <span>Show Shortcuts Panel</span>
                         </label>
                     </div>
                     
@@ -330,6 +345,40 @@
 
     <!-- Global file input for importing worlds -->
     <input type="file" id="worldFileInput" accept=".json" style="display: none;" onchange="loadWorldFromFile(this)">
+
+    <!-- Add Tile Modal -->
+    <div id="addTileModal" class="modal" style="display: none;">
+        <div class="modal-content">
+            <div class="modal-header">Add New Tile<span class="close" id="closeTileModal">&times;</span></div>
+            <div class="modal-body">
+                <form id="addTileForm">
+                    <div class="form-group">
+                        <label for="tileName">Tile Name:</label>
+                        <input type="text" id="tileName" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="tileColor">Fallback Color:</label>
+                        <input type="color" id="tileColor" value="#ffffff" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="tileTexture">Texture Image:</label>
+                        <input type="file" id="tileTexture" accept="image/png, image/jpeg" required>
+                    </div>
+                    <div class="form-group">
+                        <label>Preview:</label>
+                        <div class="tile-preview-container">
+                            <div class="tile-preview" id="tilePreview">
+                                <div class="tile-preview-placeholder">Select a texture to see preview</div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="modal-buttons">
+                        <button type="submit" class="modal-btn">Save Tile</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
 
     <!-- Load Core Modules -->
     <script src="../src/core/WorldManager.js"></script>

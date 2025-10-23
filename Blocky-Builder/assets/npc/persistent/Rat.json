@@ -3,8 +3,13 @@
   "name": "Rat",
   "type": "custom",
   "color": "#8B4513",
-  "behavior": "wander",
-  "speed": 0.5,
+  "behavior": "hostile",
+  "speed": 0.2,
+  "detectionRadius": 80,
+  "attackDamage": 10,
+  "attackCooldown": 1000,
+  "health": 50,
+  "maxHealth": 50,
   "dialogue": [
     "Squeek!"
   ],

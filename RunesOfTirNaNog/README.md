@@ -24,7 +24,10 @@ This is an enhanced prototype demonstrating advanced game development concepts:
 - **Collision Detection**: Prevents walking through walls
 - **Camera System**: Follows player with smooth movement
 - **World Rendering**: Only renders visible tiles for performance
-- **Health Bar**: Visual health display with 10 heart icons at bottom of screen
+- **Combat System**: Complete RPG combat with player and NPC attacks
+- **Health System**: Above-character health bars with color-coded states
+- **Floating Damage Numbers**: Animated damage numbers that float upward and fade out
+- **Hostile NPCs**: Rats that chase and attack players with detection radius
 - **Textured Ground**: Pixel art ground tiles with grass, dirt, and decorative elements
 - **Inventory System**: Full RPG-style inventory with 8 equipment slots and 24 item slots
 - **Water System**: Random water tiles with pixel art textures and audio feedback

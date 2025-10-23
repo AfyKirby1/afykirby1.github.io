@@ -404,10 +404,63 @@ class Renderer {
         this.ctx.fillText(npc.name, npc.x, npc.y - 20);
         
         // Draw behavior indicator (small colored dot)
-        this.ctx.fillStyle = '#00FF00';
+        const behaviorColors = {
+            'idle': '#00FF00',      // Green
+            'wander': '#00FF00',    // Green
+            'patrol': '#00FF00',    // Green
+            'guard': '#FFFF00',     // Yellow
+            'hostile': '#FF0000',   // Red
+            'defensive': '#FF8800', // Orange
+            'aggressive': '#CC0000' // Dark Red
+        };
+        this.ctx.fillStyle = behaviorColors[npc.behavior] || '#00FF00';
         this.ctx.beginPath();
         this.ctx.arc(npc.x + 12, npc.y - 12, 3, 0, Math.PI * 2);
         this.ctx.fill();
+        
+        // Draw health bar if NPC has health properties
+        this.renderNPCHealthBar(npc);
+        
+        this.ctx.restore();
+    }
+    
+    renderNPCHealthBar(npc) {
+        // Only render health bar if NPC has health and maxHealth properties
+        if (npc.health === undefined || npc.maxHealth === undefined) {
+            return;
+        }
+        
+        const healthPercentage = npc.health / npc.maxHealth;
+        const barWidth = 40;
+        const barHeight = 6;
+        const barX = npc.x - barWidth / 2;
+        const barY = npc.y - 35; // Above NPC name
+        
+        this.ctx.save();
+        
+        // Draw health bar background (black border)
+        this.ctx.fillStyle = '#000000';
+        this.ctx.fillRect(barX - 1, barY - 1, barWidth + 2, barHeight + 2);
+        
+        // Draw health bar background (dark red)
+        this.ctx.fillStyle = '#330000';
+        this.ctx.fillRect(barX, barY, barWidth, barHeight);
+        
+        // Draw health bar fill (red to green gradient based on health)
+        if (healthPercentage > 0) {
+            const fillWidth = barWidth * healthPercentage;
+            const red = Math.floor(255 * (1 - healthPercentage));
+            const green = Math.floor(255 * healthPercentage);
+            this.ctx.fillStyle = `rgb(${red}, ${green}, 0)`;
+            this.ctx.fillRect(barX, barY, fillWidth, barHeight);
+        }
+        
+        // Draw health text
+        this.ctx.fillStyle = '#FFFFFF';
+        this.ctx.font = '10px Arial';
+        this.ctx.textAlign = 'center';
+        this.ctx.textBaseline = 'middle';
+        this.ctx.fillText(`${npc.health}/${npc.maxHealth}`, npc.x, barY + barHeight / 2);
         
         this.ctx.restore();
     }

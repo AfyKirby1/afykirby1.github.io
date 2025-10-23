@@ -16,10 +16,37 @@
     <title>Runes of Tir na nÓg - Prototype</title>
     <link rel="icon" href="../favicon.ico" type="image/x-icon">
     <link rel="shortcut icon" href="../favicon.ico" type="image/x-icon">
+    <script>
+        (function() {
+            try {
+                var params = new URLSearchParams(window.location.search);
+                if (params.get('multiplayer') === 'true') {
+                    document.documentElement.classList.add('is-connecting');
+                }
+            } catch (e) {}
+        })();
+    </script>
     <style>
         body{margin:0;padding:0;background:#4a7c59;font-family:'Courier New',monospace;color:#fff;overflow:hidden;background-image:radial-gradient(circle at 20% 80%,rgba(139,90,43,0.3) 0%,transparent 50%),radial-gradient(circle at 80% 20%,rgba(74,124,89,0.3) 0%,transparent 50%)}
 
         .game-container{position:relative;width:100vw;height:100vh;margin:0;padding:0;background:#4a7c59;box-sizing:border-box;overflow:hidden}
+
+        /* Hide game UI elements during loading */
+        .game-container.loading {
+            opacity: 0;
+            pointer-events: none;
+        }
+
+        .game-container.loading #gameCanvas,
+        .game-container.loading .ui-container,
+        .game-container.loading .controls-bubble,
+        .game-container.loading .mobile-controls,
+        .game-container.loading .mobile-chat-btn,
+        .game-container.loading .mobile-zoom-controls,
+        .game-container.loading .fullscreen-btn {
+            opacity: 0;
+            pointer-events: none;
+        }
 
         #gameCanvas{display:block;width:100%;height:100%;margin:0;padding:0}
 
@@ -283,75 +310,217 @@
             color: #ffa500;
         }
 
-        .pause-menu {
+        /* Loading Screen Styles */
+        .loading-screen {
             position: fixed;
             top: 0;
             left: 0;
             width: 100vw;
             height: 100vh;
-            background: rgba(0, 0, 0, 0.8);
+            background: linear-gradient(135deg, #0a0a1a 0%, #1a1a2e 50%, #0a0a1a 100%);
             display: none;
-            visibility: hidden;
+            justify-content: center;
+            align-items: center;
             z-index: 99999;
             font-family: "Courier New", monospace;
             pointer-events: auto;
         }
 
-        .pause-menu.show {
+        .loading-screen.show {
             display: flex;
-            visibility: visible;
         }
 
-        .pause-content {
-            margin: auto;
+        /* Show loading immediately when multiplayer param is present */
+        html.is-connecting .loading-screen {
+            display: flex;
+        }
+
+        /* Hide gameplay while connecting */
+        html.is-connecting .game-container {
+            opacity: 0;
+            pointer-events: none;
+        }
+
+        .loading-content {
             text-align: center;
-            background: rgba(139, 90, 43, 0.9);
-            padding: 40px;
-            border-radius: 15px;
+            background: rgba(26, 26, 46, 0.9);
             border: 3px solid #d4af37;
+            border-radius: 15px;
+            padding: 40px;
             box-shadow: 0 0 30px rgba(212, 175, 55, 0.5);
             min-width: 300px;
+            max-width: 400px;
         }
 
-        .pause-title {
-            font-size: 2.5em;
+        .loading-title {
+            font-size: 2rem;
             color: #d4af37;
-            margin-bottom: 30px;
+            margin-bottom: 20px;
             text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.8);
+            text-transform: uppercase;
+            letter-spacing: 2px;
         }
 
-        .pause-button {
-            display: inline-block;
-            padding: 15px 30px;
-            margin: 10px;
-            font-size: 1.2em;
+        .loading-subtitle {
+            font-size: 1.1rem;
+            color: #d4d4f4;
+            margin-bottom: 30px;
+            opacity: 0.9;
+        }
+
+        .loading-spinner {
+            width: 60px;
+            height: 60px;
+            border: 4px solid rgba(212, 175, 55, 0.3);
+            border-top: 4px solid #d4af37;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 20px;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .loading-progress {
+            width: 100%;
+            height: 8px;
+            background: rgba(212, 175, 55, 0.2);
+            border-radius: 4px;
+            overflow: hidden;
+            margin-bottom: 20px;
+        }
+
+        .loading-progress-bar {
+            height: 100%;
+            background: linear-gradient(90deg, #d4af37, #ffd700);
+            border-radius: 4px;
+            width: 0%;
+            transition: width 0.3s ease;
+            animation: progressGlow 2s ease-in-out infinite;
+        }
+
+        @keyframes progressGlow {
+            0%, 100% { box-shadow: 0 0 5px rgba(212, 175, 55, 0.5); }
+            50% { box-shadow: 0 0 15px rgba(212, 175, 55, 0.8); }
+        }
+
+        .loading-status {
+            color: #d4af37;
+            font-size: 0.9rem;
+            margin-bottom: 10px;
+            min-height: 20px;
+        }
+
+        .loading-details {
+            color: #8b7355;
+            font-size: 0.8rem;
+            opacity: 0.8;
+        }
+
+        /* Mobile responsive loading screen */
+        @media (max-width: 768px) {
+            .loading-content {
+                padding: 30px 20px;
+                margin: 20px;
+                min-width: 250px;
+            }
+
+            .loading-title {
+                font-size: 1.5rem;
+                letter-spacing: 1px;
+            }
+
+            .loading-subtitle {
+                font-size: 1rem;
+            }
+
+            .loading-spinner {
+                width: 50px;
+                height: 50px;
+            }
+        }
+
+        .compact-pause-menu {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            background: rgba(0, 0, 0, 0.7);
+            display: none;
+            justify-content: center;
+            align-items: center;
+            z-index: 99999;
             font-family: "Courier New", monospace;
-            border: none;
+            pointer-events: auto;
+        }
+
+        .compact-pause-menu.show {
+            display: flex;
+        }
+
+        .compact-pause-content {
+            background: linear-gradient(135deg, rgba(26, 26, 46, 0.98), rgba(15, 15, 30, 0.98));
+            border: 3px solid #d4af37;
+            border-radius: 15px;
+            padding: 30px;
+            text-align: center;
+            box-shadow: 0 0 30px rgba(212, 175, 55, 0.5);
+            min-width: 250px;
+            max-width: 300px;
+        }
+
+        .compact-pause-title {
+            font-size: 1.8em;
+            color: #d4af37;
+            margin-bottom: 25px;
+            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.8);
+            text-transform: uppercase;
+            letter-spacing: 2px;
+        }
+
+        .compact-pause-button {
+            display: block;
+            width: 100%;
+            padding: 12px 20px;
+            margin: 8px 0;
+            font-size: 1.1em;
+            font-family: "Courier New", monospace;
+            border: 2px solid;
             border-radius: 8px;
             cursor: pointer;
             text-transform: uppercase;
             font-weight: bold;
             transition: all 0.3s ease;
+            text-decoration: none;
         }
 
-        .pause-button.resume {
-            background: #4a7c59;
-            color: white;
+        .compact-pause-button.settings {
+            background: linear-gradient(145deg, #2d5a2d, #1a3a1a);
+            border-color: #4ade80;
+            color: #4ade80;
         }
 
-        .pause-button.resume:hover {
-            background: #5a9c69;
-            transform: scale(1.05);
+        .compact-pause-button.settings:hover {
+            background: linear-gradient(145deg, #3d6a3d, #2a4a2a);
+            border-color: #6ee7b7;
+            color: #6ee7b7;
+            transform: translateY(-2px);
         }
 
-        .pause-button.quit {
-            background: #8b5a2b;
-            color: white;
+        .compact-pause-button.quit {
+            background: linear-gradient(145deg, #5a2d2d, #3a1a1a);
+            border-color: #ef4444;
+            color: #ef4444;
         }
 
-        .pause-button.quit:hover {
-            background: #9b6a3b;
-            transform: scale(1.05);
+        .compact-pause-button.quit:hover {
+            background: linear-gradient(145deg, #6a3d3d, #4a2a2a);
+            border-color: #f87171;
+            color: #f87171;
+            transform: translateY(-2px);
         }
 
         /* Health Bar Styles */
@@ -360,7 +529,7 @@
             bottom: 20px;
             left: 50%;
             transform: translateX(-50%);
-            display: flex;
+            display: none; /* Hide bottom health bar - now using above-character display */
             gap: 5px;
             align-items: center;
             justify-content: center;
@@ -512,6 +681,60 @@
             gap: 15px;
         }
 
+        /* Mobile Zoom Controls */
+        .mobile-zoom-controls {
+            position: fixed;
+            top: 90px;
+            left: 20px;
+            z-index: 1500;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        .zoom-btn {
+            width: 50px;
+            height: 50px;
+            background: rgba(0, 0, 0, 0.8);
+            border: 2px solid #d4af37;
+            border-radius: 50%;
+            color: #d4af37;
+            font-size: 20px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            user-select: none;
+            -webkit-user-select: none;
+            -webkit-touch-callout: none;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+        }
+
+        .zoom-btn:hover {
+            background: rgba(212, 175, 55, 0.2);
+            border-color: #ffd700;
+            color: #ffd700;
+            transform: scale(1.05);
+        }
+
+        .zoom-btn:active {
+            background: #d4af37;
+            color: #000000;
+            transform: scale(0.95);
+        }
+
+        .zoom-in-btn::before {
+            content: '+';
+            font-size: 24px;
+        }
+
+        .zoom-out-btn::before {
+            content: '−';
+            font-size: 24px;
+        }
+
         /* Mobile Chat Button - Separate positioning */
         .mobile-chat-btn {
             position: fixed;
@@ -653,6 +876,10 @@
                 display: flex !important;
             }
             
+            .mobile-zoom-controls {
+                display: flex !important;
+            }
+            
             /* Adjust UI elements for mobile */
             .game-title {
                 font-size: 1.5em;
@@ -682,6 +909,10 @@
             }
             
             .fullscreen-btn {
+                display: none !important;
+            }
+            
+            .mobile-zoom-controls {
                 display: none !important;
             }
         }
@@ -720,6 +951,20 @@
     </style>
 </head>
 <body>
+    <!-- Loading Screen (placed before game to render immediately) -->
+    <div id="loadingScreen" class="loading-screen">
+        <div class="loading-content">
+            <div class="loading-title">Connecting</div>
+            <div class="loading-subtitle">Joining Multiplayer Server</div>
+            <div class="loading-spinner"></div>
+            <div class="loading-progress">
+                <div class="loading-progress-bar" id="loadingProgressBar"></div>
+            </div>
+            <div class="loading-status" id="loadingStatus">Initializing connection...</div>
+            <div class="loading-details" id="loadingDetails">Please wait while we connect to the server</div>
+        </div>
+    </div>
+
     <div class="game-container">
         <!-- Game Title with Sparks -->
         <div class="game-title" style="display: none;">RUNES OF TIR NA NÓG</div>
@@ -733,10 +978,10 @@
             <!-- Health Bar -->
             <div id="health-bar" class="health-bar"></div>
             
-            <!-- Interactive Controls Bubble -->
-            <div class="controls-bubble" id="controlsBubble">
-                <div class="bubble-icon">🎮</div>
-                <div class="bubble-tooltip">Click for Controls</div>
+            <!-- Pause Button -->
+            <div class="controls-bubble" id="pauseBubble">
+                <div class="bubble-icon">⚙</div>
+                <div class="bubble-tooltip">Game Menu</div>
             </div>
         </div>
 
@@ -775,6 +1020,21 @@
         <!-- Mobile Chat Button (Separate positioning) -->
         <button id="mobileChatBtn" class="mobile-chat-btn" style="display: none;">💬</button>
 
+        <!-- Mobile Zoom Controls -->
+        <div id="mobileZoomControls" class="mobile-zoom-controls" style="display: none;">
+            <button id="zoomInBtn" class="zoom-btn zoom-in-btn" title="Zoom In"></button>
+            <button id="zoomOutBtn" class="zoom-btn zoom-out-btn" title="Zoom Out"></button>
+        </div>
+
+        <!-- Compact Pause Menu -->
+        <div id="compactPauseMenu" class="compact-pause-menu">
+            <div class="compact-pause-content">
+                <div class="compact-pause-title" id="compactPauseTitle">Game Menu</div>
+                <button id="compactSettingsBtn" class="compact-pause-button settings">⚙ Settings</button>
+                <button id="compactQuitBtn" class="compact-pause-button quit">🏠 Quit to Menu</button>
+            </div>
+        </div>
+
         <!-- Pause Menu -->
         <div id="pauseMenu" class="pause-menu">
             <div class="pause-content">
@@ -806,6 +1066,88 @@
             import { World } from './world/World.js';
             import { SecurityUtils } from './utils/SecurityUtils.js';
 
+        // Loading Screen Manager
+        class LoadingScreenManager {
+            constructor() {
+                this.loadingScreen = document.getElementById('loadingScreen');
+                this.progressBar = document.getElementById('loadingProgressBar');
+                this.statusText = document.getElementById('loadingStatus');
+                this.detailsText = document.getElementById('loadingDetails');
+                this.gameContainer = document.querySelector('.game-container');
+                this.isVisible = false;
+                this.progressSteps = [
+                    { progress: 20, status: 'Connecting to server...', details: 'Establishing WebSocket connection' },
+                    { progress: 40, status: 'Authenticating...', details: 'Verifying player credentials' },
+                    { progress: 60, status: 'Loading world data...', details: 'Fetching world configuration' },
+                    { progress: 80, status: 'Synchronizing...', details: 'Syncing with other players' },
+                    { progress: 100, status: 'Connected!', details: 'Welcome to multiplayer!' }
+                ];
+                this.currentStep = 0;
+            }
+
+            show() {
+                // Hide game UI elements immediately
+                if (this.gameContainer) {
+                    this.gameContainer.classList.add('loading');
+                }
+                
+                // Show loading screen
+                this.loadingScreen.classList.add('show');
+                this.isVisible = true;
+                this.startProgressSimulation();
+            }
+
+            hide() {
+                // Hide loading screen
+                this.loadingScreen.classList.remove('show');
+                this.isVisible = false;
+                this.resetProgress();
+                
+                // Show game UI elements
+                if (this.gameContainer) {
+                    this.gameContainer.classList.remove('loading');
+                }
+            }
+
+            startProgressSimulation() {
+                this.currentStep = 0;
+                this.updateProgress(0, 'Initializing connection...', 'Please wait while we connect to the server');
+                
+                // Simulate progress steps
+                const interval = setInterval(() => {
+                    if (this.currentStep < this.progressSteps.length) {
+                        const step = this.progressSteps[this.currentStep];
+                        this.updateProgress(step.progress, step.status, step.details);
+                        this.currentStep++;
+                    } else {
+                        clearInterval(interval);
+                        // Keep at 100% until connection is actually complete
+                        this.updateProgress(100, 'Connected!', 'Welcome to multiplayer!');
+                    }
+                }, 800); // Update every 800ms
+            }
+
+            updateProgress(progress, status, details) {
+                this.progressBar.style.width = `${progress}%`;
+                this.statusText.textContent = status;
+                this.detailsText.textContent = details;
+            }
+
+            resetProgress() {
+                this.progressBar.style.width = '0%';
+                this.statusText.textContent = 'Initializing connection...';
+                this.detailsText.textContent = 'Please wait while we connect to the server';
+                this.currentStep = 0;
+            }
+
+            setRealProgress(progress, status, details) {
+                this.updateProgress(progress, status, details);
+            }
+        }
+
+        // Initialize loading screen manager
+        window.loadingScreenManager = new LoadingScreenManager();
+
         // Controls system
         class GameControls {
             constructor() {
@@ -819,14 +1161,28 @@
             }
 
             setupEventListeners() {
-                // Controls bubble click
-                const controlsBubble = document.getElementById('controlsBubble');
+                // Pause bubble click
+                const pauseBubble = document.getElementById('pauseBubble');
+                const compactPauseMenu = document.getElementById('compactPauseMenu');
+                const compactSettingsBtn = document.getElementById('compactSettingsBtn');
+                const compactQuitBtn = document.getElementById('compactQuitBtn');
+
+                pauseBubble.addEventListener('click', () => {
+                    this.toggleCompactPause();
+                });
+
+                // Compact pause menu buttons
+                compactSettingsBtn.addEventListener('click', () => {
+                    this.closeCompactPause();
+                    this.openControls();
+                });
+
+                compactQuitBtn.addEventListener('click', () => {
+                    this.quitToMenu();
+                });
+
                 const controlsWindow = document.getElementById('controlsWindow');
                 const controlsClose = document.getElementById('controlsClose');
-
-                controlsBubble.addEventListener('click', () => {
-                    this.toggleControls();
-                });
 
                 controlsClose.addEventListener('click', () => {
                     this.closeControls();
@@ -836,6 +1192,13 @@
                 controlsWindow.addEventListener('click', (e) => {
                     if (e.target === controlsWindow) {
                         this.closeControls();
+                    }
+                });
+
+                // Close compact pause menu when clicking outside
+                compactPauseMenu.addEventListener('click', (e) => {
+                    if (e.target === compactPauseMenu) {
+                        this.closeCompactPause();
                     }
                 });
             }
@@ -950,6 +1313,50 @@
                 controlsWindow.classList.remove('show');
                 this.isOpen = false;
             }
+
+            toggleCompactPause() {
+                const compactPauseMenu = document.getElementById('compactPauseMenu');
+                if (compactPauseMenu.classList.contains('show')) {
+                    this.closeCompactPause();
+                } else {
+                    this.openCompactPause();
+                }
+            }
+
+            openCompactPause() {
+                const compactPauseMenu = document.getElementById('compactPauseMenu');
+                const pauseTitle = document.getElementById('compactPauseTitle');
+                compactPauseMenu.classList.add('show');
+                
+                // Update title based on game mode
+                if (window.game && window.game.isMultiplayer) {
+                    pauseTitle.textContent = 'Game Menu';
+                } else {
+                    pauseTitle.textContent = 'Game Paused';
+                }
+                
+                // Only pause the game in single-player mode
+                if (window.game && !window.game.isMultiplayer) {
+                    window.game.pause();
+                }
+            }
+
+            closeCompactPause() {
+                const compactPauseMenu = document.getElementById('compactPauseMenu');
+                compactPauseMenu.classList.remove('show');
+                
+                // Only resume the game in single-player mode
+                if (window.game && !window.game.isMultiplayer) {
+                    window.game.resume();
+                }
+            }
+
+            quitToMenu() {
+                // Close pause menu
+                this.closeCompactPause();
+                // Navigate to menu
+                window.location.href = 'assets/menu.html';
+            }
         }
 
         window.addEventListener('load', async () => {
@@ -977,6 +1384,14 @@
                     fullURL: window.location.href,
                     searchParams: window.location.search
                 });
+
+                // If connecting class was set early, start the simulated progress now
+                if (document.documentElement.classList.contains('is-connecting')) {
+                    // Ensure manager is constructed
+                    if (window.loadingScreenManager) {
+                        window.loadingScreenManager.show();
+                    }
+                }
 
                 if (customWorldParam) {
                     // ✅ SECURITY FIX (VULN-004): Validate URL parameter
@@ -1087,13 +1502,24 @@
                     game.connectToMultiplayer().then(success => {
                         if (success) {
                             console.log('✅ Successfully connected to multiplayer server');
+                            // Hide loading screen after successful connection
+                            setTimeout(() => {
+                                window.loadingScreenManager.hide();
+                                document.documentElement.classList.remove('is-connecting');
+                            }, 1000); // Small delay to show "Connected!" message
                         } else {
                             console.error('❌ Failed to connect to multiplayer server');
                             console.error('Make sure the WebSocket server is running on wss://web-production-b1ed.up.railway.app/ws');
+                            // Hide loading screen even on failure
+                            window.loadingScreenManager.hide();
+                            document.documentElement.classList.remove('is-connecting');
                         }
                     }).catch(error => {
                         console.error('❌ Multiplayer connection error:', error);
                         console.error('Make sure the WebSocket server is running on wss://web-production-b1ed.up.railway.app/ws');
+                        // Hide loading screen on error
+                        window.loadingScreenManager.hide();
+                        document.documentElement.classList.remove('is-connecting');
                     });
                 }
 
@@ -1160,9 +1586,15 @@
         document.addEventListener('visibilitychange', () => {
             if (window.game) {
                 if (document.hidden) {
-                    window.game.pause();
+                    // In multiplayer, don't pause to avoid sync issues
+                    if (!window.game.isMultiplayer) {
+                        window.game.pause();
+                    }
                 } else {
-                    window.game.resume();
+                    // Only resume if we're actually paused
+                    if (window.game.isPaused) {
+                        window.game.resume();
+                    }
                 }
             }
         });
@@ -1305,6 +1737,9 @@
                 this.dpadButtons = document.querySelectorAll('.dpad-btn');
                 this.mobileChatBtn = document.getElementById('mobileChatBtn');
                 this.fullscreenBtn = document.getElementById('fullscreenBtn');
+                this.mobileZoomControls = document.getElementById('mobileZoomControls');
+                this.zoomInBtn = document.getElementById('zoomInBtn');
+                this.zoomOutBtn = document.getElementById('zoomOutBtn');
                 this.isFullscreen = false;
                 
                 this.setupEventListeners();
@@ -1375,6 +1810,27 @@
                     this.toggleFullscreen();
                 });
 
+                // Zoom button events
+                this.zoomInBtn.addEventListener('touchstart', (e) => {
+                    e.preventDefault();
+                    this.handleZoomIn();
+                });
+                
+                this.zoomInBtn.addEventListener('mousedown', (e) => {
+                    e.preventDefault();
+                    this.handleZoomIn();
+                });
+
+                this.zoomOutBtn.addEventListener('touchstart', (e) => {
+                    e.preventDefault();
+                    this.handleZoomOut();
+                });
+                
+                this.zoomOutBtn.addEventListener('mousedown', (e) => {
+                    e.preventDefault();
+                    this.handleZoomOut();
+                });
+
                 // Listen for fullscreen changes
                 document.addEventListener('fullscreenchange', () => {
                     this.isFullscreen = !!document.fullscreenElement;
@@ -1406,6 +1862,22 @@
             openMobileChat() {
                 if (window.chatManager) {
                     window.chatManager.openChat();
+                }
+            }
+
+            handleZoomIn() {
+                if (this.game.camera) {
+                    // Simulate scroll wheel zoom in (negative delta for zoom in)
+                    this.game.input.mouse.scrollDelta = -100;
+                    console.log('Mobile zoom in triggered');
+                }
+            }
+
+            handleZoomOut() {
+                if (this.game.camera) {
+                    // Simulate scroll wheel zoom out (positive delta for zoom out)
+                    this.game.input.mouse.scrollDelta = 100;
+                    console.log('Mobile zoom out triggered');
                 }
             }
 
@@ -1456,6 +1928,7 @@
                 if ('ontouchstart' in window || navigator.maxTouchPoints > 0) {
                     this.mobileControls.style.display = 'flex';
                     this.fullscreenBtn.style.display = 'flex';
+                    this.mobileZoomControls.style.display = 'flex';
                     console.log('Mobile controls enabled - Touch device detected');
                 } else {
                     console.log('Desktop device detected - Mobile controls hidden');

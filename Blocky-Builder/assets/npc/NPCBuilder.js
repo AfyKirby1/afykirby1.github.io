@@ -494,6 +494,9 @@ class NPCBuilder {
                                     <option value="wander">Wander</option>
                                     <option value="patrol">Patrol</option>
                                     <option value="guard">Guard</option>
+                                    <option value="hostile">Hostile</option>
+                                    <option value="defensive">Defensive</option>
+                                    <option value="aggressive">Aggressive</option>
                                 </select>
                             </div>
                             <div class="npc-upload-field">
@@ -970,6 +973,9 @@ class NPCBuilder {
                         <option value="wander" ${template.behavior === 'wander' ? 'selected' : ''}>Wander</option>
                         <option value="patrol" ${template.behavior === 'patrol' ? 'selected' : ''}>Patrol</option>
                         <option value="guard" ${template.behavior === 'guard' ? 'selected' : ''}>Guard</option>
+                        <option value="hostile" ${template.behavior === 'hostile' ? 'selected' : ''}>Hostile</option>
+                        <option value="defensive" ${template.behavior === 'defensive' ? 'selected' : ''}>Defensive</option>
+                        <option value="aggressive" ${template.behavior === 'aggressive' ? 'selected' : ''}>Aggressive</option>
                     </select>
                 </div>
                 
@@ -995,6 +1001,33 @@ class NPCBuilder {
                     <div class="npc-patrol-points">
                         <button id="npc-add-patrol-point" class="npc-patrol-btn">Add Point</button>
                         <div id="npc-patrol-list" class="npc-patrol-list"></div>
+                    </div>
+                </div>
+                
+                <div class="npc-config-group npc-combat-config" style="display: ${['hostile', 'defensive', 'aggressive'].includes(template.behavior) ? 'block' : 'none'}">
+                    <h4>⚔️ Combat Properties</h4>
+                    <div class="npc-combat-grid">
+                        <div class="npc-combat-field">
+                            <label for="npc-health">Health:</label>
+                            <input type="number" id="npc-health" min="1" max="1000" value="${template.health || 50}">
+                        </div>
+                        <div class="npc-combat-field">
+                            <label for="npc-max-health">Max Health:</label>
+                            <input type="number" id="npc-max-health" min="1" max="1000" value="${template.maxHealth || 50}">
+                        </div>
+                        <div class="npc-combat-field">
+                            <label for="npc-attack-damage">Damage:</label>
+                            <input type="number" id="npc-attack-damage" min="1" max="100" value="${template.attackDamage || 10}">
+                        </div>
+                        <div class="npc-combat-field">
+                            <label for="npc-attack-cooldown">Cooldown (ms):</label>
+                            <input type="number" id="npc-attack-cooldown" min="100" max="5000" step="100" value="${template.attackCooldown || 1000}">
+                        </div>
+                        <div class="npc-combat-field span-2">
+                            <label for="npc-detection-radius">Detection Radius:</label>
+                            <input type="range" id="npc-detection-radius" min="10" max="200" value="${template.detectionRadius || 80}">
+                            <span class="npc-detection-value">${template.detectionRadius || 80} px</span>
+                        </div>
                     </div>
                 </div>
                 
@@ -1040,6 +1073,31 @@ class NPCBuilder {
             });
         }
         
+        // Detection radius slider handler
+        const detectionSlider = document.getElementById('npc-detection-radius');
+        const detectionValue = document.querySelector('.npc-detection-value');
+        if (detectionSlider && detectionValue) {
+            detectionSlider.addEventListener('input', (e) => {
+                detectionValue.textContent = `${e.target.value} px`;
+            });
+        }
+        
+        // Health validation handler
+        const healthInput = document.getElementById('npc-health');
+        const maxHealthInput = document.getElementById('npc-max-health');
+        if (healthInput && maxHealthInput) {
+            const validateHealth = () => {
+                const health = parseInt(healthInput.value) || 1;
+                const maxHealth = parseInt(maxHealthInput.value) || 1;
+                if (health > maxHealth) {
+                    healthInput.value = maxHealth;
+                }
+            };
+            
+            healthInput.addEventListener('input', validateHealth);
+            maxHealthInput.addEventListener('input', validateHealth);
+        }
+        
         // Place NPC button
         const placeBtn = document.getElementById('npc-place-btn');
         if (placeBtn) {
@@ -1068,6 +1126,7 @@ class NPCBuilder {
     updateBehaviorConfig(behavior) {
         const wanderConfig = document.querySelector('.npc-wander-config');
         const patrolConfig = document.querySelector('.npc-patrol-config');
+        const combatConfig = document.querySelector('.npc-combat-config');
         
         if (wanderConfig) {
             wanderConfig.style.display = behavior === 'wander' ? 'block' : 'none';
@@ -1075,6 +1134,10 @@ class NPCBuilder {
         
         if (patrolConfig) {
             patrolConfig.style.display = behavior === 'patrol' ? 'block' : 'none';
+        }
+        
+        if (combatConfig) {
+            combatConfig.style.display = ['hostile', 'defensive', 'aggressive'].includes(behavior) ? 'block' : 'none';
         }
     }
     
@@ -1174,6 +1237,15 @@ class NPCBuilder {
             config.patrolPoints = this.getPatrolPoints();
         }
         
+        // Add combat properties for hostile/defensive/aggressive behaviors
+        if (['hostile', 'defensive', 'aggressive'].includes(behavior)) {
+            config.health = parseInt(document.getElementById('npc-health').value) || 50;
+            config.maxHealth = parseInt(document.getElementById('npc-max-health').value) || 50;
+            config.detectionRadius = parseInt(document.getElementById('npc-detection-radius').value) || 80;
+            config.attackDamage = parseInt(document.getElementById('npc-attack-damage').value) || 10;
+            config.attackCooldown = parseInt(document.getElementById('npc-attack-cooldown').value) || 1000;
+        }
+        
         return config;
     }
     
@@ -1261,6 +1333,23 @@ class NPCBuilder {
         
         if (npc.wanderRadius) {
             document.getElementById('npc-wander-radius').value = npc.wanderRadius;
+        }
+        
+        // Populate combat properties if they exist
+        if (npc.health !== undefined) {
+            document.getElementById('npc-health').value = npc.health;
+        }
+        if (npc.maxHealth !== undefined) {
+            document.getElementById('npc-max-health').value = npc.maxHealth;
+        }
+        if (npc.detectionRadius !== undefined) {
+            document.getElementById('npc-detection-radius').value = npc.detectionRadius;
+        }
+        if (npc.attackDamage !== undefined) {
+            document.getElementById('npc-attack-damage').value = npc.attackDamage;
+        }
+        if (npc.attackCooldown !== undefined) {
+            document.getElementById('npc-attack-cooldown').value = npc.attackCooldown;
         }
         
         console.log('Editing NPC:', npc);
@@ -1603,7 +1692,13 @@ class NPCBuilder {
                     customImage: npcData.customImage || null,
                     isCustom: npcData.isCustom || false,
                     width: npcData.width || 32,
-                    height: npcData.height || 32
+                    height: npcData.height || 32,
+                    // Include combat properties if present
+                    health: npcData.health,
+                    maxHealth: npcData.maxHealth,
+                    detectionRadius: npcData.detectionRadius,
+                    attackDamage: npcData.attackDamage,
+                    attackCooldown: npcData.attackCooldown
                 };
                 
                 this.npcs.push(npc);

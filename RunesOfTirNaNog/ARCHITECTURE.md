@@ -474,7 +474,118 @@ class Input {
 - Event delegation with action abstraction
 - Settings integration
 
-### 7. Settings System (`/ui/`)
+### 7. Loading Screen System (`index.html`)
+
+#### LoadingScreenManager - Multiplayer Connection Loading
+```javascript
+class LoadingScreenManager {
+    constructor() {
+        this.loadingScreen = document.getElementById('loadingScreen');
+        this.progressBar = document.getElementById('loadingProgressBar');
+        this.statusText = document.getElementById('loadingStatus');
+        this.detailsText = document.getElementById('loadingDetails');
+        this.gameContainer = document.querySelector('.game-container');
+        this.isVisible = false;
+        this.progressSteps = [
+            { progress: 20, status: 'Connecting to server...', details: 'Establishing WebSocket connection' },
+            { progress: 40, status: 'Authenticating...', details: 'Verifying player credentials' },
+            { progress: 60, status: 'Loading world data...', details: 'Fetching world configuration' },
+            { progress: 80, status: 'Synchronizing...', details: 'Syncing with other players' },
+            { progress: 100, status: 'Connected!', details: 'Welcome to multiplayer!' }
+        ];
+    }
+
+    show() {
+        // Hide game UI elements immediately
+        if (this.gameContainer) {
+            this.gameContainer.classList.add('loading');
+        }
+        
+        // Show loading screen
+        this.loadingScreen.classList.add('show');
+        this.isVisible = true;
+        this.startProgressSimulation();
+    }
+
+    hide() {
+        // Hide loading screen
+        this.loadingScreen.classList.remove('show');
+        this.isVisible = false;
+        this.resetProgress();
+        
+        // Show game UI elements
+        if (this.gameContainer) {
+            this.gameContainer.classList.remove('loading');
+        }
+    }
+}
+```
+
+**Key Features:**
+- **Immediate Display**: Shows loading screen as soon as multiplayer parameter detected
+- **Progress Simulation**: 5-stage progress simulation with realistic timing
+- **UI Hiding**: Completely hides game UI during loading to prevent flicker
+- **Mobile Responsive**: Optimized sizing and layout for mobile devices
+- **Connection Integration**: Hides automatically when multiplayer connection completes
+
+**Responsibilities:**
+- Prevent loading screen flicker in multiplayer mode
+- Provide visual feedback during connection process
+- Hide/show game UI elements appropriately
+- Simulate realistic connection progress
+
+### 8. Mobile Controls System (`index.html`)
+
+#### MobileControlsManager - Touch Device Controls
+```javascript
+class MobileControlsManager {
+    constructor(game) {
+        this.game = game;
+        this.mobileControls = document.getElementById('mobileControls');
+        this.dpadButtons = document.querySelectorAll('.dpad-btn');
+        this.mobileChatBtn = document.getElementById('mobileChatBtn');
+        this.fullscreenBtn = document.getElementById('fullscreenBtn');
+        this.mobileZoomControls = document.getElementById('mobileZoomControls');
+        this.zoomInBtn = document.getElementById('zoomInBtn');
+        this.zoomOutBtn = document.getElementById('zoomOutBtn');
+        this.isFullscreen = false;
+        
+        this.setupEventListeners();
+        this.detectMobileDevice();
+    }
+
+    handleZoomIn() {
+        if (this.game.camera) {
+            // Simulate scroll wheel zoom in (negative delta for zoom in)
+            this.game.input.mouse.scrollDelta = -100;
+            console.log('Mobile zoom in triggered');
+        }
+    }
+
+    handleZoomOut() {
+        if (this.game.camera) {
+            // Simulate scroll wheel zoom out (positive delta for zoom out)
+            this.game.input.mouse.scrollDelta = 100;
+            console.log('Mobile zoom out triggered');
+        }
+    }
+}
+```
+
+**Key Features:**
+- **D-pad Controls**: 8-directional movement with touch events
+- **Zoom Controls**: Dedicated zoom in/out buttons for mobile
+- **Chat Integration**: Mobile chat button for multiplayer communication
+- **Fullscreen Support**: Enter/exit fullscreen functionality
+- **Touch Detection**: Automatic mobile device detection and control activation
+
+**Responsibilities:**
+- Mobile touch input handling
+- Zoom control simulation
+- Mobile UI element management
+- Touch event optimization
+
+### 9. Settings System (`/ui/`)
 
 #### SettingsPanel.js - Settings Management
 ```javascript
@@ -708,11 +819,28 @@ const GAME_CONFIG = {
 
 ---
 
-**Architecture Version**: v2.0
-**Last Updated**: Enhanced with Interactive Controls & Settings System
-**Status**: Production-ready with comprehensive UI/UX improvements
+**Architecture Version**: v2.2
+**Last Updated**: Enhanced with Complete Combat System & Visual Improvements
+**Status**: Production-ready with comprehensive combat, mobile and multiplayer support
 
 ## 🆕 Recent Architecture Updates
+
+### Combat System Implementation (January 27, 2025)
+- **Complete Combat System**: Player and NPC attack mechanics with RuneScape Classic-style visuals
+- **Health Bar System**: Above-character health bars for player and all NPCs with color-coded states
+- **Floating Damage Numbers**: Animated damage numbers that float upward and fade out with gravity
+- **Hostile NPC Behavior**: Rats chase and attack players with detection radius and attack cooldowns
+- **Visual Attack Effects**: Simple weapon swing animations and claw attack effects
+- **Player Size Enhancement**: Increased from 12px to 18px for better visibility
+- **NPC Visual Cleanup**: Removed green interaction dots, improved name positioning
+- **Keybind Conflict Resolution**: Fixed Spacebar triggering both attack and chat
+
+### Mobile & Multiplayer Enhancements (January 27, 2025)
+- **Loading Screen System**: Immediate display with progress simulation for multiplayer connections
+- **Mobile Controls**: Touch-friendly D-pad, zoom controls, and chat integration
+- **Smart Pause Logic**: Multiplayer-aware pause behavior that preserves NPC synchronization
+- **Mobile Default Zoom**: Automatic maximum zoom on touch devices for better visibility
+- **Event Handler Updates**: Window blur and visibility change handlers respect multiplayer mode
 
 ### Custom World Support (October 21, 2025)
 - **Mana Tile Support**: Added "mana" as valid tile type for custom worlds

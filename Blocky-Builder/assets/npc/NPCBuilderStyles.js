@@ -74,6 +74,30 @@ const NPCBuilderStyles = `
     cursor: move;
 }
 
+.npc-combat-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+}
+
+.npc-combat-field {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.npc-combat-field.span-2 {
+    grid-column: span 2;
+}
+
+.npc-combat-field label {
+    font-size: 11px;
+    font-weight: 600;
+    color: #bdc3c7;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
 .npc-panel-header h3 {
     margin: 0;
     font-size: 16px;
@@ -324,6 +348,11 @@ const NPCBuilderStyles = `
     box-shadow: 0 0 0 2px rgba(138, 43, 226, 0.2);
 }
 
+.npc-config-group select option {
+    background: #34495e;
+    color: #ecf0f1;
+}
+
 .npc-config-group input[type="range"] {
     padding: 0;
     height: 6px;
@@ -350,7 +379,8 @@ const NPCBuilderStyles = `
 }
 
 .npc-speed-value,
-.npc-wander-value {
+.npc-wander-value,
+.npc-detection-value {
     font-size: 11px;
     color: #8A2BE2;
     font-weight: 600;

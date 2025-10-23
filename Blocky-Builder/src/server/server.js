@@ -1,9 +1,10 @@
 const express = require('express');
 const path = require('path');
 const fs = require('fs');
+const multer = require('multer');
 
 const app = express();
-const PORT = process.env.PORT || 3000;
+const PORT = process.env.PORT || 3001;
 
 // Middleware
 app.use(express.static(path.join(__dirname, '../../public')));
@@ -11,6 +12,22 @@ app.use('/src', express.static(path.join(__dirname, '../../src')));
 app.use('/assets', express.static(path.join(__dirname, '../../assets')));
 app.use(express.json({ limit: '50mb' }));
 app.use(express.urlencoded({ extended: true, limit: '50mb' }));
+
+// Multer configuration for tile texture uploads
+const storage = multer.diskStorage({
+    destination: function (req, file, cb) {
+        const tilesDir = path.join(__dirname, '../../assets/tiles');
+        if (!fs.existsSync(tilesDir)) {
+            fs.mkdirSync(tilesDir, { recursive: true });
+        }
+        cb(null, tilesDir);
+    },
+    filename: function (req, file, cb) {
+        const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9);
+        cb(null, file.fieldname + '-' + uniqueSuffix + path.extname(file.originalname));
+    }
+});
+const upload = multer({ storage: storage });
 
 // Routes
 app.get('/', (req, res) => {
@@ -92,6 +109,41 @@ app.get('/api/worlds', (req, res) => {
     } catch (error) {
         res.status(500).json({ success: false, message: error.message });
     }
+});
+
+// New endpoint for uploading tile textures
+app.post('/api/upload-tile-texture', upload.single('texture'), (req, res) => {
+    if (!req.file) {
+        return res.json({ success: false, message: 'No file uploaded.' });
+    }
+    // Return the relative path to be used by the frontend
+    res.json({ success: true, path: `../assets/tiles/${req.file.filename}` });
+});
+
+// New endpoint for adding tile metadata
+app.post('/api/add-tile', (req, res) => {
+    const { id, data } = req.body;
+    const tilesPath = path.join(__dirname, '..', '..', 'public', 'tiles.json');
+
+    fs.readFile(tilesPath, 'utf8', (err, fileData) => {
+        let tiles = {};
+        if (!err) {
+            try {
+                tiles = JSON.parse(fileData);
+            } catch (e) {
+                // Ignore if JSON is invalid, we'll overwrite it
+            }
+        }
+        
+        tiles[id] = data;
+
+        fs.writeFile(tilesPath, JSON.stringify(tiles, null, 2), (writeErr) => {
+            if (writeErr) {
+                return res.json({ success: false, message: 'Failed to save tile data.' });
+            }
+            res.json({ success: true, message: 'Tile added successfully.' });
+        });
+    });
 });
 
 // Serve editor files

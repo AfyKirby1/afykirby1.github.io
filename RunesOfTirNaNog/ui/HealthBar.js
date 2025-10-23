@@ -65,6 +65,36 @@ export class HealthBar {
         // For now, using DOM-based display
     }
 
+    /**
+     * Render health bar above character (canvas-based)
+     */
+    renderAboveCharacter(ctx, playerX, playerY, camera) {
+        const barWidth = 36; // Increased from 30 to match larger player size
+        const barHeight = 4; // Increased from 3 to match larger player size
+        const barX = playerX - barWidth / 2;
+        const barY = playerY - 24; // Adjusted for larger player (was 20)
+        
+        // Background (empty health)
+        ctx.fillStyle = 'rgba(0, 0, 0, 0.7)';
+        ctx.fillRect(barX, barY, barWidth, barHeight);
+        
+        // Health fill
+        const healthPercent = this.currentHealth / this.maxHealth;
+        const fillWidth = barWidth * healthPercent;
+        
+        // Color based on health level
+        if (healthPercent > 0.6) ctx.fillStyle = '#4ade80'; // Green
+        else if (healthPercent > 0.3) ctx.fillStyle = '#fbbf24'; // Yellow
+        else ctx.fillStyle = '#ef4444'; // Red
+        
+        ctx.fillRect(barX, barY, fillWidth, barHeight);
+        
+        // Border
+        ctx.strokeStyle = '#ffffff';
+        ctx.lineWidth = 1;
+        ctx.strokeRect(barX, barY, barWidth, barHeight);
+    }
+
     getCurrentHealth() {
         return this.currentHealth;
     }

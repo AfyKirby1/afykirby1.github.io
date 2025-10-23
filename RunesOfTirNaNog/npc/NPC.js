@@ -43,7 +43,7 @@ class NPC {
         
         // Player model properties (for Bob)
         if (this.usePlayerModel) {
-            this.size = 12;
+            this.size = 18; // Increased from 12 to match player size
             this.legAngle = 0;
             this.legSwingSpeed = Math.PI * 2 / 0.5;
             this.playerDirection = 'down'; // down, up, left, right
@@ -78,6 +78,18 @@ class NPC {
         this.detectionRadius = config.detectionRadius || 50;
         this.reactionTime = config.reactionTime || 500;
         
+        // Combat Properties
+        this.health = config.health || 100;
+        this.maxHealth = config.maxHealth || 100;
+        this.attackDamage = config.attackDamage || 1;
+        this.attackCooldown = config.attackCooldown || 1000;
+        this.lastAttackTime = 0;
+        this.isAttacking = false;
+        this.attackRange = config.attackRange || 20;
+        
+        // Damage numbers system
+        this.damageNumbers = [];
+        
         // Animation Properties
         this.animationTimer = 0;
         this.isMoving = false;
@@ -103,6 +115,9 @@ class NPC {
         
         // Update animation
         this.updateAnimation(deltaTime);
+        
+        // Update damage numbers
+        this.updateDamageNumbers();
         
         // Update smooth movement
         this.updateSmoothMovement(deltaTime, this.world);
@@ -134,6 +149,9 @@ class NPC {
                 break;
             case "guard":
                 this.handleGuardBehavior(deltaTime, game);
+                break;
+            case "hostile":
+                this.handleHostileBehavior(deltaTime, game);
                 break;
         }
         
@@ -259,6 +277,35 @@ class NPC {
             // Look around for threats
             if (Math.random() < 0.02) {
                 this.direction = Math.floor(Math.random() * 8);
+            }
+        }
+    }
+    
+    /**
+     * Handle hostile behavior - NPC chases and attacks player
+     */
+    handleHostileBehavior(deltaTime, game) {
+        if (!game.player) return;
+        
+        const distanceToPlayer = this.getDistanceTo(game.player.x, game.player.y);
+        
+        if (distanceToPlayer <= this.detectionRadius) {
+            // Player detected - chase
+            if (distanceToPlayer <= this.attackRange) {
+                // In attack range - attack if cooldown is ready
+                if (Date.now() - this.lastAttackTime >= this.attackCooldown) {
+                    this.attackPlayer(game.player);
+                }
+            } else {
+                // Chase player
+                this.moveTowards(game.player.x, game.player.y, deltaTime, this.world);
+            }
+        } else {
+            // Player not detected - return to wandering or idle
+            if (this.behavior === "wander") {
+                this.handleWanderBehavior(deltaTime, game);
+            } else {
+                this.handleIdleBehavior(deltaTime, game);
             }
         }
     }
@@ -449,20 +496,37 @@ class NPC {
             ctx.fillStyle = "#d4af37"; // Gold color for Bob
             ctx.font = "12px Arial";
             ctx.textAlign = "center";
-            const nameY = this.usePlayerModel ? -this.size - 5 : -this.height/2 - 15;
+            
+            // Adjust positioning based on NPC type
+            let nameY;
+            if (this.name.toLowerCase().includes('rat')) {
+                // Rats get names closer to sprite
+                nameY = this.usePlayerModel ? -this.size - 2 : -this.height/2 - 8;
+            } else {
+                // Other NPCs keep original positioning
+                nameY = this.usePlayerModel ? -this.size - 5 : -this.height/2 - 15;
+            }
+            
             ctx.fillText(this.name, 0, nameY);
+            
+            // Draw health bar above name for all NPCs
+            this.renderHealthBar(ctx, nameY);
+        }
+        
+        // Render attack effect
+        if (this.isAttacking) {
+            this.renderAttackEffect(ctx);
         }
         
         // Draw interaction indicator
         if (this.interactable && camera.zoom > 0.3) {
-            ctx.fillStyle = "#00FF00";
-            ctx.beginPath();
-            const indicatorY = this.usePlayerModel ? -this.size - 15 : -this.height/2 - 20;
-            ctx.arc(0, indicatorY, 3, 0, Math.PI * 2);
-            ctx.fill();
+            // Green dot removed - only show names now
         }
         
         ctx.restore();
+        
+        // Render damage numbers in world coordinates (outside transform)
+        this.renderDamageNumbers(ctx);
     }
     
     /**
@@ -704,6 +768,172 @@ class NPC {
      */
     addQuest(quest) {
         this.quests.push(quest);
+    }
+    
+    /**
+     * Attack the player
+     */
+    attackPlayer(player) {
+        this.lastAttackTime = Date.now();
+        this.isAttacking = true;
+        
+        console.log(`⚔️ ${this.name} attacks player!`);
+        player.takeDamage(this.attackDamage);
+        
+        // Reset attack animation after 200ms
+        setTimeout(() => {
+            this.isAttacking = false;
+        }, 200);
+    }
+    
+    /**
+     * Take damage from player or other sources
+     */
+    takeDamage(amount) {
+        this.health = Math.max(0, this.health - amount);
+        console.log(`💔 ${this.name} takes ${amount} damage! Health: ${this.health}/${this.maxHealth}`);
+        
+        // Add floating damage number
+        this.addDamageNumber(amount, this.x, this.y - 20);
+        
+        // Check for death
+        if (this.health <= 0) {
+            console.log(`💀 ${this.name} has died!`);
+            this.isActive = false;
+            this.isVisible = false;
+            // TODO: Add death animation or loot drop
+        }
+    }
+    
+    /**
+     * Heal the NPC
+     */
+    heal(amount) {
+        this.health = Math.min(this.maxHealth, this.health + amount);
+        console.log(`💚 ${this.name} heals ${amount} HP! Health: ${this.health}/${this.maxHealth}`);
+    }
+    
+    /**
+     * Render attack effect for NPCs
+     */
+    renderAttackEffect(ctx) {
+        // RuneScape Classic style: Simple bite/claw attack
+        ctx.strokeStyle = '#8B4513'; // Brown color for rat teeth/claws
+        ctx.lineWidth = 2;
+        
+        // Draw simple attack lines
+        const attackSize = Math.max(this.width, this.height) * 0.5;
+        
+        // Draw 2-3 attack lines in different directions
+        for (let i = 0; i < 3; i++) {
+            const angle = (Math.PI * 2 * i) / 3;
+            const startX = Math.cos(angle) * attackSize * 0.3;
+            const startY = Math.sin(angle) * attackSize * 0.3;
+            const endX = Math.cos(angle) * attackSize;
+            const endY = Math.sin(angle) * attackSize;
+            
+            ctx.beginPath();
+            ctx.moveTo(startX, startY);
+            ctx.lineTo(endX, endY);
+            ctx.stroke();
+        }
+        
+        // Add simple hit effect at center
+        ctx.fillStyle = '#FF4444';
+        ctx.beginPath();
+        ctx.arc(0, 0, 2, 0, Math.PI * 2);
+        ctx.fill();
+    }
+    
+    /**
+     * Render health bar above NPC name
+     */
+    renderHealthBar(ctx, nameY) {
+        const barWidth = 30;
+        const barHeight = 3;
+        const barX = -barWidth / 2;
+        const barY = nameY - 8; // Above the name
+        
+        // Background (empty health)
+        ctx.fillStyle = 'rgba(0, 0, 0, 0.7)';
+        ctx.fillRect(barX, barY, barWidth, barHeight);
+        
+        // Health fill
+        const healthPercent = this.health / this.maxHealth;
+        const fillWidth = barWidth * healthPercent;
+        
+        // Color based on health level
+        if (healthPercent > 0.6) ctx.fillStyle = '#4ade80'; // Green
+        else if (healthPercent > 0.3) ctx.fillStyle = '#fbbf24'; // Yellow
+        else ctx.fillStyle = '#ef4444'; // Red
+        
+        ctx.fillRect(barX, barY, fillWidth, barHeight);
+        
+        // Border
+        ctx.strokeStyle = '#ffffff';
+        ctx.lineWidth = 1;
+        ctx.strokeRect(barX, barY, barWidth, barHeight);
+    }
+    
+    /**
+     * Add damage number floating above NPC
+     */
+    addDamageNumber(amount, x, y) {
+        console.log(`🔢 Adding damage number: -${amount} at (${x}, ${y}) for ${this.name}`);
+        this.damageNumbers.push({
+            amount: amount,
+            x: x,
+            y: y,
+            startTime: Date.now(),
+            duration: 1000, // 1 second
+            velocity: { x: (Math.random() - 0.5) * 2, y: -2 }
+        });
+    }
+    
+    /**
+     * Update damage numbers animation
+     */
+    updateDamageNumbers() {
+        const now = Date.now();
+        this.damageNumbers = this.damageNumbers.filter(dmg => {
+            const elapsed = now - dmg.startTime;
+            if (elapsed >= dmg.duration) {
+                return false; // Remove expired damage numbers
+            }
+            
+            // Update position
+            dmg.x += dmg.velocity.x;
+            dmg.y += dmg.velocity.y;
+            dmg.velocity.y += 0.1; // Gravity effect
+            
+            return true;
+        });
+    }
+    
+    /**
+     * Render floating damage numbers
+     */
+    renderDamageNumbers(ctx) {
+        if (this.damageNumbers.length === 0) return;
+        
+        ctx.save();
+        ctx.font = 'bold 12px Arial';
+        ctx.textAlign = 'center';
+        
+        console.log(`🎨 Rendering ${this.damageNumbers.length} damage numbers for ${this.name}`);
+        
+        this.damageNumbers.forEach((dmg, index) => {
+            const elapsed = Date.now() - dmg.startTime;
+            const progress = elapsed / dmg.duration;
+            const alpha = 1 - progress;
+            
+            ctx.fillStyle = `rgba(255, 0, 0, ${alpha})`;
+            ctx.fillText(`-${dmg.amount}`, dmg.x, dmg.y);
+            
+            console.log(`🎨 Damage number ${index}: -${dmg.amount} at (${dmg.x}, ${dmg.y}) alpha: ${alpha.toFixed(2)}`);
+        });
+        
+        ctx.restore();
     }
     
     /**

@@ -5,26 +5,41 @@ All notable changes to this project will be documented in this file.
 ## [Unreleased] - 2025-01-27
 
 ### Added
-- **Grid Toggle Feature**: Added ability to show/hide grid lines overlay in Video Settings
-- **Real-time Settings Sync**: Grid toggle changes apply immediately without requiring game restart
-- **Settings Persistence**: Grid setting is saved to localStorage and restored on game start
+- **Combat System**: Complete RPG combat with player and NPC attacks
+- **Player Attack System**: Spacebar attack with 1 damage and RuneScape Classic-style weapon animations
+- **Hostile NPC Behavior**: Rats chase and attack players with detection radius and attack cooldowns
+- **Health Bar System**: Above-character health bars for player and all NPCs with color-coded states
+- **Floating Damage Numbers**: Animated damage numbers that float upward and fade out
+- **Visual Attack Effects**: RuneScape Classic-style weapon swings and claw attacks
+- **NPC Health Tracking**: Real-time health monitoring with death states
+- **Mobile Loading Screen**: Comprehensive loading screen for multiplayer connections with progress simulation
+- **Mobile Zoom Controls**: Touch-friendly zoom in/out buttons for mobile devices
+- **Mobile Default Zoom**: Automatic maximum zoom on touch devices for better mobile experience
+- **Compact Pause Menu**: Streamlined pause menu with Settings and Quit to Menu options
+- **Multiplayer Menu System**: Smart menu behavior that doesn't pause game in multiplayer mode
 
 ### Fixed
-- **Spawn Point Coordinates**: Fixed player spawning at incorrect coordinates by properly converting tile coordinates to pixel coordinates
-- **World Dimensions Loading**: Fixed world dimensions showing as "NaNxNaN" by correcting property names from `worldWidth/worldHeight` to `width/height`
-- **Double Coordinate Conversion**: Fixed spawn point double conversion issue in `getRandomSpawnPoint` method
-- **Quit to Menu Navigation**: Fixed "Quit to Menu" button to navigate to main menu (`assets/menu.html`) instead of landing page
-- **Main Page Navigation**: Fixed Runes of Tir Na Nog button to point to internal landing page instead of GitHub Pages URL
-- **Custom World Loading**: Fixed world path resolution from `../worlds/` to `worlds/` for proper server file structure
-- **Custom World Loading**: Fixed "Invalid tile type: mana" error by adding "mana" to valid tile types in SecurityUtils.js
-- **World Validation**: Updated security validation to support mana tiles in custom worlds
+- **Spacebar Keybind Conflict**: Fixed Spacebar triggering both attack and chat - now only attacks
+- **NPC Visual Clutter**: Removed green interaction dots, showing only names
+- **Rat Name Positioning**: Moved rat names closer to sprites for better visual hierarchy
+- **Loading Screen Flicker**: Fixed bare green screen flash by showing loading screen immediately on multiplayer detection
+- **Pause Menu CSS**: Added missing base CSS for compact pause menu to display properly
+- **ESC Key Behavior**: ESC key now opens compact menu in multiplayer instead of traditional pause menu
+- **Window Blur Handling**: Clicking outside game window no longer pauses game in multiplayer mode
+- **Tab Visibility**: Switching tabs no longer pauses game in multiplayer mode
+- **NPC Sync Preservation**: All pause triggers respect multiplayer mode to maintain NPC synchronization
+- **Mobile Menu Responsiveness**: Menu page optimized for mobile with responsive design
 
 ### Changed
-- **Internal Testing**: Updated main page button to use local path `RunesOfTirNaNog/landing.html` for internal testing
-- **World Path Resolution**: Changed custom world loading path from `../worlds/${sanitized}/world.json` to `worlds/${sanitized}/world.json`
-- **Security Validation**: Extended valid tile types from `['grass', 'water', 'wall', 'cave']` to `['grass', 'water', 'wall', 'cave', 'mana']`
-- **Custom World Support**: Enhanced support for custom worlds with mana tiles
-- **Error Messages**: Improved error messages to include server port information
+- **Player Size**: Increased from 12px to 18px for better visibility
+- **Health Display**: Moved from bottom screen to above-character for immersive experience
+- **Attack Visuals**: Replaced complex arcs with simple RuneScape Classic-style weapon animations
+- **NPC Appearance**: Cleaner look with health bars and proper name positioning
+- **Pause Button Icon**: Changed from ⏸ to ⚙ in multiplayer mode to reflect menu functionality
+- **Menu Titles**: Dynamic titles ("Game Paused" vs "Game Menu") based on game mode
+- **Mobile Zoom Default**: Touch devices now start at maximum zoom level (3.0x) for better visibility
+- **Loading Screen Integration**: Loading screen shows immediately when multiplayer parameter detected
+- **Event Handler Logic**: Window blur and visibility change handlers respect multiplayer mode
 
 ## [v1.2] - 2025-10-16
 

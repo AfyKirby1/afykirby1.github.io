@@ -4,31 +4,64 @@
 
 **Runes of Tir na nÓg** is an enhanced top-down RPG prototype built with vanilla JavaScript, featuring modular architecture, pixel art graphics, and comprehensive UI systems.
 
-## 🎯 Current Status: **GRID TOGGLE & NAVIGATION FIXES**
+## 🎯 Current Status: **COMBAT SYSTEM IMPLEMENTATION**
 
 ### ✅ Recently Completed Features
 
-#### 1. Grid Toggle Feature (v1.4) 🎮 NEW!
-- **Location**: `world/World.js`, `ui/VideoSettings.js`, `core/Game.js`
+#### 1. Complete Combat System (v2.0) ⚔️ NEW!
+- **Location**: `player/Player.js`, `npc/NPC.js`
 - **Features**:
-  - **Grid Toggle**: Added ability to show/hide grid lines overlay in Video Settings
-  - **Real-time Sync**: Grid changes apply immediately without game restart
-  - **Settings Persistence**: Grid setting saved to localStorage and restored on start
-  - **UI Integration**: Grid toggle appears in Video Settings with checkbox and ON/OFF status
-  - **Default State**: Grid lines enabled by default for better tile visibility
-- **Technical**: Added `showGrid` property, `toggleGrid()`, `setGridVisibility()` methods
-- **User Experience**: Instant visual feedback when toggling grid lines
+  - **Player Attacks**: Spacebar triggers 1-damage attacks with RuneScape Classic-style weapon animations
+  - **Hostile NPCs**: Rats chase and attack players with 27px detection radius and 1-second attack cooldowns
+  - **Health System**: Above-character health bars for player (10 HP) and NPCs (5-6 HP) with color-coded states
+  - **Floating Damage Numbers**: Animated red damage numbers that float upward and fade out over 1 second
+  - **Visual Effects**: Simple brown weapon swings and claw attacks with gold hit sparkles
+  - **Death System**: NPCs become inactive and invisible when health reaches 0
+- **Technical**: Added combat properties, attack methods, damage number system, and visual effects
+- **User Experience**: Complete RPG combat with immersive visual feedback
 
-#### 2. Navigation Fixes (v1.4) 🧭 NEW!
-- **Location**: `ui/PauseMenu.js`
+#### 2. Visual Improvements (v2.0) 🎨 NEW!
+- **Location**: `player/Player.js`, `npc/NPC.js`, `ui/HealthBar.js`
 - **Features**:
-  - **Quit to Menu Fix**: Fixed "Quit to Menu" button to navigate to main menu (`assets/menu.html`)
-  - **Proper Navigation**: No longer incorrectly redirects to landing page
-  - **Auto-save**: Game still auto-saves before quitting to menu
-- **Technical**: Updated `quitToMenu()` method navigation path
-- **User Experience**: Proper menu navigation flow restored
+  - **Player Size**: Increased from 12px to 18px for better visibility
+  - **Health Display**: Moved from bottom screen to above-character for immersive experience
+  - **NPC Cleanup**: Removed green interaction dots, showing only names
+  - **Rat Positioning**: Moved rat names closer to sprites for better visual hierarchy
+  - **Keybind Fix**: Spacebar now only attacks (no longer triggers chat)
+- **Technical**: Enhanced rendering systems and positioning logic
+- **User Experience**: Cleaner, more immersive visual presentation
+- **User Experience**: Better mobile gameplay with accessible zoom controls
 
-#### 3. Custom World Support Enhancement (v1.3) 🌍
+#### 3. Smart Pause System (v1.5) ⚙️ NEW!
+- **Location**: `core/Game.js`, `index.html` - GameControls class
+- **Features**:
+  - **Multiplayer-Aware**: Pause button behaves differently in multiplayer vs single-player
+  - **NPC Sync Preservation**: No pause in multiplayer to maintain NPC synchronization
+  - **Dynamic UI**: Button icon and menu title change based on game mode
+  - **ESC Key Integration**: ESC key opens compact menu in multiplayer
+  - **Event Handler Updates**: Window blur and tab switching don't pause in multiplayer
+- **Technical**: Updated `togglePause()`, blur handlers, and visibility change handlers
+- **User Experience**: Consistent menu behavior without disrupting multiplayer sync
+
+#### 4. Compact Pause Menu (v1.5) 📋 NEW!
+- **Location**: `index.html` - Compact pause menu system
+- **Features**:
+  - **Streamlined Design**: Clean menu with Settings and Quit to Menu options
+  - **Mode-Aware Titles**: "Game Paused" vs "Game Menu" based on game mode
+  - **CSS Fix**: Added missing base CSS for proper display
+  - **Mobile Optimized**: Responsive design for mobile devices
+- **Technical**: Fixed CSS display issues and added dynamic title updates
+- **User Experience**: Clean, functional menu system
+
+#### 5. Mobile Menu Responsiveness (v1.4) 📱
+- **Location**: `assets/menu.html`
+- **Features**:
+  - **Responsive Design**: Mobile-friendly layout with proper scaling
+  - **Touch Optimization**: Larger touch targets and improved spacing
+  - **Performance**: Reduced animated elements on mobile for better performance
+  - **Horizontal Scroll Fix**: Prevented horizontal scrolling on mobile devices
+- **Technical**: Added comprehensive CSS media queries for mobile optimization
+- **User Experience**: Better mobile menu navigation
 - **Location**: `utils/SecurityUtils.js`, `world/World.js`
 - **Features**:
   - **Mana Tile Support**: Added "mana" as valid tile type for custom worlds
@@ -252,6 +285,6 @@ getPlayerName()         // Get current player name
 
 ---
 
-**Last Updated**: October 21, 2025
-**Version**: Enhanced Prototype v1.3
-**Status**: Custom world support enhanced - Mana tiles now supported!
+**Last Updated**: January 27, 2025
+**Version**: Enhanced Prototype v1.5
+**Status**: Mobile & multiplayer enhancements complete - loading screen, mobile controls, and smart pause system implemented!

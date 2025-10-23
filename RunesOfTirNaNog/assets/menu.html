@@ -558,10 +558,153 @@
             box-shadow: 0 0 15px rgba(59, 130, 246, 0.3);
         }
 
-        .notification-warning {
-            border-color: #f59e0b;
-            color: #f59e0b;
-            box-shadow: 0 0 15px rgba(245, 158, 11, 0.3);
+        /* Mobile responsive styles */
+        @media (max-width: 768px) {
+            body {
+                padding: 10px;
+                overflow-x: hidden;
+            }
+
+            .menu-container {
+                padding: 20px 30px;
+                margin: 10px;
+                max-width: calc(100vw - 20px);
+                box-sizing: border-box;
+            }
+
+            .game-title {
+                font-size: 2rem;
+                letter-spacing: 2px;
+                margin-bottom: 30px;
+            }
+
+            .menu-buttons {
+                gap: 15px;
+            }
+
+            .menu-button {
+                padding: 12px 25px;
+                font-size: 1rem;
+                min-width: 180px;
+                width: 100%;
+                max-width: 300px;
+            }
+
+            .username-container {
+                margin-bottom: 25px;
+            }
+
+            .username-bar {
+                flex-direction: column;
+                gap: 10px;
+                width: 100%;
+            }
+
+            .username-input {
+                min-width: auto;
+                width: 100%;
+                max-width: 250px;
+                font-size: 0.9rem;
+                padding: 10px 15px;
+            }
+
+            .set-username-btn {
+                width: 100%;
+                max-width: 250px;
+                font-size: 0.9rem;
+                padding: 10px 15px;
+            }
+
+            .server-connection-container {
+                margin-bottom: 20px;
+            }
+
+            .join-server-btn {
+                width: 100%;
+                max-width: 250px;
+                font-size: 0.9rem;
+                padding: 10px 20px;
+            }
+
+            .username-label {
+                font-size: 0.9rem;
+            }
+
+            .username-display {
+                font-size: 0.8rem;
+                text-align: center;
+            }
+
+            .connection-status {
+                font-size: 0.8rem;
+            }
+
+            .server-info {
+                font-size: 0.7rem;
+            }
+
+            /* Reduce floating shapes on mobile for performance */
+            .floating-shape:nth-child(n+8) {
+                display: none;
+            }
+
+            /* Adjust pixel particles for mobile */
+            .pixel-particle:nth-child(n+5) {
+                display: none;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .menu-container {
+                padding: 15px 20px;
+                margin: 5px;
+            }
+
+            .game-title {
+                font-size: 1.5rem;
+                letter-spacing: 1px;
+                margin-bottom: 25px;
+            }
+
+            .menu-button {
+                padding: 10px 20px;
+                font-size: 0.9rem;
+                min-width: 160px;
+            }
+
+            .username-input {
+                font-size: 0.8rem;
+                padding: 8px 12px;
+            }
+
+            .set-username-btn {
+                font-size: 0.8rem;
+                padding: 8px 12px;
+            }
+
+            .join-server-btn {
+                font-size: 0.8rem;
+                padding: 8px 15px;
+            }
+
+            /* Hide more floating shapes on very small screens */
+            .floating-shape:nth-child(n+5) {
+                display: none;
+            }
+
+            .pixel-particle:nth-child(n+3) {
+                display: none;
+            }
+        }
+
+        /* Prevent horizontal scrolling */
+        * {
+            box-sizing: border-box;
+        }
+
+        body {
+            overflow-x: hidden;
+            max-width: 100vw;
         }
     </style>
 </head>
