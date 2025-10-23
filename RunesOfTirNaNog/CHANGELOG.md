@@ -10,6 +10,9 @@ All notable changes to this project will be documented in this file.
 - **Settings Persistence**: Grid setting is saved to localStorage and restored on game start
 
 ### Fixed
+- **Spawn Point Coordinates**: Fixed player spawning at incorrect coordinates by properly converting tile coordinates to pixel coordinates
+- **World Dimensions Loading**: Fixed world dimensions showing as "NaNxNaN" by correcting property names from `worldWidth/worldHeight` to `width/height`
+- **Double Coordinate Conversion**: Fixed spawn point double conversion issue in `getRandomSpawnPoint` method
 - **Quit to Menu Navigation**: Fixed "Quit to Menu" button to navigate to main menu (`assets/menu.html`) instead of landing page
 - **Main Page Navigation**: Fixed Runes of Tir Na Nog button to point to internal landing page instead of GitHub Pages URL
 - **Custom World Loading**: Fixed world path resolution from `../worlds/` to `worlds/` for proper server file structure

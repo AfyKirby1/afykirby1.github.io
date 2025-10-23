@@ -19,6 +19,15 @@ class NPC {
         this.speed = config.speed || 1;
         this.direction = config.direction || 0; // 0-7 for 8 directions
         
+        // Smooth movement properties
+        this.vx = 0; // Current velocity X
+        this.vy = 0; // Current velocity Y
+        this.targetX = this.x; // Target position X
+        this.targetY = this.y; // Target position Y
+        this.acceleration = config.acceleration || 0.8; // How quickly NPC accelerates toward target
+        this.deceleration = config.deceleration || 0.9; // How quickly NPC decelerates when stopping
+        this.maxSpeed = this.speed; // Maximum movement speed
+        
         // Visual Properties
         this.sprite = config.sprite || null;
         this.color = config.color || "#8B4513"; // Default brown color
@@ -26,6 +35,11 @@ class NPC {
         this.animationSpeed = config.animationSpeed || 0.1;
         this.scale = config.scale || 1;
         this.usePlayerModel = config.usePlayerModel || false; // Use player-style rendering
+        
+        // Custom image support (from Blocky Builder)
+        this.customImage = config.customImage || null;
+        this.isCustom = config.isCustom || false;
+        this.customImageElement = null; // Cached image element
         
         // Player model properties (for Bob)
         if (this.usePlayerModel) {
@@ -81,11 +95,17 @@ class NPC {
         this.animationTimer += deltaTime;
         this.lastActionTime += deltaTime;
         
+        // Store world reference for collision detection
+        this.world = game.world;
+        
         // Update AI behavior
         this.updateAI(deltaTime, game);
         
         // Update animation
         this.updateAnimation(deltaTime);
+        
+        // Update smooth movement
+        this.updateSmoothMovement(deltaTime, this.world);
         
         // Update position if moving
         if (this.isMoving) {
@@ -124,9 +144,29 @@ class NPC {
      * Handle idle behavior - NPC stays in place
      */
     handleIdleBehavior(deltaTime, game) {
-        // Occasionally look around or fidget
-        if (Math.random() < 0.01) {
-            this.direction = Math.floor(Math.random() * 8);
+        // Enhanced idle behavior for Bob
+        if (this.name === "Bob") {
+            // Bob occasionally looks around mysteriously
+            if (Math.random() < 0.02) {
+                this.direction = Math.floor(Math.random() * 8);
+                
+                // Sometimes Bob has mysterious insights
+                if (Math.random() < 0.1) {
+                    console.log(`🔮 Bob's mysterious insight: "${this.dialogue[Math.floor(Math.random() * this.dialogue.length)]}"`);
+                }
+            }
+            
+            // Bob sometimes moves slightly even when idle (restless knowledge seeker)
+            if (Math.random() < 0.005) {
+                const smallMoveX = (Math.random() - 0.5) * 20;
+                const smallMoveY = (Math.random() - 0.5) * 20;
+                this.moveTowards(this.x + smallMoveX, this.y + smallMoveY, deltaTime, this.world);
+            }
+        } else {
+            // Standard idle behavior for other NPCs
+            if (Math.random() < 0.01) {
+                this.direction = Math.floor(Math.random() * 8);
+            }
         }
     }
     
@@ -148,7 +188,7 @@ class NPC {
             this.isMoving = false;
         } else {
             // Move towards patrol point
-            this.moveTowards(targetPoint.x, targetPoint.y, deltaTime);
+            this.moveTowards(targetPoint.x, targetPoint.y, deltaTime, this.world);
         }
     }
     
@@ -157,13 +197,37 @@ class NPC {
      */
     handleWanderBehavior(deltaTime, game) {
         if (!this.isMoving) {
-            // Choose random point within wander radius
-            const angle = Math.random() * Math.PI * 2;
-            const distance = Math.random() * this.wanderRadius;
-            const targetX = this.homeX + Math.cos(angle) * distance;
-            const targetY = this.homeY + Math.sin(angle) * distance;
-            
-            this.moveTowards(targetX, targetY, deltaTime);
+            // Enhanced wandering for Bob - more intelligent pathfinding
+            if (this.name === "Bob") {
+                // Bob sometimes approaches the player if they're nearby
+                if (game.player) {
+                    const distanceToPlayer = this.getDistanceTo(game.player.x, game.player.y);
+                    if (distanceToPlayer < this.wanderRadius * 0.6 && Math.random() < 0.3) {
+                        // 30% chance to approach player when nearby
+                        const approachDistance = 40; // Stay 40 pixels away
+                        const angleToPlayer = Math.atan2(game.player.y - this.y, game.player.x - this.x);
+                        const targetX = game.player.x - Math.cos(angleToPlayer) * approachDistance;
+                        const targetY = game.player.y - Math.sin(angleToPlayer) * approachDistance;
+                        this.moveTowards(targetX, targetY, deltaTime, this.world);
+                        return;
+                    }
+                }
+                
+                // Bob explores more systematically - prefers unexplored areas
+                const explorationAngle = Math.random() * Math.PI * 2;
+                const explorationDistance = Math.random() * this.wanderRadius * 0.8 + this.wanderRadius * 0.2;
+                const targetX = this.homeX + Math.cos(explorationAngle) * explorationDistance;
+                const targetY = this.homeY + Math.sin(explorationAngle) * explorationDistance;
+                this.moveTowards(targetX, targetY, deltaTime, this.world);
+            } else {
+                // Standard wandering for other NPCs
+                const angle = Math.random() * Math.PI * 2;
+                const distance = Math.random() * this.wanderRadius;
+                const targetX = this.homeX + Math.cos(angle) * distance;
+                const targetY = this.homeY + Math.sin(angle) * distance;
+                
+                this.moveTowards(targetX, targetY, deltaTime, this.world);
+            }
         }
     }
     
@@ -176,7 +240,7 @@ class NPC {
         const distance = this.getDistanceTo(game.player.x, game.player.y);
         
         if (distance > this.detectionRadius) {
-            this.moveTowards(game.player.x, game.player.y, deltaTime);
+            this.moveTowards(game.player.x, game.player.y, deltaTime, this.world);
         } else {
             this.isMoving = false;
         }
@@ -190,7 +254,7 @@ class NPC {
         
         if (distanceFromHome > this.wanderRadius) {
             // Return to guard post
-            this.moveTowards(this.homeX, this.homeY, deltaTime);
+            this.moveTowards(this.homeX, this.homeY, deltaTime, this.world);
         } else {
             // Look around for threats
             if (Math.random() < 0.02) {
@@ -200,19 +264,63 @@ class NPC {
     }
     
     /**
-     * Move NPC towards target coordinates
+     * Set target position for smooth movement
      */
-    moveTowards(targetX, targetY, deltaTime) {
-        const dx = targetX - this.x;
-        const dy = targetY - this.y;
+    setTarget(targetX, targetY) {
+        this.targetX = targetX;
+        this.targetY = targetY;
+    }
+    
+    /**
+     * Update smooth movement towards target
+     */
+    updateSmoothMovement(deltaTime, world = null) {
+        const dx = this.targetX - this.x;
+        const dy = this.targetY - this.y;
         const distance = Math.sqrt(dx * dx + dy * dy);
         
-        if (distance > 1) {
-            const moveX = (dx / distance) * this.speed * deltaTime * 0.1;
-            const moveY = (dy / distance) * this.speed * deltaTime * 0.1;
+        if (distance > 2) {
+            // Calculate desired velocity towards target
+            const desiredVx = (dx / distance) * this.maxSpeed;
+            const desiredVy = (dy / distance) * this.maxSpeed;
             
-            this.x += moveX;
-            this.y += moveY;
+            // Smoothly accelerate towards desired velocity
+            this.vx += (desiredVx - this.vx) * this.acceleration * deltaTime * 0.01;
+            this.vy += (desiredVy - this.vy) * this.acceleration * deltaTime * 0.01;
+            
+            // Limit velocity to max speed
+            const currentSpeed = Math.sqrt(this.vx * this.vx + this.vy * this.vy);
+            if (currentSpeed > this.maxSpeed) {
+                this.vx = (this.vx / currentSpeed) * this.maxSpeed;
+                this.vy = (this.vy / currentSpeed) * this.maxSpeed;
+            }
+            
+            // Calculate new position
+            let newX = this.x + this.vx * deltaTime * 0.1;
+            let newY = this.y + this.vy * deltaTime * 0.1;
+            
+            // Check collision before moving (if world is available)
+            if (world && world.canMove) {
+                if (!world.canMove(newX, newY, this.width || 16)) {
+                    // Try moving only horizontally or vertically
+                    if (world.canMove(this.x + this.vx * deltaTime * 0.1, this.y, this.width || 16)) {
+                        newX = this.x + this.vx * deltaTime * 0.1;
+                        newY = this.y;
+                    } else if (world.canMove(this.x, this.y + this.vy * deltaTime * 0.1, this.width || 16)) {
+                        newX = this.x;
+                        newY = this.y + this.vy * deltaTime * 0.1;
+                    } else {
+                        // Can't move in any direction, decelerate
+                        this.vx *= this.deceleration;
+                        this.vy *= this.deceleration;
+                        newX = this.x;
+                        newY = this.y;
+                    }
+                }
+            }
+            
+            this.x = newX;
+            this.y = newY;
             
             // Update direction based on movement
             this.direction = this.getDirectionFromVector(dx, dy);
@@ -228,8 +336,25 @@ class NPC {
                 }
             }
         } else {
-            this.isMoving = false;
+            // Close to target, decelerate smoothly
+            this.vx *= this.deceleration;
+            this.vy *= this.deceleration;
+            
+            // Stop if velocity is very small
+            if (Math.abs(this.vx) < 0.1 && Math.abs(this.vy) < 0.1) {
+                this.vx = 0;
+                this.vy = 0;
+                this.isMoving = false;
+            }
         }
+    }
+    
+    /**
+     * Move NPC towards target coordinates (legacy method for compatibility)
+     */
+    moveTowards(targetX, targetY, deltaTime, world = null) {
+        this.setTarget(targetX, targetY);
+        this.updateSmoothMovement(deltaTime, world);
     }
     
     /**
@@ -267,45 +392,54 @@ class NPC {
     render(ctx, camera) {
         if (!this.isVisible) return;
         
-        // Calculate screen position
-        const screenX = (this.x - camera.x) * camera.zoom;
-        const screenY = (this.y - camera.y) * camera.zoom;
+        // Check if NPC is visible on screen (world coordinates)
+        const screenWorldWidth = ctx.canvas.width / camera.zoom;
+        const screenWorldHeight = ctx.canvas.height / camera.zoom;
         
-        // Check if NPC is visible on screen
-        if (screenX < -50 || screenX > ctx.canvas.width + 50 ||
-            screenY < -50 || screenY > ctx.canvas.height + 50) {
+        if (this.x < camera.x - 50 || this.x > camera.x + screenWorldWidth + 50 ||
+            this.y < camera.y - 50 || this.y > camera.y + screenWorldHeight + 50) {
             return;
         }
         
         ctx.save();
-        ctx.translate(screenX, screenY);
-        ctx.scale(camera.zoom * this.scale, camera.zoom * this.scale);
+        ctx.translate(this.x, this.y);
+        ctx.scale(this.scale, this.scale);
         
         // Use player model rendering for Bob
         if (this.usePlayerModel) {
             this.renderPlayerModel(ctx);
+        } else if (this.isCustom && this.customImage) {
+            // Custom image rendering (from Blocky Builder)
+            this.renderCustomImage(ctx);
+        } else if (this.isCustom) {
+            // NPC is marked as custom but image hasn't loaded yet - don't render anything
+            // This prevents the default brown blob from showing while custom image loads
+            ctx.restore();
+            return;
         } else {
-            // Standard NPC rendering
+            // Standard NPC rendering - position so bottom touches ground
+            const groundOffset = this.height / 2; // Offset to ground the NPC
+            
             // Draw NPC body
             ctx.fillStyle = this.color;
-            ctx.fillRect(-this.width/2, -this.height/2, this.width, this.height);
+            ctx.fillRect(-this.width/2, -this.height/2 + groundOffset, this.width, this.height);
             
             // Draw NPC face/direction indicator
             ctx.fillStyle = "#FFE4B5"; // Skin color
-            ctx.fillRect(-this.width/4, -this.height/2, this.width/2, this.height/2);
+            ctx.fillRect(-this.width/4, -this.height/2 + groundOffset, this.width/2, this.height/2);
             
             // Draw eyes
             ctx.fillStyle = "#000";
             const eyeOffset = this.isMoving ? Math.sin(this.animationFrame * 0.5) * 2 : 0;
-            ctx.fillRect(-this.width/6, -this.height/3 + eyeOffset, 3, 3);
-            ctx.fillRect(this.width/12, -this.height/3 + eyeOffset, 3, 3);
+            ctx.fillRect(-this.width/6, -this.height/3 + groundOffset + eyeOffset, 3, 3);
+            ctx.fillRect(this.width/12, -this.height/3 + groundOffset + eyeOffset, 3, 3);
             
             // Draw direction indicator (simple arrow)
             ctx.fillStyle = "#654321";
             ctx.beginPath();
-            ctx.moveTo(0, -this.height/2 - 5);
-            ctx.lineTo(-3, -this.height/2 - 10);
-            ctx.lineTo(3, -this.height/2 - 10);
+            ctx.moveTo(0, -this.height/2 + groundOffset - 5);
+            ctx.lineTo(-3, -this.height/2 + groundOffset - 10);
+            ctx.lineTo(3, -this.height/2 + groundOffset - 10);
             ctx.closePath();
             ctx.fill();
         }
@@ -337,7 +471,7 @@ class NPC {
     renderPlayerModel(ctx) {
         const size = this.size;
         const centerX = 0;
-        const centerY = 0;
+        const centerY = size / 2; // Position character so bottom touches ground
         
         // Body
         ctx.fillStyle = '#f4e4bc';
@@ -398,6 +532,49 @@ class NPC {
             ctx.fillRect(centerX - 4, centerY + size / 2 - 2, legWidth, legHeight);
             ctx.fillRect(centerX + 1, centerY + size / 2 - 2, legWidth, legHeight);
         }
+    }
+    
+    /**
+     * Render custom image (from Blocky Builder)
+     */
+    renderCustomImage(ctx) {
+        if (!this.customImage) return;
+        
+        // Position so bottom touches ground
+        const groundOffset = this.height / 2;
+        
+        // Use cached image element if available
+        if (this.customImageElement && this.customImageElement.complete && this.customImageElement.naturalWidth > 0) {
+            ctx.drawImage(this.customImageElement, -this.width/2, -this.height/2 + groundOffset, this.width, this.height);
+        } else {
+            // Create and cache image element if not already done
+            if (!this.customImageElement) {
+                this.customImageElement = new Image();
+                this.customImageElement.onload = () => {
+                    // Image loaded successfully, will be drawn on next render
+                };
+                this.customImageElement.onerror = () => {
+                    console.warn('Failed to load custom NPC image:', this.name);
+                };
+                this.customImageElement.src = this.customImage;
+            }
+            
+            // Don't render anything while custom image is loading - prevents brown blob flash
+            // The NPC will appear once the custom image loads
+        }
+    }
+    
+    /**
+     * Render fallback for custom NPCs when image fails to load
+     */
+    renderFallbackCustom(ctx, groundOffset) {
+        // Draw placeholder with custom indicator
+        ctx.fillStyle = this.color;
+        ctx.fillRect(-this.width/2, -this.height/2 + groundOffset, this.width, this.height);
+        
+        // Draw custom indicator (golden stripe)
+        ctx.fillStyle = '#FFD700';
+        ctx.fillRect(-this.width/2, -this.height/2 + groundOffset, this.width, 4);
     }
     
     /**

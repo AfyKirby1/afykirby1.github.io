@@ -53,12 +53,12 @@ export class World {
     // Load world from custom JSON data (from world editor)
     loadFromCustomData(data) {
         console.log('🌍 World: Loading custom world:', data.metadata?.name || 'Unknown');
-        console.log('📏 World: Custom world dimensions:', data.worldWidth, 'x', data.worldHeight);
+        console.log('📏 World: Custom world dimensions:', data.width, 'x', data.height);
         console.log('🧱 World: Custom world tiles:', data.tiles?.length || 0);
         
         // Set world dimensions from custom data
-        this.width = data.worldWidth * this.tileSize;
-        this.height = data.worldHeight * this.tileSize;
+        this.width = data.width * this.tileSize;
+        this.height = data.height * this.tileSize;
         
         // Convert editor tiles to game tiles format
         this.tiles = data.tiles.map(tile => ({
@@ -72,6 +72,9 @@ export class World {
         // Load NPCs from world data
         this.loadNPCsFromData(data);
         
+        // Load spawn points from world data
+        this.loadSpawnPointsFromData(data);
+        
         console.log(`Custom world loaded: ${this.width}x${this.height} (${this.tiles.length} tiles)`);
     }
 
@@ -82,16 +85,87 @@ export class World {
         if (data.npcs && Array.isArray(data.npcs)) {
             console.log('🐭 Loading NPCs from world data:', data.npcs.length);
             
-            // Store NPC data for the game to use
-            this.npcData = data.npcs;
+            // NPC coordinates are already in pixel coordinates from Blocky Builder
+            this.npcData = data.npcs.map(npcData => {
+                let pixelX = npcData.x; // Already in pixel coordinates
+                let pixelY = npcData.y; // Already in pixel coordinates
+                
+                // Clamp NPC positions to world bounds to prevent floating/disappearing
+                const margin = 50; // Keep NPCs away from world edges
+                pixelX = Math.max(margin, Math.min(this.width - margin, pixelX));
+                pixelY = Math.max(margin, Math.min(this.height - margin, pixelY));
+                
+                return {
+                    ...npcData,
+                    x: pixelX,
+                    y: pixelY
+                };
+            });
             
-            data.npcs.forEach(npcData => {
-                console.log(`🐭 NPC: ${npcData.name} at (${npcData.x}, ${npcData.y})`);
+            this.npcData.forEach(npcData => {
+                const tileX = npcData.x / this.tileSize;
+                const tileY = npcData.y / this.tileSize;
+                console.log(`🐭 NPC: ${npcData.name} at tile (${tileX}, ${tileY}) = pixel (${npcData.x}, ${npcData.y})`);
             });
         } else {
             // Initialize empty NPC data if none provided
             this.npcData = [];
         }
+    }
+
+    /**
+     * Load spawn points from world data
+     */
+    loadSpawnPointsFromData(data) {
+        if (data.spawnPoints && data.spawnPoints.spawnPoints && Array.isArray(data.spawnPoints.spawnPoints)) {
+            console.log('📍 Loading spawn points from world data:', data.spawnPoints.spawnPoints.length);
+            
+            // Convert spawn points from tile coordinates to pixel coordinates
+            this.spawnPoints = data.spawnPoints.spawnPoints.map(spawnPoint => ({
+                ...spawnPoint,
+                x: spawnPoint.x * this.tileSize, // Convert tile X to pixel X
+                y: spawnPoint.y * this.tileSize  // Convert tile Y to pixel Y
+            }));
+            
+            data.spawnPoints.spawnPoints.forEach(spawnPoint => {
+                const pixelX = spawnPoint.x * this.tileSize;
+                const pixelY = spawnPoint.y * this.tileSize;
+                console.log(`📍 Spawn Point: ${spawnPoint.name} (${spawnPoint.type}) at tile (${spawnPoint.x}, ${spawnPoint.y}) = pixel (${pixelX}, ${pixelY})`);
+            });
+        } else {
+            // Initialize empty spawn points if none provided
+            this.spawnPoints = [];
+            console.log('📍 No spawn points found in world data');
+        }
+    }
+
+    /**
+     * Get spawn points by type
+     */
+    getSpawnPointsByType(type) {
+        return this.spawnPoints.filter(spawn => spawn.type === type);
+    }
+
+    /**
+     * Get a random spawn point of a specific type
+     */
+    getRandomSpawnPoint(type = 'player') {
+        const spawnsOfType = this.getSpawnPointsByType(type);
+        if (spawnsOfType.length === 0) {
+            return null;
+        }
+        
+        const randomIndex = Math.floor(Math.random() * spawnsOfType.length);
+        const spawnPoint = spawnsOfType[randomIndex];
+        
+        // Spawn points are already converted to pixel coordinates in loadSpawnPointsFromData
+        // Just center the spawn point within the tile
+        return {
+            x: spawnPoint.x + this.tileSize / 2,
+            y: spawnPoint.y + this.tileSize / 2,
+            type: spawnPoint.type,
+            name: spawnPoint.name
+        };
     }
 
     // Static method to load world from JSON file - CACHE BUST

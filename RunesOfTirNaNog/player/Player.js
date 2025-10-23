@@ -1,9 +1,26 @@
 import { NameTag } from './NameTag.js';
 
 export class Player {
-    constructor(gameWidth, gameHeight) {
-        this.x = gameWidth / 2;
-        this.y = gameHeight / 2;
+    constructor(gameWidth, gameHeight, world = null) {
+        // Try to spawn at a player spawn point if available
+        if (world && world.spawnPoints && world.spawnPoints.length > 0) {
+            const playerSpawn = world.getRandomSpawnPoint('player');
+            if (playerSpawn) {
+                this.x = playerSpawn.x;
+                this.y = playerSpawn.y;
+                console.log(`📍 Player spawned at spawn point: ${playerSpawn.name} (${playerSpawn.x}, ${playerSpawn.y})`);
+            } else {
+                // Fallback to world center if no player spawn points
+                this.x = gameWidth / 2;
+                this.y = gameHeight / 2;
+                console.log('📍 Player spawned at world center (no player spawn points found)');
+            }
+        } else {
+            // Default spawn at world center
+            this.x = gameWidth / 2;
+            this.y = gameHeight / 2;
+            console.log('📍 Player spawned at world center (no world data)');
+        }
         this.size = 12;
         this.speed = 3;
         this.color = '#ff6b6b';

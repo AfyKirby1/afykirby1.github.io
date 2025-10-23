@@ -42,13 +42,13 @@ export class Game {
             // Load from custom world file
             console.log('🎮 Game: Loading from custom world data');
             this.world = new World(null, customWorldData);
-            this.player = new Player(this.world.width, this.world.height);
+            this.player = new Player(this.world.width, this.world.height, this.world);
             this.camera = new Camera(this.width, this.height);
         } else {
             // Create new world with config
             console.log('🎮 Game: Using default world generation');
             this.world = new World(worldConfig);
-            this.player = new Player(this.world.width, this.world.height);
+            this.player = new Player(this.world.width, this.world.height, this.world);
             this.camera = new Camera(this.width, this.height);
         }
         
@@ -583,7 +583,12 @@ export class Game {
         // Load NPCs from world data first
         if (this.world.npcData && this.world.npcData.length > 0) {
             console.log('🐭 Creating NPCs from world data...');
-            this.world.npcData.forEach(npcConfig => {
+            this.world.npcData.forEach(async npcConfig => {
+                // Load custom image if NPC is marked as custom
+                if (npcConfig.isCustom || npcConfig.type === 'custom') {
+                    await this.loadCustomNPCImage(npcConfig);
+                }
+                
                 const npc = new NPC(npcConfig);
                 this.npcManager.addNPC(npc);
                 console.log(`🐭 Created NPC: ${npc.name} at (${npc.x}, ${npc.y})`);
@@ -597,9 +602,10 @@ export class Game {
         const shouldSpawnBob = bobEnabled === null ? true : bobEnabled === 'true';
         
         if (shouldSpawnBob) {
-            // Create Bob somewhere in the world (spawns at random location)
+            // Create Bob near the player spawn point
             const worldDims = this.world.getDimensions();
-            this.npcFactory.createBobInWorld(worldDims.width, worldDims.height);
+            const playerSpawnPoint = this.world.getRandomSpawnPoint('player');
+            this.npcFactory.createBobInWorld(worldDims.width, worldDims.height, playerSpawnPoint);
             console.log('✅ Bob NPC spawned (world generator setting: enabled)');
         } else {
             console.log('❌ Bob NPC not spawned (world generator setting: disabled)');
@@ -618,6 +624,48 @@ export class Game {
         // this.npcFactory.createSpecialNPCs();
         
         console.log(`Initialized ${this.npcManager.getAllNPCs().length} NPCs`);
+    }
+    
+    /**
+     * Load custom NPC image from persistent folder
+     */
+    async loadCustomNPCImage(npcConfig) {
+        try {
+            const npcName = npcConfig.name;
+            
+            // Use customImage path if provided, otherwise construct from name
+            const imagePath = npcConfig.customImage || `assets/npc/persistent/${npcName}.png`;
+            
+            console.log(`🖼️ Loading custom image for ${npcName}: ${imagePath}`);
+            
+            // Check if it's already a base64 data URL
+            if (imagePath.startsWith('data:image/')) {
+                // Already a base64 data URL, no need to fetch
+                npcConfig.customImage = imagePath;
+                npcConfig.isCustom = true;
+                console.log(`✅ Using existing base64 image for ${npcName}`);
+                return;
+            }
+            
+            // Try to load the image from file path
+            const response = await fetch(imagePath);
+            if (response.ok) {
+                const blob = await response.blob();
+                const reader = new FileReader();
+                
+                reader.onload = () => {
+                    npcConfig.customImage = reader.result; // Base64 data URL
+                    npcConfig.isCustom = true;
+                    console.log(`✅ Loaded custom image for ${npcName}`);
+                };
+                
+                reader.readAsDataURL(blob);
+            } else {
+                console.warn(`⚠️ Custom image not found for ${npcName}: ${imagePath}`);
+            }
+        } catch (error) {
+            console.warn(`⚠️ Failed to load custom image for ${npcConfig.name}:`, error);
+        }
     }
     
     handleInteraction() {
@@ -799,7 +847,7 @@ export class Game {
         this.world.tiles = saveData.worldData.tiles;
         
         // Restore player
-        this.player = new Player(this.width, this.height);
+        this.player = new Player(this.width, this.height, this.world);
         if (saveData.playerState.position) {
             this.player.x = saveData.playerState.position.x;
             this.player.y = saveData.playerState.position.y;

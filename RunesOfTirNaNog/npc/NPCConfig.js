@@ -179,21 +179,32 @@ const NPC_CONFIGS = {
     special: {
         bob: {
             name: "Bob",
-            description: "A friendly wandering character who seems oddly familiar.",
+            description: "A mysterious wanderer with ancient knowledge and secrets to share.",
             color: "#f4e4bc", // Same beige color as player
             behavior: "wander",
-            wanderRadius: 150,
-            speed: 0.5,
+            wanderRadius: 200, // Increased exploration range
+            speed: 1.5, // Smooth, flowing movement
             width: 12, // Same size as player
             height: 12,
             usePlayerModel: true, // Flag to use player-style rendering
+            acceleration: 0.6, // Smooth acceleration for Bob
+            deceleration: 0.85, // Gentle deceleration
             dialogue: [
-                "Hey there! I'm Bob, just wandering around.",
-                "Have you seen anything interesting?",
-                "I love exploring this world!",
-                "The weather is perfect for an adventure!",
-                "Sometimes I feel like we're the same person...",
-                "Do you ever get the feeling you're being watched?"
+                "Greetings, traveler! I'm Bob, keeper of ancient secrets.",
+                "The old texts speak of powerful runes hidden in these lands...",
+                "Have you discovered the hidden chambers beneath the ruins?",
+                "I sense great potential in you, young adventurer.",
+                "The stars whisper of your destiny - listen carefully.",
+                "Beware the shadows that lurk beyond the veil of reality.",
+                "The ancient ones left clues scattered across this realm.",
+                "Your journey has only just begun, but the end draws near.",
+                "Magic flows through everything here - can you feel it?",
+                "The world remembers all who have walked these paths before.",
+                "Sometimes I wonder if we're all just players in a grand game...",
+                "The truth about this place lies buried deeper than you think.",
+                "Seek the crystal caves - they hold answers to your questions.",
+                "The old gods still watch over us, even in their slumber.",
+                "Your actions ripple through time itself - choose wisely."
             ]
         },
         
@@ -314,17 +325,39 @@ class NPCFactory {
     }
     
     /**
-     * Create Bob NPC at random location in world
+     * Create Bob NPC near player spawn point
      */
-    createBobInWorld(worldWidth, worldHeight) {
+    createBobInWorld(worldWidth, worldHeight, playerSpawnPoint = null) {
         const bobConfig = NPC_CONFIGS.special.bob;
-        // Place Bob at a random location, avoiding edges
-        const margin = 200;
-        const randomX = Math.random() * (worldWidth - margin * 2) + margin;
-        const randomY = Math.random() * (worldHeight - margin * 2) + margin;
+        let spawnX, spawnY;
         
-        console.log(`Spawning Bob at (${Math.floor(randomX)}, ${Math.floor(randomY)})`);
-        return this.createFromConfig(bobConfig, randomX, randomY);
+        if (playerSpawnPoint) {
+            // Spawn Bob near the player spawn point (within 100-200 pixels)
+            const offsetX = (Math.random() - 0.5) * 200; // -100 to +100
+            const offsetY = (Math.random() - 0.5) * 200; // -100 to +100
+            spawnX = playerSpawnPoint.x + offsetX;
+            spawnY = playerSpawnPoint.y + offsetY;
+            
+            // Ensure Bob doesn't spawn outside world bounds
+            spawnX = Math.max(50, Math.min(worldWidth - 50, spawnX));
+            spawnY = Math.max(50, Math.min(worldHeight - 50, spawnY));
+            
+            console.log(`Spawning Bob near player spawn at (${Math.floor(spawnX)}, ${Math.floor(spawnY)})`);
+        } else {
+            // Fallback to random location if no player spawn point
+            const margin = 200;
+            spawnX = Math.random() * (worldWidth - margin * 2) + margin;
+            spawnY = Math.random() * (worldHeight - margin * 2) + margin;
+            
+            console.log(`Spawning Bob at random location (${Math.floor(spawnX)}, ${Math.floor(spawnY)})`);
+        }
+        
+        // Snap Bob to tile grid (16px tiles) to prevent floating
+        const tileSize = 16;
+        spawnX = Math.floor(spawnX / tileSize) * tileSize + tileSize / 2; // Center on tile
+        spawnY = Math.floor(spawnY / tileSize) * tileSize + tileSize / 2; // Center on tile
+        
+        return this.createFromConfig(bobConfig, spawnX, spawnY);
     }
 }
 

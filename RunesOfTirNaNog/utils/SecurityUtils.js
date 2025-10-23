@@ -289,22 +289,30 @@ export class SecurityUtils {
                 return false;
             }
             
-            // Version check
-            if (!worldData.version || worldData.version !== '1.0') {
-                console.error('Unsupported world format version');
+            // Version check - support both 1.0 and 2.0 formats
+            // If no version specified, default to 2.0 if spawn points present, otherwise 1.0
+            if (!worldData.version) {
+                worldData.version = worldData.spawnPoints ? '2.0' : '1.0';
+            }
+            
+            if (worldData.version !== '1.0' && worldData.version !== '2.0') {
+                console.error('Unsupported world format version:', worldData.version);
                 return false;
             }
             
-            // Dimensions
-            if (typeof worldData.worldWidth !== 'number' || 
-                typeof worldData.worldHeight !== 'number') {
+            // Dimensions - support both worldWidth/worldHeight and width/height
+            const worldWidth = worldData.worldWidth || worldData.width;
+            const worldHeight = worldData.worldHeight || worldData.height;
+            
+            if (typeof worldWidth !== 'number' || typeof worldHeight !== 'number') {
+                console.error('Missing world dimensions');
                 return false;
             }
             
             // Bounds check
             const MAX_DIM = 500; // Max 500x500 tiles
-            if (worldData.worldWidth > MAX_DIM || worldData.worldHeight > MAX_DIM ||
-                worldData.worldWidth < 10 || worldData.worldHeight < 10) {
+            if (worldWidth > MAX_DIM || worldHeight > MAX_DIM ||
+                worldWidth < 10 || worldHeight < 10) {
                 console.error('World dimensions out of bounds');
                 return false;
             }
@@ -315,7 +323,7 @@ export class SecurityUtils {
             }
             
             // Tile count should match dimensions (approximately)
-            const expectedTiles = worldData.worldWidth * worldData.worldHeight;
+            const expectedTiles = worldWidth * worldHeight;
             if (worldData.tiles.length > expectedTiles * 1.1) { // Allow 10% overhead
                 console.error('Too many tiles for world size');
                 return false;
@@ -337,8 +345,15 @@ export class SecurityUtils {
                 // Position validation
                 if (typeof tile.x !== 'number' || typeof tile.y !== 'number' ||
                     tile.x < 0 || tile.y < 0 ||
-                    tile.x >= worldData.worldWidth || tile.y >= worldData.worldHeight) {
+                    tile.x >= worldWidth || tile.y >= worldHeight) {
                     console.error(`Invalid tile position: ${tile.x}, ${tile.y}`);
+                    return false;
+                }
+            }
+            
+            // Validate spawn points if present (version 2.0+)
+            if (worldData.version === '2.0' && worldData.spawnPoints) {
+                if (!this.validateSpawnPoints(worldData.spawnPoints, worldWidth, worldHeight)) {
                     return false;
                 }
             }
@@ -347,6 +362,89 @@ export class SecurityUtils {
             
         } catch (error) {
             console.error('Custom world validation error:', error);
+            return false;
+        }
+    }
+
+    /**
+     * Validate spawn points data structure
+     * 
+     * @param {Object} spawnPointsData - Spawn points data object
+     * @param {number} worldWidth - World width for bounds checking
+     * @param {number} worldHeight - World height for bounds checking
+     * @returns {boolean} True if valid
+     */
+    static validateSpawnPoints(spawnPointsData, worldWidth, worldHeight) {
+        try {
+            // Basic structure check
+            if (!spawnPointsData || typeof spawnPointsData !== 'object') {
+                return false;
+            }
+            
+            // Check required properties
+            if (!Array.isArray(spawnPointsData.spawnPoints)) {
+                console.error('Spawn points must be an array');
+                return false;
+            }
+            
+            if (typeof spawnPointsData.spawnCount !== 'number') {
+                console.error('Spawn count must be a number');
+                return false;
+            }
+            
+            if (!Array.isArray(spawnPointsData.spawnTypes)) {
+                console.error('Spawn types must be an array');
+                return false;
+            }
+            
+            // Validate spawn count matches array length
+            if (spawnPointsData.spawnCount !== spawnPointsData.spawnPoints.length) {
+                console.error('Spawn count mismatch');
+                return false;
+            }
+            
+            // Validate each spawn point
+            const validSpawnTypes = ['player', 'enemy', 'npc', 'item'];
+            for (const spawnPoint of spawnPointsData.spawnPoints) {
+                if (!spawnPoint || typeof spawnPoint !== 'object') {
+                    console.error('Invalid spawn point object');
+                    return false;
+                }
+                
+                // Required properties
+                if (typeof spawnPoint.id !== 'number' || 
+                    typeof spawnPoint.x !== 'number' || 
+                    typeof spawnPoint.y !== 'number' ||
+                    typeof spawnPoint.type !== 'string' ||
+                    typeof spawnPoint.name !== 'string') {
+                    console.error('Missing required spawn point properties');
+                    return false;
+                }
+                
+                // Type validation
+                if (!validSpawnTypes.includes(spawnPoint.type)) {
+                    console.error(`Invalid spawn point type: ${spawnPoint.type}`);
+                    return false;
+                }
+                
+                // Position validation
+                if (spawnPoint.x < 0 || spawnPoint.y < 0 ||
+                    spawnPoint.x >= worldWidth || spawnPoint.y >= worldHeight) {
+                    console.error(`Spawn point out of bounds: ${spawnPoint.x}, ${spawnPoint.y}`);
+                    return false;
+                }
+                
+                // Name validation
+                if (spawnPoint.name.length < 1 || spawnPoint.name.length > 50) {
+                    console.error(`Invalid spawn point name length: ${spawnPoint.name}`);
+                    return false;
+                }
+            }
+            
+            return true;
+            
+        } catch (error) {
+            console.error('Spawn points validation error:', error);
             return false;
         }
     }
