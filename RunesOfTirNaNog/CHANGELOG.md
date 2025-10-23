@@ -2,7 +2,7 @@
 
 All notable changes to this project will be documented in this file.
 
-## [Unreleased] - 2025-01-27
+## [v2.0] - 2025-01-27 - Combat System Complete
 
 ### Added
 - **Combat System**: Complete RPG combat with player and NPC attacks

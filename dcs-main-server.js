@@ -13,6 +13,8 @@ const WAR_ROOM_DIR = path.join(__dirname, 'war-room-assets');
 const WAR_ROOM_MUSIC_DIR = path.join(__dirname, 'war-room-music');
 const BLOCKY_TILES_DIR = path.join(__dirname, 'Blocky-Builder/assets/tiles');
 const BLOCKY_WORLDS_DIR = path.join(__dirname, 'Blocky-Builder/worlds');
+const BLOCKY_BUILDINGS_DIR = path.join(__dirname, 'Blocky-Builder/assets/buildings');
+const BLOCKY_BUILDINGS_PERSISTENT_DIR = path.join(__dirname, 'Blocky-Builder/assets/buildings/persistent');
 const ensureWarRoomDir = async () => {
     try {
         await fs.access(WAR_ROOM_DIR);
@@ -45,6 +47,24 @@ const ensureBlockyWorldsDir = async () => {
     } catch {
         await fs.mkdir(BLOCKY_WORLDS_DIR, { recursive: true });
         console.log('Created Blocky-Builder worlds directory');
+    }
+};
+
+const ensureBlockyBuildingsDir = async () => {
+    try {
+        await fs.access(BLOCKY_BUILDINGS_DIR);
+    } catch {
+        await fs.mkdir(BLOCKY_BUILDINGS_DIR, { recursive: true });
+        console.log('Created Blocky-Builder buildings directory');
+    }
+};
+
+const ensureBlockyBuildingsPersistentDir = async () => {
+    try {
+        await fs.access(BLOCKY_BUILDINGS_PERSISTENT_DIR);
+    } catch {
+        await fs.mkdir(BLOCKY_BUILDINGS_PERSISTENT_DIR, { recursive: true });
+        console.log('Created Blocky-Builder buildings persistent directory');
     }
 };
 
@@ -134,6 +154,62 @@ const tileUpload = multer({
             cb(null, true);
         } else {
             cb(new Error('Only image files are allowed for tile textures!'), false);
+        }
+    }
+});
+
+// Configure multer for building template uploads
+const buildingTemplateStorage = multer.diskStorage({
+    destination: async (req, file, cb) => {
+        await ensureBlockyBuildingsDir();
+        cb(null, BLOCKY_BUILDINGS_DIR);
+    },
+    filename: (req, file, cb) => {
+        const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9);
+        cb(null, file.fieldname + '-' + uniqueSuffix + path.extname(file.originalname));
+    }
+});
+
+const buildingTemplateUpload = multer({ 
+    storage: buildingTemplateStorage,
+    limits: {
+        fileSize: 10 * 1024 * 1024, // 10MB limit for building templates
+        files: 5 // Max 5 files at once
+    },
+    fileFilter: (req, file, cb) => {
+        // Check if file is JSON
+        if (file.mimetype === 'application/json' || file.originalname.endsWith('.json')) {
+            cb(null, true);
+        } else {
+            cb(new Error('Only JSON files are allowed for building templates!'), false);
+        }
+    }
+});
+
+// Configure multer for building texture uploads
+const buildingTextureStorage = multer.diskStorage({
+    destination: async (req, file, cb) => {
+        await ensureBlockyBuildingsDir();
+        cb(null, BLOCKY_BUILDINGS_DIR);
+    },
+    filename: (req, file, cb) => {
+        const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9);
+        cb(null, file.fieldname + '-' + uniqueSuffix + path.extname(file.originalname));
+    }
+});
+
+const buildingTextureUpload = multer({ 
+    storage: buildingTextureStorage,
+    limits: {
+        fileSize: 50 * 1024 * 1024, // 50MB limit for building textures
+        files: 10 // Max 10 files at once
+    },
+    fileFilter: (req, file, cb) => {
+        // Check if file is an image
+        if (file.mimetype.startsWith('image/')) {
+            cb(null, true);
+        } else {
+            cb(new Error('Only image files are allowed for building textures!'), false);
         }
     }
 });
@@ -680,6 +756,24 @@ app.get('/api/worlds', (req, res) => {
     }
 });
 
+// Building template upload endpoint
+app.post('/api/upload-building-template', buildingTemplateUpload.single('template'), (req, res) => {
+    if (!req.file) {
+        return res.json({ success: false, message: 'No template file uploaded.' });
+    }
+    // Return the relative path to be used by the frontend
+    res.json({ success: true, path: `../assets/buildings/${req.file.filename}` });
+});
+
+// Building texture upload endpoint
+app.post('/api/upload-building-texture', buildingTextureUpload.single('texture'), (req, res) => {
+    if (!req.file) {
+        return res.json({ success: false, message: 'No texture file uploaded.' });
+    }
+    // Return the relative path to be used by the frontend
+    res.json({ success: true, path: `../assets/buildings/${req.file.filename}` });
+});
+
 // Static file serving (must come after API routes)
 app.use(express.static(__dirname));
 
@@ -726,12 +820,14 @@ app.listen(PORT, () => {
     console.log(`🎵 War Room music directory: ${WAR_ROOM_MUSIC_DIR}`);
     console.log(`🎨 Blocky Builder tiles directory: ${BLOCKY_TILES_DIR}`);
     console.log(`💾 Blocky Builder worlds directory: ${BLOCKY_WORLDS_DIR}`);
+    console.log(`🏗️ Blocky Builder buildings directory: ${BLOCKY_BUILDINGS_DIR}`);
     console.log(`🌐 Main Website: http://localhost:${PORT}`);
     console.log(`🎮 Runes of Tir na Nog: http://localhost:${PORT}/RunesOfTirNaNog/`);
     console.log(`🛠️ Blocky Builder: http://localhost:${PORT}/Blocky-Builder/`);
     console.log(`⚔️ The War Room: http://localhost:${PORT}/war-room.html`);
     console.log(`🔐 Admin Panel: http://localhost:${PORT}/admin.html`);
     console.log(`\n🎨 Tile Palette Upload: Upload custom tile textures via API`);
+    console.log(`🏗️ Building Upload: Upload building templates and textures via API`);
     console.log(`💾 World Management: Save/load worlds via API endpoints`);
 });
 

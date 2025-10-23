@@ -6,6 +6,8 @@ Blocky Builder is a standalone visual world editor for creating custom game worl
 ## Current Status: V 0.09 - Building System Implementation & Fixes
 **Date:** January 27, 2025
 
+**MAJOR UPDATE**: Complete building system implementation with coordinate system fixes and professional UI integration.
+
 ## What's Been Done
 
 ### Core Features Implemented
@@ -49,6 +51,10 @@ Blocky Builder is a standalone visual world editor for creating custom game worl
 - ✅ **Building Persistence** - Buildings saved to localStorage and integrated with world system
 - ✅ **Coordinate System Fixes** - Buildings place exactly where you click (zoom-aware)
 - ✅ **Building Rendering Pipeline** - Efficient texture loading and caching system
+- ✅ **Template ID Resolution** - Fixed undefined templateId issues for texture-based buildings
+- ✅ **Building Outlines** - Golden outline borders for placed buildings
+- ✅ **Debug Spam Reduction** - Throttled warning messages to reduce console spam
+- ✅ **New World Clearing** - Buildings properly cleared when creating new worlds (like NPCs)
 
 ### Technical Stack
 - **Frontend:** Pure HTML5, CSS3, JavaScript (ES6+)

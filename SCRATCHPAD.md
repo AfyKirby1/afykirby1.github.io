@@ -96,7 +96,27 @@
 - Filesystem storage ensures full-quality asset management
 - Unified server architecture simplifies deployment and maintenance
 
-## Latest Updates (2025-01-22)
+## Latest Updates (2025-01-27)
+
+### Blocky-Builder Major Updates
+- ✅ **Complete Building System Implementation** - Full building placement, management, and rendering system
+- ✅ **Building Manager UI** - Dedicated panel with drag functionality and template management
+- ✅ **Coordinate System Fixes** - Buildings now place exactly where you click (zoom-aware placement)
+- ✅ **Building Rendering Pipeline** - Complete rendering system with texture caching and fallbacks
+- ✅ **Building Persistence** - Buildings integrated with world save/load system and localStorage
+- ✅ **Template ID Resolution** - Fixed undefined templateId issues for texture-based buildings
+
+### Runes of Tir na nÓg Combat System
+- ✅ **Complete Combat System** - Player and NPC attacks with RuneScape Classic-style weapon animations
+- ✅ **Health Bar System** - Above-character health bars for player (10 HP) and NPCs (5-6 HP)
+- ✅ **Floating Damage Numbers** - Animated red damage numbers that float upward and fade out
+- ✅ **Hostile NPC Behavior** - Rats chase and attack players with detection radius and attack cooldowns
+- ✅ **Visual Attack Effects** - Simple brown weapon swings and claw attacks with gold hit sparkles
+- ✅ **Player Size Enhancement** - Increased from 12px to 18px for better visibility
+- ✅ **NPC Visual Cleanup** - Removed green interaction dots, improved name positioning
+- ✅ **Keybind Conflict Resolution** - Fixed Spacebar triggering both attack and chat
+
+### Previous Updates (2025-01-22)
 - ✅ Implemented full-featured image viewer modal for Asset Gallery
 - ✅ Added click-to-view functionality for all gallery images
 - ✅ Created professional Instagram-like viewing experience

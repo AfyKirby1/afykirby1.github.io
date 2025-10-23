@@ -4,6 +4,41 @@
 
 ### Current Session (January 27, 2025)
 
+#### Combat System Implementation
+- **File**: `player/Player.js`, `npc/NPC.js`, `ui/HealthBar.js`
+- **Issue**: Need complete combat system with health bars and damage numbers
+- **Solution**: Implemented full combat system with RuneScape Classic-style visuals
+- **Status**: ✅ COMPLETE
+- **Notes**: Added combat properties, attack methods, health bars, floating damage numbers
+
+#### Health Bar System
+- **File**: `ui/HealthBar.js`
+- **Issue**: Health display needs to be above characters for immersive experience
+- **Solution**: Above-character health bars with color-coded states
+- **Status**: ✅ COMPLETE
+- **Notes**: Health bars render above player and NPCs with green/yellow/red states
+
+#### Player Size Enhancement
+- **File**: `player/Player.js`
+- **Issue**: Player too small for good visibility
+- **Solution**: Increased player size from 12px to 18px
+- **Status**: ✅ COMPLETE
+- **Notes**: Better visibility and visual presence
+
+#### NPC Visual Cleanup
+- **File**: `npc/NPC.js`
+- **Issue**: Green interaction dots cluttering visual presentation
+- **Solution**: Removed green dots, improved name positioning
+- **Status**: ✅ COMPLETE
+- **Notes**: Cleaner NPC appearance with health bars only
+
+#### Keybind Conflict Resolution
+- **File**: `input/Input.js`
+- **Issue**: Spacebar triggering both attack and chat
+- **Solution**: Spacebar now only attacks, chat moved to different key
+- **Status**: ✅ COMPLETE
+- **Notes**: Fixed keybind conflict for better combat experience
+
 #### Mobile Loading Screen Implementation
 - **File**: `index.html` - LoadingScreenManager class
 - **Issue**: Bare green screen flash during multiplayer connection

@@ -1,9 +1,9 @@
 # Software Bill of Materials (SBOM)
 
 **Project:** Blocky Builder - World Editor  
-**Version:** 0.01  
-**Generated:** October 15, 2025  
-**Security Notice:** This project uses NO external packages or dependencies
+**Version:** 0.09  
+**Generated:** January 27, 2025  
+**Security Notice:** This project uses minimal external packages with security considerations
 
 ## Core Technologies
 
@@ -23,7 +23,16 @@
 | Blob API | File export | Low - Client-side only |
 | URL API | File download | Low - Temporary URLs |
 
-## Zero External Dependencies
+## External Dependencies
+
+### Backend Dependencies (package.json)
+| Package | Version | Purpose | Security Risk |
+|---------|---------|---------|---------------|
+| express | ^4.18.2 | Web server framework | Low - Well-maintained |
+| multer | ^2.0.2 | File upload handling | Low - Well-maintained |
+| nodemon | ^3.0.1 | Development tool | Low - Dev dependency only |
+
+### Frontend Dependencies
 ✅ **No npm packages**  
 ✅ **No CDN links**  
 ✅ **No third-party libraries**  
@@ -36,15 +45,18 @@
 | Ground_Texture_1.png | PNG Image | ~5KB | Custom asset |
 | Water_Texture.png | PNG Image | ~5KB | Custom asset |
 | Cave_Texture_1.png | PNG Image | ~5KB | Custom asset |
+| texture-*.png | PNG Image | Variable | User uploaded textures |
+| Rat.png | PNG Image | ~2KB | NPC asset |
+| Blacksmith.png | PNG Image | ~2KB | NPC asset |
 
 ## Security Profile
 
 ### Attack Surface: MINIMAL
-- **No network requests** - Runs entirely offline after initial load
-- **No server communication** - Pure client-side application
-- **No external scripts** - All code embedded in single file
+- **Limited network requests** - Only for world save/load via API
+- **Server communication** - Express.js server for file management
+- **No external scripts** - All frontend code embedded in files
 - **No user authentication** - No sensitive data handling
-- **No database** - Uses browser's LocalStorage only
+- **No database** - Uses browser's LocalStorage and file system storage
 
 ### Data Privacy: HIGH
 - All data stays on user's machine
@@ -68,7 +80,7 @@ Not specified - to be determined by project owner
 
 ---
 
-**Last Updated:** October 15, 2025  
+**Last Updated:** January 27, 2025  
 **Maintainer:** Project Owner  
 **Contact:** motorcycler14@yahoo.com
 

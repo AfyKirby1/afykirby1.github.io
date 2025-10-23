@@ -2,7 +2,41 @@
 
 All notable changes to this project will be documented in this file.
 
-## [2025-01-22] - Latest Updates
+## [2025-01-27] - Major Feature Updates
+
+### Added - Blocky-Builder World Editor (v0.09)
+- **Complete Building System** - Full building placement, management, and rendering system
+- **Building Manager UI** - Dedicated panel with drag functionality and template management
+- **Texture-Based Buildings** - Upload PNG textures and place them as buildings
+- **Building Persistence** - Buildings saved to localStorage and integrated with world system
+- **Coordinate System Fixes** - Buildings now place exactly where you click (zoom-aware)
+- **Building Rendering Pipeline** - Complete rendering system with texture caching and fallbacks
+- **Template ID Resolution** - Fixed undefined templateId issues for texture-based buildings
+
+### Added - Runes of Tir na nÓg RPG (v2.0)
+- **Complete Combat System** - Player and NPC attacks with RuneScape Classic-style animations
+- **Health Bar System** - Above-character health bars for player (10 HP) and NPCs (5-6 HP)
+- **Floating Damage Numbers** - Animated red damage numbers that float upward and fade out
+- **Hostile NPC Behavior** - Rats chase and attack players with detection radius and attack cooldowns
+- **Visual Attack Effects** - Simple brown weapon swings and claw attacks with gold hit sparkles
+- **Player Size Enhancement** - Increased from 12px to 18px for better visibility
+- **NPC Visual Cleanup** - Removed green interaction dots, improved name positioning
+- **Keybind Conflict Resolution** - Fixed Spacebar triggering both attack and chat
+
+### Fixed
+- **Building Placement Issues** - Buildings now place exactly where you click with proper coordinate conversion
+- **Template Management** - Fixed undefined templateId issues for texture-based buildings
+- **Debug Spam Reduction** - Throttled warning messages to reduce console spam
+- **New World Clearing** - Buildings properly cleared when creating new worlds (like NPCs)
+- **Spacebar Keybind Conflict** - Fixed Spacebar triggering both attack and chat - now only attacks
+
+### Changed
+- **Building System Integration** - Buildings now use proper coordinate conversion from EventSystem
+- **Rendering Pipeline** - Complete building rendering system with texture caching and fallbacks
+- **Project Management** - Buildings integrated with world save/load system
+- **Visual Improvements** - Enhanced player visibility and NPC presentation
+
+## [2025-01-22] - Previous Updates
 
 ### Added
 - **Image Viewer Modal**: Full-featured image viewer for Asset Gallery

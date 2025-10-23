@@ -56,16 +56,27 @@ Controls System ─┘
 
 #### Game.js - Main Coordinator
 ```javascript
-class Game {
-    constructor() {
-        this.world = new World();
-        this.player = new Player();
-        this.camera = new Camera();
-        this.ui = new UI();
+export class Game {
+    constructor(worldConfig = null, saveData = null, customWorldData = null) {
+        this.canvas = document.getElementById('gameCanvas');
+        this.ctx = this.canvas.getContext('2d');
+        
+        // Initialize game systems
+        this.world = new World(worldConfig);
+        this.player = new Player(this.world.width, this.world.height, this.world);
+        this.camera = new Camera(this.width, this.height);
         this.input = new Input(this.canvas);
+        this.ui = new UI();
+        this.audioManager = new AudioManager();
         this.inventory = new Inventory(this);
-        this.pauseMenu = new PauseMenu(this);
-        this.gameLoop = new GameLoop();
+        this.networkManager = new NetworkManager(this);
+        this.npcManager = new NPCManager();
+        this.npcFactory = new NPCFactory(this.npcManager);
+        
+        this.gameLoop = new GameLoop(
+            (deltaTime) => this.update(deltaTime),
+            (alpha) => this.render(alpha)
+        );
     }
     
     update(deltaTime) {
@@ -73,22 +84,15 @@ class Game {
         this.player.update(this.input, this.world, this.audioManager);
         this.camera.update(playerPos, worldDims, this.input);
         this.ui.update(playerPos.x, playerPos.y, deltaTime, this.camera.zoom);
+        this.npcManager.update(deltaTime, this.player, this.world);
     }
     
     render(alpha) {
         // Coordinate all rendering
         this.world.render(ctx, this.camera);
         this.player.render(ctx);
-    }
-    
-    setupEventListeners() {
-        // Enhanced keybind system integration
-        document.addEventListener('keydown', (e) => {
-            if (this.input.isPausePressed()) this.togglePause();
-            if (this.input.isInventoryPressed() || e.code === 'KeyI') {
-                this.inventory.toggle();
-            }
-        });
+        this.npcManager.render(ctx, this.camera);
+        this.ui.render(ctx, this.camera);
     }
 }
 ```
@@ -99,10 +103,11 @@ class Game {
 - Enhanced keybind event handling
 - Inventory system integration
 - Performance monitoring
+- Combat system coordination
 
 #### GameLoop.js - Frame Management
 ```javascript
-class GameLoop {
+export class GameLoop {
     constructor(update, render) {
         this.update = update;
         this.render = render;
@@ -128,7 +133,7 @@ class GameLoop {
 
 #### UI.js - UI Manager
 ```javascript
-class UI {
+export class UI {
     constructor() {
         this.healthBar = new HealthBar();
         this.fps = 60;
@@ -164,7 +169,7 @@ class UI {
 
 #### HealthBar.js - Health Display
 ```javascript
-class HealthBar {
+export class HealthBar {
     constructor() {
         this.maxHealth = 10;
         this.currentHealth = 10;
@@ -175,21 +180,21 @@ class HealthBar {
         // Update health display
     }
     
-    updateDisplay() {
-        // Render hearts with scaling
+    renderAboveCharacter(ctx, playerX, playerY, camera) {
+        // Render health bar above character
     }
 }
 ```
 
 **Responsibilities:**
 - Health visualization with heart icons
-- Debug information display
-- UI state management
-- DOM manipulation
+- Above-character health bar rendering
+- Color-coded health states (green, yellow, red)
+- Player and NPC health display
 
 #### Inventory.js - Inventory System
 ```javascript
-class Inventory {
+export class Inventory {
     constructor(game) {
         this.game = game;
         this.isVisible = false;
@@ -262,96 +267,30 @@ class PauseMenu {
 - Navigation back to main menu
 - Auto-save on quit
 
-#### Interactive Controls System - In-Game Controls Reference
-```javascript
-class GameControls {
-    constructor() {
-        this.isOpen = false;
-        this.keybinds = this.loadKeybinds();
-    }
-    
-    init() {
-        this.setupEventListeners();
-        this.populateControls();
-    }
-    
-    populateControls() {
-        // Dynamic controls display with status indicators
-        // ✅ Implemented | 🚧 Coming Soon
-    }
-    
-    toggleControls() {
-        // Show/hide scrollable controls window
-    }
-}
-```
-
-**Key Features:**
-- **Interactive Bubble**: Golden gamepad icon in bottom-right corner
-- **Scrollable Window**: Comprehensive controls display with categories
-- **Status Indicators**: Clear distinction between implemented and planned features
-- **Keybind Integration**: Loads current keybinds from settings
-- **Medieval Theme**: Consistent with game aesthetic
-- **Non-Intrusive**: Only shows when requested
-
-**Responsibilities:**
-- On-demand controls reference
-- Dynamic keybind display
-- User-friendly interface
-- Clean game view when closed
-
-### 3. World System (`/world/`)
-
-#### World.js - World Management
-```javascript
-class World {
-    constructor(width, height) {
-        this.width = width;
-        this.height = height;
-        this.tiles = [];
-        this.groundTexture = null;
-    }
-    
-    generateWorld() {
-        // Procedural tile generation
-    }
-    
-    loadFromFile(path) {
-        // Custom world loading with security validation
-    }
-    
-    render(ctx, camera) {
-        // Viewport-culled rendering
-    }
-}
-```
-
-**Responsibilities:**
-- Procedural world generation
-- Custom world loading from JSON files
-- Tile-based collision detection
-- Texture loading and management
-- Viewport culling optimization
-
-#### Supported Tile Types
-The world system supports the following tile types:
-- **grass**: Basic ground tiles with grass texture
-- **water**: Water tiles with special rendering
-- **wall**: Solid wall tiles for collision
-- **cave**: Cave entrance tiles
-- **mana**: Magical mana tiles (NEW - for custom worlds)
-
-### 4. Player System (`/player/`)
+### 3. Player System (`/player/`)
 
 #### Player.js - Player Character
 ```javascript
-class Player {
-    constructor(gameWidth, gameHeight) {
+export class Player {
+    constructor(gameWidth, gameHeight, world = null) {
         this.x = gameWidth / 2;
         this.y = gameHeight / 2;
+        this.size = 18; // Increased from 12 for better visibility
         this.speed = 3;
         this.direction = 'down';
         this.nameTag = new NameTag('Bob', this.x, this.y);
+        
+        // Combat properties
+        this.health = 10;
+        this.maxHealth = 10;
+        this.attackDamage = 1;
+        this.attackRange = 30;
+        this.attackCooldown = 1000; // 1 second
+        this.lastAttackTime = 0;
+        this.isAttacking = false;
+        
+        // Damage numbers system
+        this.damageNumbers = [];
     }
     
     update(input, world, audioManager) {
@@ -371,6 +310,24 @@ class Player {
         }
     }
     
+    attack(target) {
+        // RuneScape Classic-style weapon animations
+        if (Date.now() - this.lastAttackTime >= this.attackCooldown) {
+            this.isAttacking = true;
+            this.lastAttackTime = Date.now();
+            
+            // Deal damage
+            if (target && target.takeDamage) {
+                target.takeDamage(this.attackDamage);
+            }
+            
+            // Reset attack state
+            setTimeout(() => {
+                this.isAttacking = false;
+            }, 200);
+        }
+    }
+    
     render(ctx) {
         // Player sprite rendering with animation
     }
@@ -383,16 +340,116 @@ class Player {
 - Collision detection with world
 - Animation state management
 - Name tag display
+- Combat system with attack animations
+- Health management and damage numbers
+
+### 4. NPC System (`/npc/`)
+
+#### NPC.js - NPC Management
+```javascript
+class NPC {
+    constructor(config) {
+        // Basic Properties
+        this.id = config.id || `npc_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+        this.name = config.name || "Unknown NPC";
+        this.type = config.type || "townie";
+        
+        // Position and Movement
+        this.x = config.x || 0;
+        this.y = config.y || 0;
+        this.width = config.width || 32;
+        this.height = config.height || 32;
+        this.speed = config.speed || 1;
+        
+        // Combat Properties
+        this.health = config.health || 100;
+        this.maxHealth = config.maxHealth || 100;
+        this.attackDamage = config.attackDamage || 1;
+        this.attackCooldown = config.attackCooldown || 1000;
+        this.lastAttackTime = 0;
+        this.isAttacking = false;
+        this.attackRange = config.attackRange || 20;
+        
+        // Damage numbers system
+        this.damageNumbers = [];
+        
+        // AI Properties
+        this.aiState = "idle";
+        this.detectionRadius = config.detectionRadius || 50;
+        this.reactionTime = config.reactionTime || 500;
+    }
+    
+    update(deltaTime, player, world) {
+        // AI behavior and combat logic
+        this.updateAI(deltaTime, player, world);
+        this.updateCombat(deltaTime, player);
+        this.updateMovement(deltaTime);
+        this.updateDamageNumbers(deltaTime);
+    }
+    
+    attack(target) {
+        // NPC attack logic with cooldowns
+        if (Date.now() - this.lastAttackTime >= this.attackCooldown) {
+            this.isAttacking = true;
+            this.lastAttackTime = Date.now();
+            
+            // Deal damage
+            if (target && target.takeDamage) {
+                target.takeDamage(this.attackDamage);
+            }
+            
+            // Reset attack state
+            setTimeout(() => {
+                this.isAttacking = false;
+            }, 200);
+        }
+    }
+    
+    takeDamage(damage) {
+        // Take damage and show floating damage numbers
+        this.health -= damage;
+        this.addDamageNumber(damage);
+        
+        if (this.health <= 0) {
+            this.health = 0;
+            this.isActive = false;
+            this.isVisible = false;
+        }
+    }
+    
+    render(ctx, camera) {
+        // NPC rendering with health bars and damage numbers
+    }
+}
+```
+
+**Key Features:**
+- **Combat System**: NPCs can attack players and take damage
+- **AI Behavior**: Different AI states (idle, chase, attack)
+- **Health System**: Above-character health bars with color-coded states
+- **Damage Numbers**: Floating damage numbers that animate upward
+- **Death System**: NPCs become inactive and invisible when health reaches 0
+- **Detection Radius**: NPCs detect players within a certain radius
+- **Attack Cooldowns**: Prevents rapid-fire attacks
+
+**Responsibilities:**
+- NPC behavior and AI
+- Combat interactions with players
+- Health management and damage display
+- Visual rendering with health bars
+- Death state management
 
 ### 5. Camera System (`/camera/`)
 
 #### Camera.js - Camera Management
 ```javascript
-class Camera {
+export class Camera {
     constructor(canvasWidth, canvasHeight) {
         this.x = 0;
         this.y = 0;
         this.zoom = 1.0;
+        this.maxZoom = 3.0;
+        this.minZoom = 0.5;
     }
     
     update(playerX, playerY, worldWidth, worldHeight, input) {
@@ -401,6 +458,10 @@ class Camera {
     
     applyTransform(ctx) {
         // Canvas transformation
+    }
+    
+    setZoom(zoom) {
+        // Set zoom level with constraints
     }
 }
 ```
@@ -415,12 +476,24 @@ class Camera {
 
 #### Input.js - Enhanced Input Management
 ```javascript
-class Input {
+export class Input {
     constructor(canvas) {
         this.keys = {};
         this.mouse = { x: 0, y: 0, isDragging: false };
         this.keybinds = this.loadKeybinds();
         this.keyActions = {};
+        
+        // Mobile D-pad state
+        this.mobileDpad = {
+            up: false,
+            down: false,
+            left: false,
+            right: false,
+            upLeft: false,
+            upRight: false,
+            downLeft: false,
+            downRight: false
+        };
     }
     
     loadKeybinds() {
@@ -429,6 +502,7 @@ class Input {
             moveUp: 'KeyW', moveDown: 'KeyS', moveLeft: 'KeyA', moveRight: 'KeyD',
             sprint: 'ShiftLeft', crouch: 'ControlLeft', pause: 'Escape', inventory: 'KeyI',
             interact: 'KeyE', menu: 'KeyM', debug: 'F1', screenshot: 'F12',
+            attack: 'Space', // Combat system integration
             // ... 40+ total keybinds across 8 categories
         };
     }
@@ -453,6 +527,7 @@ class Input {
     isInventoryPressed() { return this.isActionPressed('inventory'); }
     isSprintPressed() { return this.isActionPressed('sprint'); }
     isCrouchPressed() { return this.isActionPressed('crouch'); }
+    isAttackPressed() { return this.isActionPressed('attack'); } // Combat system
     isDebugPressed() { return this.isActionPressed('debug'); }
     isScreenshotPressed() { return this.isActionPressed('screenshot'); }
     isToggleAudioPressed() { return this.isActionPressed('toggleAudio'); }
@@ -466,6 +541,8 @@ class Input {
 - **Persistent Storage**: Keybinds saved to localStorage
 - **Dynamic Updates**: Keybinds refresh when settings change
 - **Fallback Support**: Direct key checking for critical functions
+- **Combat Integration**: Attack keybind for combat system
+- **Mobile Support**: D-pad controls for touch devices
 
 **Responsibilities:**
 - Enhanced keyboard input handling with keybind system
@@ -473,6 +550,7 @@ class Input {
 - Input state management
 - Event delegation with action abstraction
 - Settings integration
+- Combat system integration
 
 ### 7. Loading Screen System (`index.html`)
 
@@ -681,14 +759,16 @@ class VideoSettings {
     ↓
 4. Render Player
     ↓
-5. Restore Transform
+5. Render NPCs
     ↓
-6. Render UI Overlay (Health Bar + Controls Bubble)
+6. Restore Transform
+    ↓
+7. Render UI Overlay (Health Bar + Controls Bubble)
 ```
 
 ### UI Rendering Strategy
 ```
-1. Health Bar (Top Center)
+1. Health Bar (Above Characters)
     ↓
 2. Interactive Controls Bubble (Bottom Right)
     ↓
@@ -739,7 +819,7 @@ Input Events → Game.update() → Component Updates → State Changes
 
 ### Render Cycle
 ```
-Game.render() → Camera Transform → World Render → Player Render → UI Render
+Game.render() → Camera Transform → World Render → Player Render → NPC Render → UI Render
 ```
 
 ### Event Flow
@@ -779,12 +859,20 @@ const GAME_CONFIG = {
     },
     PLAYER: {
         SPEED: 200,
-        SIZE: 32
+        SIZE: 32,
+        HEALTH: 10,
+        ATTACK_DAMAGE: 1,
+        ATTACK_RANGE: 30
     },
     CAMERA: {
         ZOOM_MIN: 0.5,
         ZOOM_MAX: 2.0,
         FOLLOW_SPEED: 5
+    },
+    COMBAT: {
+        ATTACK_COOLDOWN: 1000,
+        DAMAGE_NUMBER_DURATION: 1000,
+        HEALTH_BAR_HEIGHT: 4
     }
 };
 ```

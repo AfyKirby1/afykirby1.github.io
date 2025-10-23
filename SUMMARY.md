@@ -58,18 +58,32 @@ Diamond Clad Studios (DCS) portfolio website showcasing multiple gaming and soft
 └── docs/ (documentation)
 ```
 
-## Recent Updates
-- Integrated DCS logo with blue spark effects
-- Updated tagline to "A couple gems locked away, just waiting to be discovered"
-- Unified styling across all pages with glass-morphism theme
-- Added login system integration
-- Enhanced mobile responsiveness
-- Created The War Room team collaboration workspace
-- Implemented filesystem-based image storage system
-- Integrated unified server architecture for all projects
+## Recent Updates (January 27, 2025)
+
+### DCS Portfolio & War Room
+- ✅ **Complete War Room System** - Full team collaboration workspace with checklists, notes, and asset management
+- ✅ **Image Viewer Modal** - Professional Instagram-like viewing experience with navigation controls
+- ✅ **Performance Optimization** - Instant localStorage caching with zero-delay page loads
+- ✅ **Filesystem Storage** - Full-quality asset management with upload/download capabilities
+- ✅ **Unified Server Architecture** - Single Express.js server serving all projects
+
+### Blocky-Builder World Editor (v0.09)
+- ✅ **Complete Building System** - Texture-based building placement with coordinate system fixes
+- ✅ **Building Manager UI** - Dedicated panel with drag functionality and template management
+- ✅ **NPC Builder Overhaul** - Custom PNG upload system with persistent storage
+- ✅ **Professional Rearrangement** - Modular architecture with landing page and theme system
+- ✅ **Coordinate System Fixes** - Buildings place exactly where you click with zoom awareness
+
+### Runes of Tir na nÓg RPG (v2.0)
+- ✅ **Complete Combat System** - Player and NPC attacks with RuneScape Classic-style animations
+- ✅ **Health Bar System** - Above-character health bars with floating damage numbers
+- ✅ **Mobile & Multiplayer Enhancements** - Loading screens, touch controls, smart pause system
+- ✅ **Visual Improvements** - Player size increase, NPC cleanup, keybind conflict resolution
+- ✅ **Custom World Support** - Mana tile support with security validation
 
 ## Next Steps
-- Implement backend authentication system
+- Implement backend authentication system for production use
 - Add more interactive features to admin panel
-- Expand project showcases
+- Expand project showcases with new tools
 - Optimize performance and loading times
+- Consider database integration for persistent data storage
