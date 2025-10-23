@@ -32,11 +32,14 @@ class NPCBuilder {
         this.persistentTemplates = {}; // Templates that persist across sessions
         this.sessionTemplates = {}; // Templates added during current session
         
+        // Simple file saving
+        
         // Load persistent templates from localStorage
         this.loadPersistentTemplates();
         
         this.initializeUI();
     }
+    
     
     loadPersistentTemplates() {
         try {
@@ -69,25 +72,24 @@ class NPCBuilder {
             
             for (const npcName of persistentNPCs) {
                 try {
-                    const response = await fetch(`../RunesOfTirNaNog/assets/npc/persistent/${npcName}.json`);
+                    // Load from GitHub Pages - this is the source of truth
+                    const githubUrl = `https://afykirby1.github.io/github-pages/Blocky-Builder/assets/npc/persistent/${npcName}.json`;
+                    
+                    const response = await fetch(githubUrl);
                     if (response.ok) {
                         const npcData = await response.json();
                         
-                        // Convert image path to base64 if it's a local file
-                        if (npcData.customImage && npcData.customImage.startsWith('assets/')) {
-                            try {
-                                const imgResponse = await fetch(`../RunesOfTirNaNog/${npcData.customImage}`);
-                                if (imgResponse.ok) {
-                                    const blob = await imgResponse.blob();
-                                    const reader = new FileReader();
-                                    reader.onload = () => {
-                                        npcData.customImage = reader.result;
-                                    };
-                                    reader.readAsDataURL(blob);
-                                }
-                            } catch (imgError) {
-                                console.warn(`⚠️ Failed to load image for ${npcName}:`, imgError);
-                            }
+                        // Load image from GitHub Pages
+                        const githubImgUrl = `https://afykirby1.github.io/github-pages/Blocky-Builder/assets/npc/persistent/${npcName}.png`;
+                        const imgResponse = await fetch(githubImgUrl);
+                        
+                        if (imgResponse.ok) {
+                            const blob = await imgResponse.blob();
+                            const reader = new FileReader();
+                            reader.onload = () => {
+                                npcData.customImage = reader.result;
+                            };
+                            reader.readAsDataURL(blob);
                         }
                         
                         // Add to persistent templates
@@ -95,10 +97,12 @@ class NPCBuilder {
                         this.persistentTemplates[key] = {
                             ...npcData,
                             storageType: 'persistent',
-                            source: 'folder'
+                            source: 'github_pages'
                         };
                         
-                        console.log(`✅ Loaded persistent NPC from folder: ${npcName}`);
+                        console.log(`✅ Loaded persistent NPC from GitHub Pages: ${npcName}`);
+                    } else {
+                        console.log(`⚠️ NPC ${npcName} not found on GitHub Pages`);
                     }
                 } catch (error) {
                     console.warn(`⚠️ Failed to load persistent NPC ${npcName}:`, error);
@@ -166,7 +170,7 @@ class NPCBuilder {
         this.npcTemplates = { ...this.persistentTemplates, ...this.sessionTemplates };
     }
     
-    saveNPCToFiles(template, key) {
+    async saveNPCToFiles(template, key) {
         try {
             // Create NPC data object
             const npcData = {
@@ -179,7 +183,7 @@ class NPCBuilder {
                 dialogue: template.dialogue,
                 icon: template.icon,
                 isCustom: template.isCustom,
-                customImage: template.customImage || `assets/npc/persistent/${template.name}.png`,
+                customImage: template.customImage,
                 width: template.width || 32,
                 height: template.height || 32,
                 storageType: template.storageType,
@@ -187,80 +191,72 @@ class NPCBuilder {
                 version: "1.0"
             };
             
-            // Convert image data URL to blob
-            const imageDataUrl = template.customImage;
-            const imageBlob = this.dataURLToBlob(imageDataUrl);
+            // Save JSON file
+            const sanitizedName = template.name.replace(/[^a-zA-Z0-9]/g, '_');
+            const jsonContent = JSON.stringify(npcData, null, 2);
             
-            // Create a single deployment package
-            this.createNPCPackage(template.name, npcData, imageBlob);
+            // Download JSON file
+            this.downloadFile(jsonContent, `${sanitizedName}.json`, 'application/json');
             
-            console.log('📁 NPC package created:', template.name);
+            // Download PNG file if image exists
+            if (template.customImage) {
+                const imageBlob = this.dataURLToBlob(template.customImage);
+                this.downloadFile(imageBlob, `${sanitizedName}.png`, 'image/png');
+            }
+            
+            console.log('📁 NPC files downloaded:', template.name);
         } catch (error) {
             console.error('❌ Failed to save NPC files:', error);
         }
     }
     
-    createNPCPackage(npcName, npcData, imageBlob) {
+    async createNPCPackage(npcName, npcData, imageBlob) {
         const sanitizedName = npcName.replace(/[^a-zA-Z0-9]/g, '_');
         
-        // Create a comprehensive package with all necessary files
-        const packageData = {
-            metadata: {
-                npcName: npcName,
-                sanitizedName: sanitizedName,
-                createdAt: new Date().toISOString(),
-                version: "1.0"
-            },
-            files: {
-                json: {
-                    filename: `${sanitizedName}.json`,
-                    content: JSON.stringify(npcData, null, 2),
-                    path: `assets/npc/persistent/${sanitizedName}.json`
-                },
-                image: {
-                    filename: `${sanitizedName}.png`,
-                    content: this.blobToBase64(imageBlob),
-                    path: `assets/npc/persistent/${sanitizedName}.png`
-                }
-            },
-            instructions: {
-                title: "Deployment Instructions",
-                steps: [
-                    `1. Create file: ${sanitizedName}.json`,
-                    `2. Copy the JSON content from the 'json.content' field above`,
-                    `3. Save it to: assets/npc/persistent/${sanitizedName}.json`,
-                    `4. Create file: ${sanitizedName}.png`,
-                    `5. Convert the base64 image data from 'image.content' field`,
-                    `6. Save it to: assets/npc/persistent/${sanitizedName}.png`,
-                    `7. Commit and push to GitHub`,
-                    `8. The NPC will be available to all users!`
-                ]
-            }
-        };
+        // Convert image blob to base64 data URL
+        const imageDataUrl = await this.blobToBase64(imageBlob);
         
-        // Download the package file
-        this.downloadFile(
-            JSON.stringify(packageData, null, 2),
-            `${sanitizedName}_NPC_Package.json`,
-            'application/json'
-        );
+        // Update npcData with proper image reference
+        npcData.customImage = imageDataUrl;
         
-        // Also save to localStorage for immediate use
-        this.saveToLocalStorage(sanitizedName, npcData, imageBlob);
+        // Save to localStorage for immediate use
+        await this.saveToLocalStorage(sanitizedName, npcData, imageBlob);
         
-        console.log(`📦 NPC package created: ${sanitizedName}_NPC_Package.json`);
-        console.log(`💾 NPC also saved to localStorage for immediate use`);
+        // Download files for manual upload
+        this.downloadFile(JSON.stringify(npcData, null, 2), `${sanitizedName}.json`, 'application/json');
+        this.downloadFile(imageBlob, `${sanitizedName}.png`, 'image/png');
+        
+        console.log(`💾 NPC "${npcName}" saved locally and files downloaded`);
     }
     
-    saveToLocalStorage(sanitizedName, npcData, imageBlob) {
+    async saveToLocalStorage(sanitizedName, npcData, imageBlob) {
         const persistentKey = `persistent_npc_${sanitizedName}`;
+        
+        // Convert image blob to base64 data URL
+        const imageDataUrl = await this.blobToBase64(imageBlob);
+        
+        // Update NPC data to include the image
+        npcData.customImage = imageDataUrl;
+        
         const storageData = {
             json: JSON.stringify(npcData, null, 2),
-            image: this.blobToBase64(imageBlob),
+            image: imageDataUrl,
             timestamp: Date.now()
         };
         
         localStorage.setItem(persistentKey, JSON.stringify(storageData));
+        
+        // Also save to the main persistent templates
+        const templateKey = `persistent_${sanitizedName.toLowerCase()}`;
+        this.persistentTemplates[templateKey] = {
+            ...npcData,
+            storageType: 'persistent',
+            source: 'localStorage'
+        };
+        
+        this.savePersistentTemplates();
+        this.updateTemplateList();
+        this.createTemplateList();
     }
     
     blobToBase64(blob) {
@@ -269,6 +265,96 @@ class NPCBuilder {
             reader.onloadend = () => resolve(reader.result);
             reader.readAsDataURL(blob);
         });
+    }
+    
+    showDeploymentSuccess(npcName) {
+        const toast = document.createElement('div');
+        toast.style.cssText = `
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            background: #28a745;
+            color: white;
+            padding: 15px 20px;
+            border-radius: 8px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+            z-index: 10000;
+            font-family: Arial, sans-serif;
+            max-width: 300px;
+        `;
+        
+        toast.innerHTML = `
+            <div style="font-weight: bold; margin-bottom: 5px;">✅ NPC Deployed Successfully!</div>
+            <div>NPC "${npcName}" is now available on GitHub Pages and will be accessible to all users.</div>
+        `;
+        
+        document.body.appendChild(toast);
+        
+        setTimeout(() => {
+            if (document.body.contains(toast)) {
+                document.body.removeChild(toast);
+            }
+        }, 5000);
+    }
+    
+    showGitHubTokenPrompt() {
+        if (this.githubDeployer) {
+            this.githubDeployer.createTokenSetupUI();
+        }
+    }
+    
+    showManualDeploymentInstructions(npcName) {
+        const modal = document.createElement('div');
+        modal.style.cssText = `
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.8);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 10000;
+        `;
+        
+        modal.innerHTML = `
+            <div style="background: white; padding: 20px; border-radius: 8px; max-width: 500px; width: 90%; max-height: 80vh; overflow-y: auto;">
+                <h3>Manual Deployment Required</h3>
+                <p>NPC "${npcName}" has been saved locally and a package file has been downloaded.</p>
+                
+                <h4>To make it available on GitHub Pages:</h4>
+                <ol style="text-align: left; margin: 15px 0;">
+                    <li>Check your Downloads folder for <code>${npcName.replace(/[^a-zA-Z0-9]/g, '_')}_NPC_Package.json</code></li>
+                    <li>Run: <code>node deploy-npc.js ${npcName.replace(/[^a-zA-Z0-9]/g, '_')}_NPC_Package.json</code></li>
+                    <li>Commit and push the files to GitHub</li>
+                    <li>The NPC will be available to all users!</li>
+                </ol>
+                
+                <div style="margin: 15px 0; padding: 10px; background: #f8f9fa; border-radius: 4px;">
+                    <strong>Alternative:</strong> Set up GitHub token for automatic deployment:
+                    <button id="setup-github-token" style="margin-left: 10px; padding: 5px 10px; background: #007bff; color: white; border: none; border-radius: 4px;">Setup GitHub Token</button>
+                </div>
+                
+                <div style="text-align: right; margin-top: 20px;">
+                    <button id="close-manual-instructions" style="padding: 8px 16px; background: #6c757d; color: white; border: none; border-radius: 4px;">Close</button>
+                </div>
+            </div>
+        `;
+        
+        document.body.appendChild(modal);
+        
+        // Event listeners
+        document.getElementById('close-manual-instructions').onclick = () => {
+            document.body.removeChild(modal);
+        };
+        
+        document.getElementById('setup-github-token').onclick = () => {
+            document.body.removeChild(modal);
+            if (this.githubDeployer) {
+                this.githubDeployer.createTokenSetupUI();
+            }
+        };
     }
     
     dataURLToBlob(dataURL) {
@@ -590,7 +676,7 @@ class NPCBuilder {
         confirmBtn.disabled = !(name && hasImage);
     }
     
-    confirmCustomNPC() {
+    async confirmCustomNPC() {
         const name = document.getElementById('npc-custom-name').value.trim();
         const behavior = document.getElementById('npc-custom-behavior').value;
         const dialogue = document.getElementById('npc-custom-dialogue').value.split('\n').filter(line => line.trim());
@@ -624,7 +710,7 @@ class NPCBuilder {
             this.persistentTemplates[customKey] = customTemplate;
             this.savePersistentTemplates();
             // Also save as downloadable files
-            this.saveNPCToFiles(customTemplate, customKey);
+            await this.saveNPCToFiles(customTemplate, customKey);
             console.log('💾 Saved NPC permanently:', customTemplate.name);
         } else {
             this.sessionTemplates[customKey] = customTemplate;

@@ -1,0 +1,19 @@
+{
+  "id": "custom_1761186921126_ecz4x0onj",
+  "name": "Rat",
+  "type": "custom",
+  "color": "#8B4513",
+  "behavior": "wander",
+  "speed": 0.5,
+  "dialogue": [
+    "Squeek!"
+  ],
+  "icon": "🎨",
+  "isCustom": true,
+  "storageType": "persistent",
+  "createdAt": "2025-10-23T02:35:21.127Z",
+  "version": "1.0",
+  "customImage": "assets/npc/persistent/Rat.png",
+  "width": 32,
+  "height": 32
+}
