@@ -65,6 +65,9 @@ class BuildingManager {
                 this.persistentTextures = {};
             }
             
+            // Add hardcoded house textures for GitHub Pages compatibility
+            this.addHardcodedHouseTextures();
+            
         } catch (error) {
             console.warn('⚠️ Failed to load persistent templates:', error);
             this.persistentTemplates = {};
@@ -89,6 +92,31 @@ class BuildingManager {
         
         // Load existing buildings from localStorage
         this.loadBuildings();
+    }
+    
+    addHardcodedHouseTextures() {
+        // Add hardcoded house textures for GitHub Pages compatibility
+        const hardcodedTextures = {
+            'house_1': {
+                name: 'House 1',
+                path: '../assets/buildings/house_1.png',
+                size: 2867,
+                storageType: 'hardcoded',
+                source: 'hardcoded'
+            },
+            'house_2': {
+                name: 'House 2',
+                path: '../assets/buildings/house_2.png', 
+                size: 2867,
+                storageType: 'hardcoded',
+                source: 'hardcoded'
+            }
+        };
+        
+        // Merge hardcoded textures with existing persistent textures
+        this.persistentTextures = { ...this.persistentTextures, ...hardcodedTextures };
+        
+        console.log('🏠 Added hardcoded house textures for GitHub Pages compatibility');
     }
     
     preloadExistingTextures() {
@@ -121,8 +149,23 @@ class BuildingManager {
             delete this.persistentTemplates[key];
         });
         
-        if (keysToRemove.length > 0) {
+        // Clean up broken texture paths (old texture-xxxx files)
+        const textureKeysToRemove = [];
+        Object.keys(this.persistentTextures).forEach(key => {
+            const texture = this.persistentTextures[key];
+            if (texture.path && texture.path.includes('texture-176124')) {
+                textureKeysToRemove.push(key);
+            }
+        });
+        
+        textureKeysToRemove.forEach(key => {
+            delete this.persistentTextures[key];
+        });
+        
+        if (keysToRemove.length > 0 || textureKeysToRemove.length > 0) {
             this.savePersistentTemplates();
+            this.savePersistentTextures();
+            console.log(`🧹 Cleaned up ${keysToRemove.length} orphaned building templates and ${textureKeysToRemove.length} broken texture paths`);
         }
     }
     

@@ -57,6 +57,7 @@ class Renderer {
                     console.warn(`Failed to load texture: ${path}`);
                     resolve(); // Continue without this texture
                 };
+                // Handle both file paths and base64 data URLs
                 img.src = path;
             });
         });

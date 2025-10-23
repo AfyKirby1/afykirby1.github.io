@@ -1,5 +1,17 @@
 # Blocky Builder - Development Scratchpad
 
+## Version 0.10 - January 27, 2025
+**GitHub Pages Texture Integration**
+
+### Major Features Added
+- **Hardcoded Texture System** - Custom textures converted to base64 data URLs for GitHub Pages compatibility
+- **Integrated Tile System** - Custom textures now work seamlessly with built-in tile system
+- **GitHub Pages Ready** - All textures embedded directly in tiles.json, no external file dependencies
+- **Enhanced Tile Palette** - 2 new custom tile types available: Vertical Trail, Connector Trail
+- **Building Manager Integration** - House textures (house_1, house_2) moved to buildings folder and hardcoded into Building Manager only
+- **Separation of Concerns** - Houses removed from tile palette, now exclusively available in Building Manager
+- **localStorage Cleanup** - Automatic cleanup of broken texture paths from old texture-xxxx files
+
 ## Version 0.09 - January 27, 2025
 **Building System Implementation & Coordinate Fixes**
 

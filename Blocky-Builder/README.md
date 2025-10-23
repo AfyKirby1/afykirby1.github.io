@@ -32,7 +32,8 @@ Blocky-Builder/
 ├── 📁 assets/                       # Game assets
 ├── 📁 worlds/                       # Saved worlds (auto-created)
 ├── 📁 docs/                         # Documentation
-│   └── ARCHITECTURE.md             # System architecture
+│   ├── ARCHITECTURE.md             # System architecture
+│   └── TEXTURE_MANAGEMENT_GUIDE.md # Team guide for adding textures
 ├── launch.bat                      # Windows launcher
 ├── package.json                    # Dependencies
 └── README.md                       # This file
@@ -152,6 +153,13 @@ The theme system uses CSS custom properties for easy customization:
     --text-primary: #ffffff;
 }
 ```
+
+## 📚 **Documentation**
+
+- **[ARCHITECTURE.md](docs/ARCHITECTURE.md)** - Complete system architecture overview
+- **[TEXTURE_MANAGEMENT_GUIDE.md](docs/TEXTURE_MANAGEMENT_GUIDE.md)** - Team guide for adding textures and buildings
+- **[SCRATCHPAD.md](SCRATCHPAD.md)** - Development notes and progress
+- **[SUMMARY.md](SUMMARY.md)** - Project summary and status
 
 ## 🔧 **Development**
 
