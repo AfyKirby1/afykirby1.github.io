@@ -7,7 +7,7 @@ class Renderer {
         this.canvas = canvas;
         this.ctx = canvas.getContext('2d');
         this.worldManager = worldManager;
-        this.TILE_SIZE = 32;
+        this.TILE_SIZE = 16;
         this.textures = new Map();
         this.texturesLoaded = false;
         this.backgroundColor = '#0a0a0a'; // Default background color
