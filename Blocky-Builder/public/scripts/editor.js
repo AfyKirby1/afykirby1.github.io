@@ -6,6 +6,7 @@ class BlockyBuilderEditor {
         this.eventSystem = null;
         this.toolManager = null;
         this.canvas = null;
+        this.npcBuilder = null;
         
         this.init();
     }
@@ -30,6 +31,9 @@ class BlockyBuilderEditor {
             // Setup UI
             this.setupUI();
             
+            // Initialize NPC Builder
+            this.initializeNPCBuilder();
+            
             // Resize canvas to proper dimensions
             this.renderer.resizeCanvas();
             
@@ -50,6 +54,22 @@ class BlockyBuilderEditor {
         } catch (error) {
             console.error('Failed to initialize editor:', error);
             this.showToast('Failed to load editor: ' + error.message, 'error');
+        }
+    }
+
+    initializeNPCBuilder() {
+        try {
+            // Check if NPCBuilder class is available
+            if (typeof NPCBuilder !== 'undefined') {
+                this.npcBuilder = new NPCBuilder(this.canvas, this.worldManager);
+                console.log('✅ NPC Builder initialized successfully');
+            } else {
+                console.warn('⚠️ NPCBuilder class not found - NPC functionality disabled');
+                this.showToast('NPC Builder not available', 'warning');
+            }
+        } catch (error) {
+            console.error('Failed to initialize NPC Builder:', error);
+            this.showToast('Failed to initialize NPC Builder: ' + error.message, 'error');
         }
     }
 
@@ -441,6 +461,16 @@ class BlockyBuilderEditor {
             try {
                 const worldData = JSON.parse(savedWorld);
                 this.worldManager.loadWorldData(worldData);
+                
+                // Load NPCs into NPCBuilder if available
+                if (this.npcBuilder && worldData.npcs) {
+                    console.log(`🎯 Loading ${worldData.npcs.length} NPCs into NPCBuilder:`, worldData.npcs.map(npc => `${npc.name} (${npc.id})`));
+                    this.npcBuilder.loadSaveData(worldData);
+                    console.log(`✅ Loaded ${worldData.npcs.length} NPCs from saved world`);
+                } else if (this.npcBuilder) {
+                    console.log('ℹ️ No NPCs found in world data to load');
+                }
+                
                 this.updateWorldStats();
                 this.showToast('World loaded from save', 'success');
             } catch (error) {
@@ -494,6 +524,27 @@ class BlockyBuilderEditor {
     exportWorld() {
         try {
             const worldData = this.worldManager.getWorldData();
+            
+            // Add NPCs to world data
+            if (this.npcBuilder && this.npcBuilder.npcs && this.npcBuilder.npcs.length > 0) {
+                worldData.npcs = this.npcBuilder.npcs.map(npc => ({
+                    id: npc.id,
+                    name: npc.name,
+                    type: npc.type,
+                    x: npc.x,
+                    y: npc.y,
+                    dialogue: npc.dialogue,
+                    behavior: npc.behavior,
+                    wanderRadius: npc.wanderRadius,
+                    patrolPoints: npc.patrolPoints,
+                    color: npc.color,
+                    interactable: true
+                }));
+                console.log(`✅ Exported ${worldData.npcs.length} NPCs with world data`);
+            } else {
+                console.log('ℹ️ No NPCs to export');
+            }
+            
             const dataStr = JSON.stringify(worldData, null, 2);
             const dataBlob = new Blob([dataStr], { type: 'application/json' });
             
@@ -546,26 +597,16 @@ class BlockyBuilderEditor {
 
 // Global functions for HTML onclick handlers
 function selectTool(tool) {
-    console.log('🔍 DEBUG: selectTool called with tool:', tool);
-    console.log('🔍 DEBUG: Body classes:', document.body.classList.toString());
-    console.log('🔍 DEBUG: Body has modal-open class:', document.body.classList.contains('modal-open'));
-    
     // Don't allow tool selection when Project Setup modal is open
     const modal = document.getElementById('projectModal');
-    console.log('🔍 DEBUG: Modal element:', modal);
-    console.log('🔍 DEBUG: Modal display style:', modal ? modal.style.display : 'modal not found');
-    
-    // Temporarily disable modal check for debugging
-    // if (modal && (modal.style.display === 'flex' || modal.style.display === 'block')) {
-    //     console.log('🔍 DEBUG: Tool selection blocked - modal is open with display:', modal.style.display);
-    //     return; // Block tool selection
-    // }
+    if (modal && (modal.style.display === 'flex' || modal.style.display === 'block')) {
+        return; // Block tool selection
+    }
     
     if (window.editor && window.editor.toolManager) {
-        console.log('🔍 DEBUG: Calling toolManager.selectTool');
         window.editor.toolManager.selectTool(tool);
     } else {
-        console.log('🔍 DEBUG: Editor or toolManager not available');
+        console.warn('ToolManager not available');
     }
 }
 
@@ -761,12 +802,13 @@ function openStatisticsPanel() {
 }
 
 function openNPCPanel() {
-    window.editor.showToast('NPC panel coming soon!', 'info');
+    if (window.editor.npcBuilder) {
+        window.editor.npcBuilder.togglePanel();
+    } else {
+        window.editor.showToast('NPC Builder not initialized', 'error');
+    }
 }
 
-function addNewNPC() {
-    window.editor.showToast('Add NPC functionality coming soon!', 'info');
-}
 
 function undo() {
     window.editor.showToast('Undo functionality coming soon!', 'info');

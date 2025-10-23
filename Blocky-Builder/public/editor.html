@@ -38,7 +38,7 @@
                 <button class="tool-btn" onclick="selectTool('pan')" id="panBtn" title="Pan (P)">✋ Pan</button>
                 <button class="tool-btn" onclick="selectTool('rotate')" id="rotateBtn" title="Rotate (R)">🔄 Rotate</button>
                 <button class="tool-btn" onclick="selectTool('flip')" id="flipBtn" title="Flip (X)">↔️ Flip</button>
-                <button class="tool-btn" onclick="selectTool('npc')" id="npcBtn" title="Manage NPCs (N)">🧙 NPCs</button>
+                <button class="tool-btn" onclick="openNPCPanel()" id="npcBtn" title="Open NPC Builder (N)">🧙 NPCs</button>
             </div>
 
             <div class="tool-section" id="betaToolsSection" style="display: none;">
@@ -87,17 +87,6 @@
                 </div>
             </div>
 
-            <!-- NPC Management Section -->
-            <div class="tool-section" id="npcManagementSection" style="display: none;">
-                <h3>🧙 NPC Management</h3>
-                <div class="npc-preview-grid" id="npcPreviewGrid">
-                    <!-- NPC previews will be populated here -->
-                </div>
-                <div class="npc-actions">
-                    <button class="tool-btn" onclick="openNPCPanel()" title="Open NPC management panel">🎭 Manage NPCs</button>
-                    <button class="tool-btn" onclick="addNewNPC()" title="Add new NPC">➕ Add NPC</button>
-                </div>
-            </div>
 
             <div class="tool-section" id="minimapSection">
                 <h3>🗺️ Minimap</h3>
@@ -351,7 +340,11 @@
     <script src="../src/core/EventSystem.js"></script>
     <script src="../src/tools/ToolManager.js"></script>
     
-    <!-- Load Editor Script -->
-    <script src="scripts/editor.js"></script>
+        <!-- Load NPC Builder System -->
+        <script src="../assets/npc/NPCBuilder.js?v=4"></script>
+        <script src="../assets/npc/NPCBuilderStyles.js?v=4"></script>
+
+        <!-- Load Editor Script -->
+        <script src="scripts/editor.js?v=4"></script>
 </body>
 </html>

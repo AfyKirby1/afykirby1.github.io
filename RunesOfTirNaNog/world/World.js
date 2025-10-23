@@ -69,7 +69,29 @@ export class World {
             textureVariant: Math.random() // Add some variety
         }));
         
+        // Load NPCs from world data
+        this.loadNPCsFromData(data);
+        
         console.log(`Custom world loaded: ${this.width}x${this.height} (${this.tiles.length} tiles)`);
+    }
+
+    /**
+     * Load NPCs from world data
+     */
+    loadNPCsFromData(data) {
+        if (data.npcs && Array.isArray(data.npcs)) {
+            console.log('🐭 Loading NPCs from world data:', data.npcs.length);
+            
+            // Store NPC data for the game to use
+            this.npcData = data.npcs;
+            
+            data.npcs.forEach(npcData => {
+                console.log(`🐭 NPC: ${npcData.name} at (${npcData.x}, ${npcData.y})`);
+            });
+        } else {
+            // Initialize empty NPC data if none provided
+            this.npcData = [];
+        }
     }
 
     // Static method to load world from JSON file - CACHE BUST

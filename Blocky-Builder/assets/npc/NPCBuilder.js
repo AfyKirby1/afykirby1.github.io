@@ -13,74 +13,59 @@ class NPCBuilder {
         this.isCreatingNPC = false;
         this.selectedNPCTemplate = null;
         this.previewNPC = null;
-        this.npcs = [];
+        this.npcs = []; // Start with empty NPC list
+        
+        // Drag functionality
+        this.isDragging = false;
+        this.dragOffset = { x: 0, y: 0 };
+        
+        // File processing flag
+        this.isProcessingFile = false;
         
         // UI elements
         this.npcPanel = null;
         this.templateList = null;
         this.configPanel = null;
         
-        // NPC templates
-        this.npcTemplates = {
-            townie: {
-                name: "Townie",
-                type: "townie",
-                color: "#8B4513",
-                behavior: "wander",
-                wanderRadius: 50,
-                speed: 0.5,
-                dialogue: ["Hello there!", "Nice day, isn't it?"],
-                icon: "👤"
-            },
-            merchant: {
-                name: "Merchant",
-                type: "merchant",
-                color: "#4169E1",
-                behavior: "idle",
-                shopItems: [],
-                dialogue: ["Welcome to my shop!", "Looking for something specific?"],
-                icon: "🛒"
-            },
-            guard: {
-                name: "Guard",
-                type: "guard",
-                color: "#696969",
-                behavior: "patrol",
-                patrolPoints: [],
-                speed: 0.7,
-                dialogue: ["Halt! Who goes there?", "The town is safe under my watch."],
-                icon: "🛡️"
-            },
-            quest_giver: {
-                name: "Quest Giver",
-                type: "quest_giver",
-                color: "#32CD32",
-                behavior: "idle",
-                quests: [],
-                dialogue: ["I have a task for you.", "The town needs your help!"],
-                icon: "⚔️"
-            },
-            child: {
-                name: "Child",
-                type: "child",
-                color: "#FFB6C1",
-                behavior: "wander",
-                wanderRadius: 30,
-                speed: 0.8,
-                dialogue: ["Hi! Want to play?", "I found something cool!"],
-                icon: "👶"
-            },
-            elder: {
-                name: "Elder",
-                type: "elder",
-                color: "#8B008B",
-                behavior: "idle",
-                dialogue: ["The old ways are fading...", "Wisdom comes with age."],
-                icon: "👴"
-            }
-        };
+        // NPC templates - persistent (localStorage) + session templates
+        this.npcTemplates = {};
+        this.persistentTemplates = {}; // Templates that persist across sessions
+        this.sessionTemplates = {}; // Templates added during current session
+        
+        // Load persistent templates from localStorage
+        this.loadPersistentTemplates();
         
         this.initializeUI();
+    }
+    
+    loadPersistentTemplates() {
+        try {
+            const saved = localStorage.getItem('blockyBuilder_persistentNPCs');
+            if (saved) {
+                this.persistentTemplates = JSON.parse(saved);
+                console.log('📦 Loaded persistent NPC templates:', Object.keys(this.persistentTemplates));
+            }
+        } catch (error) {
+            console.warn('⚠️ Failed to load persistent NPC templates:', error);
+            this.persistentTemplates = {};
+        }
+        
+        // Merge persistent and session templates
+        this.updateTemplateList();
+    }
+    
+    savePersistentTemplates() {
+        try {
+            localStorage.setItem('blockyBuilder_persistentNPCs', JSON.stringify(this.persistentTemplates));
+            console.log('💾 Saved persistent NPC templates:', Object.keys(this.persistentTemplates));
+        } catch (error) {
+            console.warn('⚠️ Failed to save persistent NPC templates:', error);
+        }
+    }
+    
+    updateTemplateList() {
+        // Merge persistent and session templates
+        this.npcTemplates = { ...this.persistentTemplates, ...this.sessionTemplates };
     }
     
     initializeUI() {
@@ -95,12 +80,13 @@ class NPCBuilder {
         this.npcPanel = document.createElement('div');
         this.npcPanel.id = 'npc-builder-panel';
         this.npcPanel.className = 'npc-panel';
+        this.npcPanel.style.display = 'none'; // Hide the entire panel by default
         this.npcPanel.innerHTML = `
             <div class="npc-panel-header">
                 <h3>NPC Builder</h3>
-                <button id="npc-panel-toggle" class="npc-toggle-btn">−</button>
+                <button id="npc-panel-toggle" class="npc-toggle-btn">+</button>
             </div>
-            <div class="npc-panel-content">
+            <div class="npc-panel-content" style="display: none;">
                 <div class="npc-tools">
                     <button id="npc-create-btn" class="npc-tool-btn active">
                         <span class="npc-tool-icon">➕</span>
@@ -114,9 +100,19 @@ class NPCBuilder {
                         <span class="npc-tool-icon">🗑️</span>
                         Delete NPC
                     </button>
+                    <button id="npc-clear-btn" class="npc-tool-btn" style="background: #dc3545; color: white;">
+                        <span class="npc-tool-icon">🧹</span>
+                        Clear All
+                    </button>
                 </div>
                 <div class="npc-template-section">
                     <h4>NPC Templates</h4>
+                    <div class="npc-template-actions">
+                        <button id="npc-add-custom-btn" class="npc-add-custom-btn">
+                            <span class="npc-tool-icon">📁</span>
+                            Add Custom NPC
+                        </button>
+                    </div>
                     <div id="npc-template-list" class="npc-template-list"></div>
                 </div>
                 <div class="npc-config-section">
@@ -132,6 +128,309 @@ class NPCBuilder {
         
         // Add to page
         document.body.appendChild(this.npcPanel);
+        
+        // Create upload modal
+        this.createUploadModal();
+    }
+    
+    createUploadModal() {
+        // Create upload modal
+        this.uploadModal = document.createElement('div');
+        this.uploadModal.id = 'npc-upload-modal';
+        this.uploadModal.className = 'npc-upload-modal';
+        this.uploadModal.style.display = 'none';
+        this.uploadModal.innerHTML = `
+            <div class="npc-upload-modal-content">
+                <div class="npc-upload-header">
+                    <h3>Add Custom NPC</h3>
+                    <button id="npc-upload-close" class="npc-upload-close">×</button>
+                </div>
+                <div class="npc-upload-body">
+                    <div class="npc-upload-section">
+                        <div class="npc-upload-dropzone" id="npc-dropzone">
+                            <div class="npc-upload-icon">📁</div>
+                            <div class="npc-upload-text">Click to select PNG file or drag & drop</div>
+                            <div class="npc-upload-hint">Recommended size: 32x32 or 64x64 pixels</div>
+                        </div>
+                        <input type="file" id="npc-file-input" accept=".png" style="display: none;">
+                    </div>
+                    <div class="npc-upload-preview-section" id="npc-preview-section" style="display: none;">
+                        <h4>Preview</h4>
+                        <div class="npc-upload-preview">
+                            <img id="npc-preview-image" src="" alt="NPC Preview">
+                        </div>
+                        <div class="npc-upload-details">
+                            <div class="npc-upload-field">
+                                <label for="npc-custom-name">NPC Name:</label>
+                                <input type="text" id="npc-custom-name" placeholder="Enter NPC name" maxlength="20">
+                            </div>
+                            <div class="npc-upload-field">
+                                <label for="npc-custom-behavior">Default Behavior:</label>
+                                <select id="npc-custom-behavior">
+                                    <option value="idle">Idle</option>
+                                    <option value="wander">Wander</option>
+                                    <option value="patrol">Patrol</option>
+                                    <option value="guard">Guard</option>
+                                </select>
+                            </div>
+                            <div class="npc-upload-field">
+                                <label for="npc-custom-dialogue">Default Dialogue:</label>
+                                <textarea id="npc-custom-dialogue" rows="2" placeholder="Enter default dialogue lines (one per line)">Hello there!</textarea>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                    <div class="npc-upload-footer">
+                        <div class="npc-upload-storage-options">
+                            <label class="npc-upload-storage-option">
+                                <input type="radio" name="npc-storage" value="session" checked>
+                                <span>Session Only (temporary)</span>
+                            </label>
+                            <label class="npc-upload-storage-option">
+                                <input type="radio" name="npc-storage" value="persistent">
+                                <span>Save Permanently (localStorage)</span>
+                            </label>
+                        </div>
+                        <div class="npc-upload-buttons">
+                            <button id="npc-upload-cancel" class="npc-upload-btn npc-upload-cancel">Cancel</button>
+                            <button id="npc-upload-confirm" class="npc-upload-btn npc-upload-confirm" disabled>Add NPC</button>
+                        </div>
+                    </div>
+            </div>
+        `;
+        
+        // Add to page
+        document.body.appendChild(this.uploadModal);
+        
+        // Setup upload modal event listeners
+        this.setupUploadModalListeners();
+    }
+    
+    setupUploadModalListeners() {
+        // Close modal buttons
+        document.getElementById('npc-upload-close').addEventListener('click', () => {
+            this.closeUploadModal();
+        });
+        
+        document.getElementById('npc-upload-cancel').addEventListener('click', () => {
+            this.closeUploadModal();
+        });
+        
+        // File input handling
+        const fileInput = document.getElementById('npc-file-input');
+        const dropzone = document.getElementById('npc-dropzone');
+        
+        // Remove any existing event listeners to prevent duplicates
+        dropzone.removeEventListener('click', this.handleDropzoneClick);
+        fileInput.removeEventListener('change', this.handleFileInputChange);
+        
+        // Store handlers as instance methods to prevent duplicates
+        this.handleDropzoneClick = (e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            // Only trigger if not already processing
+            if (!this.isProcessingFile) {
+                this.isProcessingFile = true;
+                fileInput.click();
+                // Reset flag after a short delay
+                setTimeout(() => {
+                    this.isProcessingFile = false;
+                }, 100);
+            }
+        };
+        
+        this.handleFileInputChange = (e) => {
+            if (e.target.files && e.target.files[0]) {
+                this.handleFileSelect(e.target.files[0]);
+            }
+        };
+        
+        // Click to open file dialog
+        dropzone.addEventListener('click', this.handleDropzoneClick);
+        
+        // File selection
+        fileInput.addEventListener('change', this.handleFileInputChange);
+        
+        // Drag and drop
+        dropzone.addEventListener('dragover', (e) => {
+            e.preventDefault();
+            dropzone.classList.add('npc-upload-dragover');
+        });
+        
+        dropzone.addEventListener('dragleave', (e) => {
+            e.preventDefault();
+            dropzone.classList.remove('npc-upload-dragover');
+        });
+        
+        dropzone.addEventListener('drop', (e) => {
+            e.preventDefault();
+            dropzone.classList.remove('npc-upload-dragover');
+            const file = e.dataTransfer.files[0];
+            if (file && file.type === 'image/png') {
+                this.handleFileSelect(file);
+            } else {
+                alert('Please select a PNG file.');
+            }
+        });
+        
+        // Form validation
+        document.getElementById('npc-custom-name').addEventListener('input', () => {
+            this.validateUploadForm();
+        });
+        
+        // Prevent keyboard events from bubbling up to tool hotkeys
+        const modalInputs = [
+            'npc-custom-name',
+            'npc-custom-behavior', 
+            'npc-custom-dialogue'
+        ];
+        
+        modalInputs.forEach(inputId => {
+            const input = document.getElementById(inputId);
+            if (input) {
+                input.addEventListener('keydown', (e) => {
+                    e.stopPropagation();
+                });
+                input.addEventListener('keyup', (e) => {
+                    e.stopPropagation();
+                });
+                input.addEventListener('keypress', (e) => {
+                    e.stopPropagation();
+                });
+            }
+        });
+        
+        // Prevent all keyboard events on the modal from bubbling up
+        this.uploadModal.addEventListener('keydown', (e) => {
+            e.stopPropagation();
+        });
+        
+        this.uploadModal.addEventListener('keyup', (e) => {
+            e.stopPropagation();
+        });
+        
+        this.uploadModal.addEventListener('keypress', (e) => {
+            e.stopPropagation();
+        });
+        
+        // Confirm button
+        document.getElementById('npc-upload-confirm').addEventListener('click', () => {
+            this.confirmCustomNPC();
+        });
+    }
+    
+    handleFileSelect(file) {
+        if (!file || file.type !== 'image/png') {
+            alert('Please select a PNG file.');
+            return;
+        }
+        
+        const reader = new FileReader();
+        reader.onload = (e) => {
+            const previewImage = document.getElementById('npc-preview-image');
+            const previewSection = document.getElementById('npc-preview-section');
+            
+            previewImage.src = e.target.result;
+            previewSection.style.display = 'block';
+            
+            // Auto-fill name from filename
+            const nameInput = document.getElementById('npc-custom-name');
+            if (!nameInput.value) {
+                const fileName = file.name.replace('.png', '').replace(/[^a-zA-Z0-9\s]/g, '');
+                nameInput.value = fileName || 'Custom NPC';
+            }
+            
+            this.validateUploadForm();
+        };
+        reader.readAsDataURL(file);
+    }
+    
+    validateUploadForm() {
+        const name = document.getElementById('npc-custom-name').value.trim();
+        const hasImage = document.getElementById('npc-preview-image').src;
+        const confirmBtn = document.getElementById('npc-upload-confirm');
+        
+        confirmBtn.disabled = !(name && hasImage);
+    }
+    
+    confirmCustomNPC() {
+        const name = document.getElementById('npc-custom-name').value.trim();
+        const behavior = document.getElementById('npc-custom-behavior').value;
+        const dialogue = document.getElementById('npc-custom-dialogue').value.split('\n').filter(line => line.trim());
+        const imageSrc = document.getElementById('npc-preview-image').src;
+        const storageType = document.querySelector('input[name="npc-storage"]:checked').value;
+        
+        if (!name || !imageSrc) {
+            alert('Please provide a name and select an image.');
+            return;
+        }
+        
+        // Create custom NPC template
+        const customKey = `custom_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+        const customTemplate = {
+            name: name,
+            type: 'custom',
+            color: '#8B4513', // Default color
+            behavior: behavior,
+            speed: 0.5,
+            dialogue: dialogue,
+            icon: '🎨', // Custom icon
+            customImage: imageSrc, // Store the image data URL
+            isCustom: true,
+            storageType: storageType // Track how it was stored
+        };
+        
+        // Add to appropriate storage
+        if (storageType === 'persistent') {
+            this.persistentTemplates[customKey] = customTemplate;
+            this.savePersistentTemplates();
+            console.log('💾 Saved NPC permanently:', customTemplate.name);
+        } else {
+            this.sessionTemplates[customKey] = customTemplate;
+            console.log('🔄 Saved NPC for session:', customTemplate.name);
+        }
+        
+        // Update template list
+        this.updateTemplateList();
+        this.createTemplateList();
+        
+        // Close modal and reset form
+        this.closeUploadModal();
+        
+        console.log('Custom NPC added:', customTemplate);
+    }
+    
+    closeUploadModal() {
+        this.uploadModal.style.display = 'none';
+        
+        // Remove the modal-open class from NPC panel
+        this.npcPanel.classList.remove('npc-modal-open');
+        
+        // Reset form
+        document.getElementById('npc-file-input').value = '';
+        document.getElementById('npc-preview-image').src = '';
+        document.getElementById('npc-preview-section').style.display = 'none';
+        document.getElementById('npc-custom-name').value = '';
+        document.getElementById('npc-custom-behavior').value = 'idle';
+        document.getElementById('npc-custom-dialogue').value = 'Hello there!';
+        document.getElementById('npc-upload-confirm').disabled = true;
+        
+        // Reset file processing flag
+        this.isProcessingFile = false;
+    }
+    
+    openUploadModal() {
+        this.uploadModal.style.display = 'flex';
+        // Dim the NPC Builder panel when modal is open
+        this.npcPanel.classList.add('npc-modal-open');
+        
+        // Focus the first input field for better UX
+        setTimeout(() => {
+            const nameInput = document.getElementById('npc-custom-name');
+            if (nameInput) {
+                nameInput.focus();
+            }
+        }, 100);
     }
     
     createTemplateList() {
@@ -141,8 +440,16 @@ class NPCBuilder {
             const templateItem = document.createElement('div');
             templateItem.className = 'npc-template-item';
             templateItem.dataset.template = key;
+            // Create template icon/image
+            let iconHtml;
+            if (template.isCustom && template.customImage) {
+                iconHtml = `<img src="${template.customImage}" alt="${template.name}" class="npc-template-custom-image">`;
+            } else {
+                iconHtml = `<div class="npc-template-icon">${template.icon}</div>`;
+            }
+            
             templateItem.innerHTML = `
-                <div class="npc-template-icon">${template.icon}</div>
+                <div class="npc-template-icon-container">${iconHtml}</div>
                 <div class="npc-template-info">
                     <div class="npc-template-name">${template.name}</div>
                     <div class="npc-template-type">${template.type}</div>
@@ -342,12 +649,16 @@ class NPCBuilder {
         }
         
         const config = this.getNPCConfig();
+        const template = this.npcTemplates[this.selectedNPCTemplate];
         const npc = {
             id: `npc_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
             template: this.selectedNPCTemplate,
             x: x,
             y: y,
-            ...config
+            ...config,
+            // Include custom image data if available
+            customImage: template.customImage || null,
+            isCustom: template.isCustom || false
         };
         
         this.npcs.push(npc);
@@ -485,9 +796,11 @@ class NPCBuilder {
         // Canvas click handler for NPC placement
         this.canvas.addEventListener('click', (e) => {
             if (this.isCreatingNPC) {
-                const rect = this.canvas.getBoundingClientRect();
-                const x = e.clientX - rect.left;
-                const y = e.clientY - rect.top;
+                // Use the renderer's coordinate conversion to get proper world coordinates
+                const worldCoords = window.editor.renderer.getWorldCoords(e.clientX, e.clientY);
+                // Convert world coordinates to pixel coordinates for NPC placement
+                const x = worldCoords.x * window.editor.renderer.TILE_SIZE;
+                const y = worldCoords.y * window.editor.renderer.TILE_SIZE;
                 this.placeNPC(x, y);
             }
         });
@@ -499,6 +812,9 @@ class NPCBuilder {
                 this.togglePanel();
             });
         }
+        
+        // Drag functionality for panel header
+        this.setupDragFunctionality();
         
         // Tool buttons
         document.getElementById('npc-create-btn').addEventListener('click', () => {
@@ -512,17 +828,119 @@ class NPCBuilder {
         document.getElementById('npc-delete-btn').addEventListener('click', () => {
             this.setActiveTool('delete');
         });
+        
+        document.getElementById('npc-clear-btn').addEventListener('click', () => {
+            if (confirm('Are you sure you want to clear ALL NPCs? This cannot be undone.')) {
+                this.clearAllNPCs();
+            }
+        });
+        
+        // Add Custom NPC button
+        document.getElementById('npc-add-custom-btn').addEventListener('click', () => {
+            this.openUploadModal();
+        });
+    }
+    
+    setupDragFunctionality() {
+        const header = this.npcPanel.querySelector('.npc-panel-header');
+        if (!header) return;
+        
+        // Make header draggable
+        header.style.cursor = 'move';
+        header.style.userSelect = 'none';
+        
+        // Performance optimization variables
+        let isDragging = false;
+        let dragOffset = { x: 0, y: 0 };
+        let animationFrame = null;
+        
+        // Mouse down handler
+        header.addEventListener('mousedown', (e) => {
+            // Don't drag if clicking the toggle button
+            if (e.target.id === 'npc-panel-toggle') return;
+            
+            isDragging = true;
+            const rect = this.npcPanel.getBoundingClientRect();
+            dragOffset.x = e.clientX - rect.left;
+            dragOffset.y = e.clientY - rect.top;
+            
+            // Prevent text selection and default behavior
+            e.preventDefault();
+            e.stopPropagation();
+            
+            // Add dragging class for visual feedback
+            this.npcPanel.classList.add('npc-dragging');
+            
+            // Add event listeners for the drag operation
+            document.addEventListener('mousemove', handleMouseMove, { passive: true });
+            document.addEventListener('mouseup', handleMouseUp);
+        });
+        
+        // Optimized mouse move handler using requestAnimationFrame
+        const handleMouseMove = (e) => {
+            if (!isDragging) return;
+            
+            // Cancel previous animation frame
+            if (animationFrame) {
+                cancelAnimationFrame(animationFrame);
+            }
+            
+            // Use requestAnimationFrame for smooth updates
+            animationFrame = requestAnimationFrame(() => {
+                const x = e.clientX - dragOffset.x;
+                const y = e.clientY - dragOffset.y;
+                
+                // Keep panel within viewport bounds
+                const maxX = window.innerWidth - this.npcPanel.offsetWidth;
+                const maxY = window.innerHeight - this.npcPanel.offsetHeight;
+                
+                const clampedX = Math.max(0, Math.min(x, maxX));
+                const clampedY = Math.max(0, Math.min(y, maxY));
+                
+                // Use transform for better performance
+                this.npcPanel.style.transform = `translate(${clampedX}px, ${clampedY}px)`;
+                this.npcPanel.style.position = 'fixed';
+                this.npcPanel.style.left = '0';
+                this.npcPanel.style.top = '0';
+            });
+        };
+        
+        // Mouse up handler
+        const handleMouseUp = () => {
+            if (!isDragging) return;
+            
+            isDragging = false;
+            
+            // Cancel any pending animation frame
+            if (animationFrame) {
+                cancelAnimationFrame(animationFrame);
+                animationFrame = null;
+            }
+            
+            // Remove dragging class
+            this.npcPanel.classList.remove('npc-dragging');
+            
+            // Remove event listeners
+            document.removeEventListener('mousemove', handleMouseMove);
+            document.removeEventListener('mouseup', handleMouseUp);
+        };
+        
+        // Prevent context menu on header
+        header.addEventListener('contextmenu', (e) => {
+            e.preventDefault();
+        });
     }
     
     togglePanel() {
         const content = this.npcPanel.querySelector('.npc-panel-content');
         const toggleBtn = document.getElementById('npc-panel-toggle');
         
-        if (content.style.display === 'none') {
-            content.style.display = 'block';
+        if (this.npcPanel.style.display === 'none') {
+            this.npcPanel.style.display = 'block';
+            content.style.display = 'block'; // Show the content too
             toggleBtn.textContent = '−';
         } else {
-            content.style.display = 'none';
+            this.npcPanel.style.display = 'none';
             toggleBtn.textContent = '+';
         }
     }
@@ -558,18 +976,28 @@ class NPCBuilder {
             this.ctx.globalAlpha = 0.7;
         }
         
-        // Draw NPC body
-        this.ctx.fillStyle = npc.color;
-        this.ctx.fillRect(npc.x - 16, npc.y - 16, 32, 32);
-        
-        // Draw NPC face
-        this.ctx.fillStyle = '#FFE4B5';
-        this.ctx.fillRect(npc.x - 12, npc.y - 16, 24, 16);
-        
-        // Draw eyes
-        this.ctx.fillStyle = '#000';
-        this.ctx.fillRect(npc.x - 8, npc.y - 12, 4, 4);
-        this.ctx.fillRect(npc.x + 4, npc.y - 12, 4, 4);
+        // Check if NPC has custom image
+        if (npc.isCustom && npc.customImage) {
+            // Draw custom image
+            const img = new Image();
+            img.onload = () => {
+                this.ctx.drawImage(img, npc.x - 16, npc.y - 16, 32, 32);
+            };
+            img.src = npc.customImage;
+        } else {
+            // Draw default NPC body
+            this.ctx.fillStyle = npc.color;
+            this.ctx.fillRect(npc.x - 16, npc.y - 16, 32, 32);
+            
+            // Draw NPC face
+            this.ctx.fillStyle = '#FFE4B5';
+            this.ctx.fillRect(npc.x - 12, npc.y - 16, 24, 16);
+            
+            // Draw eyes
+            this.ctx.fillStyle = '#000';
+            this.ctx.fillRect(npc.x - 8, npc.y - 12, 4, 4);
+            this.ctx.fillRect(npc.x + 4, npc.y - 12, 4, 4);
+        }
         
         // Draw name tag
         this.ctx.fillStyle = '#000';
@@ -589,23 +1017,59 @@ class NPCBuilder {
     getSaveData() {
         return {
             npcs: this.npcs,
-            templates: this.npcTemplates
+            templates: { ...this.persistentTemplates, ...this.sessionTemplates }
         };
     }
     
     loadSaveData(data) {
+        console.log('🔍 Loading save data:', data);
         if (data.npcs) {
+            console.log(`📋 Found ${data.npcs.length} NPCs in save data:`, data.npcs.map(npc => `${npc.name} (${npc.id})`));
             this.npcs = data.npcs;
             this.updateNPCList();
+            console.log(`✅ Loaded ${data.npcs.length} NPCs from save data`);
+        } else {
+            console.log('ℹ️ No NPCs found in save data');
         }
         
         if (data.templates) {
-            this.npcTemplates = { ...this.npcTemplates, ...data.templates };
+            // Only load persistent custom templates, ignore session templates
+            Object.entries(data.templates).forEach(([key, template]) => {
+                if (template.isCustom && template.storageType === 'persistent') {
+                    this.persistentTemplates[key] = template;
+                }
+            });
+            this.savePersistentTemplates(); // Ensure they're saved to localStorage
         }
+    }
+
+    clearAllNPCs() {
+        console.log(`🧹 Clearing ${this.npcs.length} NPCs:`, this.npcs.map(npc => `${npc.name} (${npc.id})`));
+        this.npcs = [];
+        this.updateNPCList();
+        
+        // Also clear NPCs from localStorage
+        const savedWorld = localStorage.getItem('blockyBuilderWorld');
+        if (savedWorld) {
+            try {
+                const worldData = JSON.parse(savedWorld);
+                console.log(`🗑️ Found ${worldData.npcs ? worldData.npcs.length : 0} NPCs in localStorage:`, worldData.npcs ? worldData.npcs.map(npc => `${npc.name} (${npc.id})`) : 'none');
+                worldData.npcs = []; // Clear NPCs from saved data
+                localStorage.setItem('blockyBuilderWorld', JSON.stringify(worldData));
+                console.log('✅ Cleared NPCs from localStorage');
+            } catch (error) {
+                console.warn('Failed to clear NPCs from localStorage:', error);
+            }
+        }
+        
+        console.log('All NPCs cleared');
     }
 }
 
 // Export for use in Blocky Builder
 if (typeof module !== 'undefined' && module.exports) {
     module.exports = NPCBuilder;
+} else {
+    // Make NPCBuilder available globally for browser
+    window.NPCBuilder = NPCBuilder;
 }

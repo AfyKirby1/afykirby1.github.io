@@ -14,7 +14,7 @@ import { Inventory } from '../ui/Inventory.js';
 import { SecurityUtils } from '../utils/SecurityUtils.js';
 import { NetworkManager } from './NetworkManager.js';
 // NPC system imports - comment out if not using NPCs
-import { NPCManager } from '../npc/NPC.js';
+import { NPC, NPCManager } from '../npc/NPC.js';
 import { NPCFactory } from '../npc/NPCConfig.js';
 
 export class Game {
@@ -578,6 +578,18 @@ export class Game {
         if (!this.npcManager || !this.npcFactory) {
             console.log('NPC system not available - skipping NPC initialization');
             return;
+        }
+        
+        // Load NPCs from world data first
+        if (this.world.npcData && this.world.npcData.length > 0) {
+            console.log('🐭 Creating NPCs from world data...');
+            this.world.npcData.forEach(npcConfig => {
+                const npc = new NPC(npcConfig);
+                this.npcManager.addNPC(npc);
+                console.log(`🐭 Created NPC: ${npc.name} at (${npc.x}, ${npc.y})`);
+            });
+        } else {
+            console.log('🐭 No NPCs found in world data');
         }
         
         // Check if Bob is enabled in world generator settings (default: true)

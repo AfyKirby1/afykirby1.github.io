@@ -10,6 +10,8 @@ class ToolManager {
         this.tools = ['draw', 'erase', 'fill', 'quickfill', 'pan', 'rotate', 'flip', 'spawn', 'npc'];
         
         this.setupTools();
+        // Ensure draw tool is selected on initialization
+        this.selectTool('draw');
     }
 
     setupTools() {
@@ -84,12 +86,7 @@ class ToolManager {
     }
 
     updateToolUI() {
-        // Show/hide NPC management section
-        const npcSection = document.getElementById('npcManagementSection');
-        if (npcSection) {
-            npcSection.style.display = this.currentTool === 'npc' ? 'block' : 'none';
-        }
-        
+        // Tool-specific UI updates
         if (this.currentTool === 'npc') {
             this.updateNPCPreviews();
         }
@@ -277,8 +274,21 @@ class ToolManager {
     }
 
     handleNPCClick(x, y) {
-        // Implement NPC click handling
-        console.log('NPC click at', x, y);
+        // Handle NPC tool click - either open NPC Builder or place NPC if in creation mode
+        if (window.editor && window.editor.npcBuilder) {
+            // Check if we're in NPC creation mode
+            if (window.editor.npcBuilder.isCreatingNPC) {
+                // Convert world coordinates to pixel coordinates for NPC placement
+                const pixelX = x * window.editor.renderer.TILE_SIZE;
+                const pixelY = y * window.editor.renderer.TILE_SIZE;
+                window.editor.npcBuilder.placeNPC(pixelX, pixelY);
+            } else {
+                // Open NPC Builder panel if not in creation mode
+                window.editor.npcBuilder.togglePanel();
+            }
+        } else {
+            console.warn('NPC Builder not available');
+        }
     }
 
     updateNPCPreviews() {

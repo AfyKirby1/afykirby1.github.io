@@ -9,30 +9,49 @@ const NPCBuilderStyles = `
     position: fixed;
     top: 20px;
     right: 20px;
-    width: 350px;
+    width: 300px;
     background: linear-gradient(135deg, #2c3e50 0%, #34495e 100%);
-    border-radius: 12px;
-    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+    border-radius: 8px;
+    box-shadow: 0 6px 24px rgba(0, 0, 0, 0.3);
     z-index: 1000;
     font-family: 'Inter', system-ui, -apple-system, sans-serif;
     color: #ecf0f1;
     border: 1px solid #34495e;
     overflow: hidden;
     transition: all 0.3s ease;
+    /* Performance optimizations */
+    will-change: transform;
+    transform: translateZ(0);
+    backface-visibility: hidden;
+    -webkit-backface-visibility: hidden;
+}
+
+/* Dragging state optimizations */
+.npc-panel.npc-dragging {
+    transition: none;
+    box-shadow: 0 12px 40px rgba(0, 0, 0, 0.5);
+    transform: translateZ(0) scale(1.02);
+    z-index: 1001;
 }
 
 .npc-panel-header {
     background: linear-gradient(135deg, #8A2BE2 0%, #00BFFF 100%);
-    padding: 15px 20px;
+    padding: 10px 15px;
     display: flex;
     justify-content: space-between;
     align-items: center;
     border-bottom: 1px solid #34495e;
+    /* Performance optimizations for dragging */
+    user-select: none;
+    -webkit-user-select: none;
+    -moz-user-select: none;
+    -ms-user-select: none;
+    cursor: move;
 }
 
 .npc-panel-header h3 {
     margin: 0;
-    font-size: 18px;
+    font-size: 16px;
     font-weight: 600;
     color: white;
     text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
@@ -60,7 +79,7 @@ const NPCBuilderStyles = `
 }
 
 .npc-panel-content {
-    padding: 20px;
+    padding: 15px;
     max-height: 70vh;
     overflow-y: auto;
 }
@@ -68,9 +87,9 @@ const NPCBuilderStyles = `
 /* NPC Tools */
 .npc-tools {
     display: flex;
-    gap: 8px;
-    margin-bottom: 20px;
-    padding: 10px;
+    gap: 6px;
+    margin-bottom: 15px;
+    padding: 8px;
     background: rgba(255, 255, 255, 0.05);
     border-radius: 8px;
 }
@@ -80,11 +99,11 @@ const NPCBuilderStyles = `
     background: transparent;
     border: 2px solid #34495e;
     color: #bdc3c7;
-    padding: 10px 8px;
+    padding: 8px 6px;
     border-radius: 6px;
     cursor: pointer;
     transition: all 0.3s ease;
-    font-size: 12px;
+    font-size: 11px;
     display: flex;
     flex-direction: column;
     align-items: center;
@@ -114,8 +133,8 @@ const NPCBuilderStyles = `
 }
 
 .npc-template-section h4 {
-    margin: 0 0 12px 0;
-    font-size: 14px;
+    margin: 0 0 10px 0;
+    font-size: 12px;
     font-weight: 600;
     color: #8A2BE2;
     text-transform: uppercase;
@@ -131,13 +150,13 @@ const NPCBuilderStyles = `
 .npc-template-item {
     background: rgba(255, 255, 255, 0.05);
     border: 2px solid #34495e;
-    border-radius: 8px;
-    padding: 12px;
+    border-radius: 6px;
+    padding: 8px;
     cursor: pointer;
     transition: all 0.3s ease;
     display: flex;
     align-items: center;
-    gap: 10px;
+    gap: 8px;
 }
 
 .npc-template-item:hover {
@@ -153,9 +172,9 @@ const NPCBuilderStyles = `
 }
 
 .npc-template-icon {
-    font-size: 24px;
-    width: 32px;
-    height: 32px;
+    font-size: 20px;
+    width: 28px;
+    height: 28px;
     display: flex;
     align-items: center;
     justify-content: center;
@@ -168,20 +187,20 @@ const NPCBuilderStyles = `
 }
 
 .npc-template-name {
-    font-size: 13px;
+    font-size: 12px;
     font-weight: 600;
     color: #ecf0f1;
     margin-bottom: 2px;
 }
 
 .npc-template-type {
-    font-size: 11px;
+    font-size: 10px;
     color: #95a5a6;
     text-transform: capitalize;
 }
 
 .npc-template-behavior {
-    font-size: 10px;
+    font-size: 9px;
     color: #8A2BE2;
     font-weight: 500;
     text-transform: capitalize;
@@ -610,6 +629,297 @@ const NPCBuilderStyles = `
         border: 3px solid #ffffff;
     }
 }
+
+/* Upload Modal Styles */
+.npc-upload-modal {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.8);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 10002;
+    backdrop-filter: blur(4px);
+}
+
+.npc-upload-modal-content {
+    background: #2a2a2a;
+    border: 2px solid #4a4a4a;
+    border-radius: 8px;
+    width: 90%;
+    max-width: 500px;
+    max-height: 80vh;
+    overflow-y: auto;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.5);
+}
+
+.npc-upload-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 15px 20px;
+    border-bottom: 1px solid #4a4a4a;
+    background: #333;
+    border-radius: 6px 6px 0 0;
+}
+
+.npc-upload-header h3 {
+    margin: 0;
+    color: #fff;
+    font-size: 18px;
+}
+
+.npc-upload-close {
+    background: none;
+    border: none;
+    color: #fff;
+    font-size: 24px;
+    cursor: pointer;
+    padding: 0;
+    width: 30px;
+    height: 30px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 4px;
+    transition: background-color 0.2s;
+}
+
+.npc-upload-close:hover {
+    background: #555;
+}
+
+.npc-upload-body {
+    padding: 20px;
+}
+
+.npc-upload-section {
+    margin-bottom: 20px;
+}
+
+.npc-upload-dropzone {
+    border: 2px dashed #666;
+    border-radius: 8px;
+    padding: 40px 20px;
+    text-align: center;
+    background: #1a1a1a;
+    transition: all 0.3s ease;
+    cursor: pointer;
+}
+
+.npc-upload-dropzone:hover {
+    border-color: #888;
+    background: #222;
+}
+
+.npc-upload-dropzone.npc-upload-dragover {
+    border-color: #4CAF50;
+    background: #1a3a1a;
+}
+
+.npc-upload-icon {
+    font-size: 48px;
+    margin-bottom: 10px;
+    opacity: 0.7;
+}
+
+.npc-upload-text {
+    color: #fff;
+    font-size: 16px;
+    margin-bottom: 5px;
+}
+
+.npc-upload-hint {
+    color: #888;
+    font-size: 12px;
+}
+
+.npc-upload-preview-section {
+    margin-top: 20px;
+    padding: 15px;
+    background: #1a1a1a;
+    border-radius: 6px;
+    border: 1px solid #444;
+}
+
+.npc-upload-preview-section h4 {
+    margin: 0 0 15px 0;
+    color: #fff;
+    font-size: 16px;
+}
+
+.npc-upload-preview {
+    text-align: center;
+    margin-bottom: 15px;
+}
+
+.npc-upload-preview img {
+    max-width: 64px;
+    max-height: 64px;
+    border: 2px solid #666;
+    border-radius: 4px;
+    background: #fff;
+}
+
+.npc-upload-details {
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+}
+
+.npc-upload-field {
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+}
+
+.npc-upload-field label {
+    color: #fff;
+    font-size: 14px;
+    font-weight: 500;
+}
+
+.npc-upload-field input,
+.npc-upload-field select,
+.npc-upload-field textarea {
+    background: #333;
+    border: 1px solid #555;
+    border-radius: 4px;
+    color: #fff;
+    padding: 8px 12px;
+    font-size: 14px;
+}
+
+.npc-upload-field input:focus,
+.npc-upload-field select:focus,
+.npc-upload-field textarea:focus {
+    outline: none;
+    border-color: #4CAF50;
+    box-shadow: 0 0 0 2px rgba(76, 175, 80, 0.2);
+}
+
+.npc-upload-field textarea {
+    resize: vertical;
+    min-height: 60px;
+}
+
+.npc-upload-footer {
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+    padding: 15px 20px;
+    border-top: 1px solid #4a4a4a;
+    background: #333;
+    border-radius: 0 0 6px 6px;
+}
+
+.npc-upload-storage-options {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.npc-upload-storage-option {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    cursor: pointer;
+    color: #bdc3c7;
+    font-size: 13px;
+}
+
+.npc-upload-storage-option input[type="radio"] {
+    margin: 0;
+    accent-color: #8A2BE2;
+}
+
+.npc-upload-storage-option:hover {
+    color: #ecf0f1;
+}
+
+.npc-upload-buttons {
+    display: flex;
+    gap: 10px;
+    justify-content: flex-end;
+}
+
+.npc-upload-btn {
+    padding: 10px 20px;
+    border: none;
+    border-radius: 4px;
+    font-size: 14px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.npc-upload-cancel {
+    background: #666;
+    color: #fff;
+}
+
+.npc-upload-cancel:hover {
+    background: #777;
+}
+
+.npc-upload-confirm {
+    background: #4CAF50;
+    color: #fff;
+}
+
+.npc-upload-confirm:hover:not(:disabled) {
+    background: #45a049;
+}
+
+.npc-upload-confirm:disabled {
+    background: #555;
+    color: #888;
+    cursor: not-allowed;
+}
+
+/* Template Actions */
+.npc-template-actions {
+    margin-bottom: 15px;
+}
+
+.npc-add-custom-btn {
+    background: #4CAF50;
+    color: #fff;
+    border: none;
+    border-radius: 4px;
+    padding: 8px 12px;
+    font-size: 12px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    transition: background-color 0.2s;
+}
+
+.npc-add-custom-btn:hover {
+    background: #45a049;
+}
+
+/* Custom Image Templates */
+.npc-template-icon-container {
+    width: 28px;
+    height: 28px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 4px;
+    overflow: hidden;
+}
+
+.npc-template-custom-image {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    border-radius: 4px;
+}
 `;
 
 // Function to inject styles
@@ -627,4 +937,11 @@ function injectNPCBuilderStyles() {
 // Export styles and injection function
 if (typeof module !== 'undefined' && module.exports) {
     module.exports = { NPCBuilderStyles, injectNPCBuilderStyles };
+} else {
+    // Make styles available globally for browser
+    window.NPCBuilderStyles = NPCBuilderStyles;
+    window.injectNPCBuilderStyles = injectNPCBuilderStyles;
+    
+    // Auto-inject styles when loaded
+    injectNPCBuilderStyles();
 }

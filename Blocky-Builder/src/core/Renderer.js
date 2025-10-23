@@ -80,6 +80,9 @@ class Renderer {
             this.renderGrid();
         }
 
+        // Render NPCs if available
+        this.renderNPCs();
+
         this.ctx.restore();
 
         // Render minimap
@@ -298,6 +301,40 @@ class Renderer {
         this.worldManager.viewY = (y * this.TILE_SIZE) - worldCenterY;
         
         this.render();
+    }
+
+    renderNPCs() {
+        // Check if NPC Builder is available and has NPCs
+        if (window.editor && window.editor.npcBuilder && window.editor.npcBuilder.npcs) {
+            window.editor.npcBuilder.npcs.forEach(npc => {
+                this.renderNPC(npc);
+            });
+        }
+    }
+
+    renderNPC(npc) {
+        this.ctx.save();
+        
+        // Set NPC color
+        this.ctx.fillStyle = npc.color || '#8B4513';
+        
+        // Draw NPC as a circle at the exact pixel coordinates
+        this.ctx.beginPath();
+        this.ctx.arc(npc.x, npc.y, 12, 0, Math.PI * 2);
+        this.ctx.fill();
+        
+        // Draw NPC border
+        this.ctx.strokeStyle = '#000000';
+        this.ctx.lineWidth = 2;
+        this.ctx.stroke();
+        
+        // Draw NPC name above
+        this.ctx.fillStyle = '#FFFFFF';
+        this.ctx.font = '12px Arial';
+        this.ctx.textAlign = 'center';
+        this.ctx.fillText(npc.name, npc.x, npc.y - 20);
+        
+        this.ctx.restore();
     }
 }
 
