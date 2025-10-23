@@ -68,7 +68,7 @@ class NPCBuilder {
     async loadNPCsFromPersistentFolder() {
         try {
             // List of known persistent NPCs to load
-            const persistentNPCs = ['Rat'];
+            const persistentNPCs = ['Rat', 'Blacksmith'];
             
             for (const npcName of persistentNPCs) {
                 try {
