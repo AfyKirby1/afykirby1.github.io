@@ -9,6 +9,7 @@ export class NetworkManager {
         this.socket = null;
         this.playerId = null;
         this.otherPlayers = {};
+        this.npcs = {};  // Server-synchronized NPCs
         this.isConnected = false;
         this.reconnectAttempts = 0;
         this.maxReconnectAttempts = 5;
@@ -22,6 +23,12 @@ export class NetworkManager {
         this.onPlayerLeft = null;
         this.onPlayerPositionUpdate = null;
         this.onError = null;
+        
+        // NPC callbacks
+        this.onNPCsReceived = null;
+        this.onNPCHealthUpdate = null;
+        this.onNPCDefeated = null;
+        this.onNPCInteraction = null;
         
         // Chat callbacks
         this.onChatMessage = null;
@@ -167,6 +174,15 @@ export class NetworkManager {
             case 'system_message':
                 this.handleSystemMessage(data);
                 break;
+            case 'npc_interaction_response':
+                this.handleNPCInteraction(data);
+                break;
+            case 'npc_health_update':
+                this.handleNPCHealthUpdate(data);
+                break;
+            case 'npc_defeated':
+                this.handleNPCDefeated(data);
+                break;
             default:
                 console.warn('Unknown message type:', messageType);
         }
@@ -187,6 +203,16 @@ export class NetworkManager {
                 if (pid !== this.playerId) {
                     this.otherPlayers[pid] = playerData;
                 }
+            }
+        }
+        
+        // Initialize NPCs from server
+        if (data.npcs) {
+            this.npcs = data.npcs;
+            console.log(`Received ${Object.keys(this.npcs).length} NPCs from server`);
+            
+            if (this.onNPCsReceived) {
+                this.onNPCsReceived(this.npcs);
             }
         }
         
@@ -486,5 +512,76 @@ export class NetworkManager {
      */
     getGameState() {
         return this.game_state;
+    }
+    
+    /**
+     * Handle NPC interaction response
+     */
+    handleNPCInteraction(data) {
+        console.log(`NPC ${data.npc_name} says: ${data.dialogue.join(', ')}`);
+        
+        if (this.onNPCInteraction) {
+            this.onNPCInteraction(data);
+        }
+    }
+    
+    /**
+     * Handle NPC health update
+     */
+    handleNPCHealthUpdate(data) {
+        const npcId = data.npc_id;
+        if (this.npcs[npcId]) {
+            this.npcs[npcId].health = data.health;
+            console.log(`NPC ${npcId} health: ${data.health}/${data.max_health}`);
+            
+            if (this.onNPCHealthUpdate) {
+                this.onNPCHealthUpdate(data);
+            }
+        }
+    }
+    
+    /**
+     * Handle NPC defeated
+     */
+    handleNPCDefeated(data) {
+        const npcId = data.npc_id;
+        if (this.npcs[npcId]) {
+            console.log(`NPC ${data.npc_name} has been defeated!`);
+            
+            if (this.onNPCDefeated) {
+                this.onNPCDefeated(data);
+            }
+        }
+    }
+    
+    /**
+     * Send NPC interaction request
+     */
+    sendNPCInteraction(npcId) {
+        const interactionData = {
+            type: 'npc_interact',
+            npc_id: npcId
+        };
+        
+        this.sendMessage(interactionData);
+    }
+    
+    /**
+     * Send NPC attack request
+     */
+    sendNPCAttack(npcId) {
+        const attackData = {
+            type: 'npc_attack',
+            npc_id: npcId
+        };
+        
+        this.sendMessage(attackData);
+    }
+    
+    /**
+     * Get NPCs data
+     */
+    getNPCs() {
+        return this.npcs;
     }
 }

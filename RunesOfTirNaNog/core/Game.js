@@ -174,6 +174,12 @@ export class Game {
                 e.stopPropagation();
                 this.handleInteraction();
                 return;
+            } else if (e.code === 'KeyF') {
+                e.preventDefault();
+                e.stopPropagation();
+                // Attack nearest NPC
+                this.handleNPCAttack();
+                return;
             }
             
             // Only update keybinds if no action was handled
@@ -282,6 +288,7 @@ export class Game {
 
         // Render other players in multiplayer
         this.renderOtherPlayers();
+        this.renderServerNPCs();
 
         // Restore camera transform
         this.camera.restoreTransform(this.ctx);
@@ -421,6 +428,105 @@ export class Game {
         this.networkManager.onError = (errorMessage) => {
             console.error('Multiplayer error:', errorMessage);
         };
+        
+        // NPC callbacks
+        this.networkManager.onNPCsReceived = (npcs) => {
+            this.handleNPCsReceived(npcs);
+        };
+        this.networkManager.onNPCHealthUpdate = (data) => {
+            this.handleNPCHealthUpdate(data);
+        };
+        this.networkManager.onNPCDefeated = (data) => {
+            this.handleNPCDefeated(data);
+        };
+        this.networkManager.onNPCInteraction = (data) => {
+            this.handleNPCInteraction(data);
+        };
+    }
+
+    // NPC handler methods
+    handleNPCsReceived(npcs) {
+        console.log(`🎮 Received ${Object.keys(npcs).length} NPCs from server`);
+        this.serverNPCs = npcs;
+    }
+    
+    handleNPCHealthUpdate(data) {
+        console.log(`❤️ NPC ${data.npc_id} health: ${data.health}/${data.max_health}`);
+        // Update UI or show damage numbers
+    }
+    
+    handleNPCDefeated(data) {
+        console.log(`💀 NPC ${data.npc_name} defeated!`);
+        // Remove NPC from rendering or show death animation
+        if (this.serverNPCs && this.serverNPCs[data.npc_id]) {
+            delete this.serverNPCs[data.npc_id];
+        }
+    }
+    
+    handleNPCInteraction(data) {
+        console.log(`💬 ${data.npc_name}: ${data.dialogue.join(' ')}`);
+        // Show dialogue UI
+        if (this.ui) {
+            this.ui.showDialogue(data.npc_name, data.dialogue);
+        }
+    }
+    
+    // NPC interaction methods
+    interactWithNPC(npcId) {
+        if (this.isMultiplayer && this.networkManager) {
+            this.networkManager.sendNPCInteraction(npcId);
+        }
+    }
+    
+    attackNPC(npcId) {
+        if (this.isMultiplayer && this.networkManager) {
+            this.networkManager.sendNPCAttack(npcId);
+        }
+    }
+    
+    getNearestNPC(playerX, playerY, maxDistance = 100) {
+        if (!this.serverNPCs) return null;
+        
+        let nearestNPC = null;
+        let nearestDistance = maxDistance;
+        
+        for (const [npcId, npcData] of Object.entries(this.serverNPCs)) {
+            const distance = Math.sqrt((playerX - npcData.x) ** 2 + (playerY - npcData.y) ** 2);
+            if (distance < nearestDistance) {
+                nearestNPC = { id: npcId, ...npcData };
+                nearestDistance = distance;
+            }
+        }
+        
+        return nearestNPC;
+    }
+    
+    handleInteraction() {
+        if (this.isMultiplayer) {
+            const playerPos = this.player.getPosition();
+            const nearestNPC = this.getNearestNPC(playerPos.x, playerPos.y, 100);
+            
+            if (nearestNPC) {
+                console.log(`🎮 Interacting with ${nearestNPC.name}`);
+                this.interactWithNPC(nearestNPC.id);
+            } else {
+                console.log('🎮 No NPC nearby to interact with');
+            }
+        }
+    }
+    
+    handleNPCAttack() {
+        if (this.isMultiplayer) {
+            const playerPos = this.player.getPosition();
+            const nearestNPC = this.getNearestNPC(playerPos.x, playerPos.y, 80);
+            
+            if (nearestNPC) {
+                console.log(`⚔️ Attacking ${nearestNPC.name}`);
+                this.attackNPC(nearestNPC.id);
+            } else {
+                console.log('⚔️ No NPC nearby to attack');
+            }
+        }
     }
 
     renderOtherPlayers() {
@@ -471,6 +577,49 @@ export class Game {
                 this.ctx.font = '12px Arial';
                 this.ctx.textAlign = 'center';
                 this.ctx.fillText(playerData.name, worldX, worldY - 20);
+                this.ctx.restore();
+            }
+        }
+    }
+    
+    renderServerNPCs() {
+        if (!this.isMultiplayer || !this.serverNPCs) return;
+        
+        for (const [npcId, npcData] of Object.entries(this.serverNPCs)) {
+            const worldX = npcData.x;
+            const worldY = npcData.y;
+            
+            // Only render if NPC is on screen
+            if (worldX > this.camera.x - 100 && worldX < this.camera.x + this.width + 100 &&
+                worldY > this.camera.y - 100 && worldY < this.camera.y + this.height + 100) {
+                
+                this.ctx.save();
+                
+                // Draw NPC body
+                this.ctx.fillStyle = npcData.color || '#8b4513';
+                this.ctx.fillRect(worldX - npcData.width/2, worldY - npcData.height/2, npcData.width, npcData.height);
+                
+                // Draw NPC name
+                this.ctx.fillStyle = 'white';
+                this.ctx.font = '12px Arial';
+                this.ctx.textAlign = 'center';
+                this.ctx.fillText(npcData.name, worldX, worldY - npcData.height/2 - 8);
+                
+                // Draw health bar if damaged
+                if (npcData.health < npcData.max_health) {
+                    const barWidth = npcData.width;
+                    const barHeight = 4;
+                    const healthPercent = npcData.health / npcData.max_health;
+                    
+                    // Background
+                    this.ctx.fillStyle = 'red';
+                    this.ctx.fillRect(worldX - barWidth/2, worldY - npcData.height/2 - 8, barWidth, barHeight);
+                    
+                    // Health
+                    this.ctx.fillStyle = 'green';
+                    this.ctx.fillRect(worldX - barWidth/2, worldY - npcData.height/2 - 8, barWidth * healthPercent, barHeight);
+                }
+                
                 this.ctx.restore();
             }
         }
@@ -571,8 +720,7 @@ export class Game {
         const isMultiplayer = urlParams.get('multiplayer') === 'true';
         
         if (isMultiplayer) {
-            console.log('NPC system disabled in multiplayer mode');
-            return;
+            console.log('NPC system enabled in multiplayer mode - MMO RPG mode!');
         }
         
         if (!this.npcManager || !this.npcFactory) {

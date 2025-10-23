@@ -19,6 +19,7 @@ logger = logging.getLogger(__name__)
 class GameServer:
     def __init__(self):
         self.players: Dict[str, Dict] = {}  # {player_id: {name, x, y, color, connected_at}}
+        self.npcs: Dict[str, Dict] = {}  # {npc_id: {name, x, y, health, behavior, etc.}}
         self.game_state = {
             'world_data': None,
             'server_start_time': datetime.now().isoformat(),
@@ -38,6 +39,9 @@ class GameServer:
         
         # Load world data
         self.load_world_data()
+        
+        # Initialize NPCs from world data
+        self.initialize_npcs()
     
     def load_world_data(self):
         """Load the Tir na nÓg world data"""
@@ -51,6 +55,39 @@ class GameServer:
                 logger.warning(f"World file not found at {world_path}")
         except Exception as e:
             logger.error(f"Failed to load world data: {e}")
+    
+    def initialize_npcs(self):
+        """Initialize NPCs from world data"""
+        try:
+            if self.game_state['world_data'] and 'npcs' in self.game_state['world_data']:
+                for npc_data in self.game_state['world_data']['npcs']:
+                    npc_id = npc_data.get('id', f"npc_{len(self.npcs) + 1}")
+                    self.npcs[npc_id] = {
+                        'id': npc_id,
+                        'name': npc_data.get('name', 'Unknown NPC'),
+                        'x': npc_data.get('x', 100),
+                        'y': npc_data.get('y', 100),
+                        'health': npc_data.get('health', 100),
+                        'max_health': npc_data.get('health', 100),
+                        'behavior': npc_data.get('behavior', 'wander'),
+                        'wander_radius': npc_data.get('wanderRadius', 50),
+                        'interactable': npc_data.get('interactable', True),
+                        'color': npc_data.get('color', '#8b4513'),
+                        'dialogue': npc_data.get('dialogue', ['Hello!']),
+                        'width': npc_data.get('width', 32),
+                        'height': npc_data.get('height', 32),
+                        'is_custom': npc_data.get('isCustom', False),
+                        'custom_image': npc_data.get('customImage', None),
+                        'last_movement': datetime.now().isoformat(),
+                        'target_x': npc_data.get('x', 100),
+                        'target_y': npc_data.get('y', 100),
+                        'is_moving': False
+                    }
+                logger.info(f"Initialized {len(self.npcs)} NPCs from world data")
+            else:
+                logger.warning("No NPC data found in world file")
+        except Exception as e:
+            logger.error(f"Failed to initialize NPCs: {e}")
     
     def get_available_color(self) -> str:
         """Get an available player color"""
@@ -94,6 +131,10 @@ class GameServer:
                         await self.handle_position_update(player_id, data)
                     elif message_type == 'ping':
                         await self.send_to_player(websocket, {'type': 'pong', 'timestamp': data.get('timestamp')})
+                    elif message_type == 'npc_interact':
+                        await self.handle_npc_interaction(player_id, data)
+                    elif message_type == 'npc_attack':
+                        await self.handle_npc_attack(player_id, data)
                     else:
                         logger.warning(f"Unknown message type: {message_type}")
                         
@@ -155,7 +196,8 @@ class GameServer:
             'type': 'join_success',
             'player_id': player_id,
             'player_data': self.players[player_id],
-            'game_state': self.get_public_game_state()
+            'game_state': self.get_public_game_state(),
+            'npcs': self.get_npcs_data()
         })
         
         # Notify other players
@@ -206,6 +248,97 @@ class GameServer:
             })
             
             logger.info(f"Player {name} ({player_id}) disconnected")
+    
+    async def handle_npc_interaction(self, player_id, data):
+        """Handle NPC interaction from player"""
+        if player_id not in self.players:
+            return
+        
+        npc_id = data.get('npc_id')
+        if npc_id not in self.npcs:
+            await self.send_error(self.players[player_id]['websocket'], "NPC not found")
+            return
+        
+        npc = self.npcs[npc_id]
+        player = self.players[player_id]
+        
+        # Check if player is close enough to interact
+        distance = ((player['x'] - npc['x'])**2 + (player['y'] - npc['y'])**2)**0.5
+        if distance > 100:  # Interaction range
+            await self.send_error(self.players[player_id]['websocket'], "Too far from NPC")
+            return
+        
+        # Send interaction response
+        await self.send_to_player(self.players[player_id]['websocket'], {
+            'type': 'npc_interaction_response',
+            'npc_id': npc_id,
+            'npc_name': npc['name'],
+            'dialogue': npc['dialogue']
+        })
+        
+        logger.info(f"Player {player['name']} interacted with NPC {npc['name']}")
+    
+    async def handle_npc_attack(self, player_id, data):
+        """Handle NPC attack from player"""
+        if player_id not in self.players:
+            return
+        
+        npc_id = data.get('npc_id')
+        if npc_id not in self.npcs:
+            await self.send_error(self.players[player_id]['websocket'], "NPC not found")
+            return
+        
+        npc = self.npcs[npc_id]
+        player = self.players[player_id]
+        
+        # Check if player is close enough to attack
+        distance = ((player['x'] - npc['x'])**2 + (player['y'] - npc['y'])**2)**0.5
+        if distance > 80:  # Attack range
+            await self.send_error(self.players[player_id]['websocket'], "Too far from NPC")
+            return
+        
+        # Calculate damage (simple system)
+        damage = 10  # Base damage
+        npc['health'] = max(0, npc['health'] - damage)
+        
+        # Broadcast NPC health update
+        await self.broadcast_to_all({
+            'type': 'npc_health_update',
+            'npc_id': npc_id,
+            'health': npc['health'],
+            'max_health': npc['max_health']
+        })
+        
+        # Check if NPC is defeated
+        if npc['health'] <= 0:
+            await self.broadcast_to_all({
+                'type': 'npc_defeated',
+                'npc_id': npc_id,
+                'npc_name': npc['name']
+            })
+            logger.info(f"NPC {npc['name']} defeated by {player['name']}")
+        else:
+            logger.info(f"Player {player['name']} attacked NPC {npc['name']} for {damage} damage")
+    
+    def get_npcs_data(self):
+        """Get NPC data for clients"""
+        return {
+            npc_id: {
+                'id': npc['id'],
+                'name': npc['name'],
+                'x': npc['x'],
+                'y': npc['y'],
+                'health': npc['health'],
+                'max_health': npc['max_health'],
+                'behavior': npc['behavior'],
+                'color': npc['color'],
+                'width': npc['width'],
+                'height': npc['height'],
+                'is_custom': npc['is_custom'],
+                'custom_image': npc['custom_image']
+            }
+            for npc_id, npc in self.npcs.items()
+        }
     
     async def send_to_player(self, websocket, message):
         """Send message to specific player"""
