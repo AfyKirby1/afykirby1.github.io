@@ -50,8 +50,106 @@ class NPCBuilder {
             this.persistentTemplates = {};
         }
         
+        // Load NPCs from persistent folder
+        this.loadNPCsFromPersistentFolder();
+        
+        // Clean up any orphaned localStorage entries
+        this.cleanupOrphanedStorage();
+        
         // Merge persistent and session templates
         this.updateTemplateList();
+        
+        // Note: createTemplateList() will be called after UI is initialized
+    }
+    
+    async loadNPCsFromPersistentFolder() {
+        try {
+            // List of known persistent NPCs to load
+            const persistentNPCs = ['Rat'];
+            
+            for (const npcName of persistentNPCs) {
+                try {
+                    const response = await fetch(`../RunesOfTirNaNog/assets/npc/persistent/${npcName}.json`);
+                    if (response.ok) {
+                        const npcData = await response.json();
+                        
+                        // Convert image path to base64 if it's a local file
+                        if (npcData.customImage && npcData.customImage.startsWith('assets/')) {
+                            try {
+                                const imgResponse = await fetch(`../RunesOfTirNaNog/${npcData.customImage}`);
+                                if (imgResponse.ok) {
+                                    const blob = await imgResponse.blob();
+                                    const reader = new FileReader();
+                                    reader.onload = () => {
+                                        npcData.customImage = reader.result;
+                                    };
+                                    reader.readAsDataURL(blob);
+                                }
+                            } catch (imgError) {
+                                console.warn(`⚠️ Failed to load image for ${npcName}:`, imgError);
+                            }
+                        }
+                        
+                        // Add to persistent templates
+                        const key = `persistent_${npcName.toLowerCase()}`;
+                        this.persistentTemplates[key] = {
+                            ...npcData,
+                            storageType: 'persistent',
+                            source: 'folder'
+                        };
+                        
+                        console.log(`✅ Loaded persistent NPC from folder: ${npcName}`);
+                    }
+                } catch (error) {
+                    console.warn(`⚠️ Failed to load persistent NPC ${npcName}:`, error);
+                }
+            }
+        } catch (error) {
+            console.warn('⚠️ Failed to load NPCs from persistent folder:', error);
+        }
+    }
+    
+    cleanupOrphanedStorage() {
+        try {
+            const currentTemplateKeys = Object.keys(this.persistentTemplates);
+            const keysToRemove = [];
+            
+            // Find localStorage keys that don't match current templates
+            for (let i = 0; i < localStorage.length; i++) {
+                const key = localStorage.key(i);
+                if (key && key.startsWith('persistent_npc_')) {
+                    // Extract the template name from the key
+                    const templateName = key.replace('persistent_npc_', '');
+                    
+                    // Check if this template still exists in our current templates
+                    const stillExists = currentTemplateKeys.some(templateKey => {
+                        const template = this.persistentTemplates[templateKey];
+                        if (template) {
+                            const sanitizedName = template.name.replace(/[^a-zA-Z0-9]/g, '_');
+                            return sanitizedName === templateName;
+                        }
+                        return false;
+                    });
+                    
+                    if (!stillExists) {
+                        keysToRemove.push(key);
+                    }
+                }
+            }
+            
+            // Remove orphaned keys
+            keysToRemove.forEach(key => {
+                localStorage.removeItem(key);
+                console.log(`🧹 Cleaned up orphaned localStorage entry: ${key}`);
+            });
+            
+            if (keysToRemove.length > 0) {
+                console.log(`🧹 Cleaned up ${keysToRemove.length} orphaned localStorage entries`);
+            }
+            
+        } catch (error) {
+            console.warn('⚠️ Failed to clean up orphaned storage:', error);
+        }
     }
     
     savePersistentTemplates() {
@@ -68,11 +166,146 @@ class NPCBuilder {
         this.npcTemplates = { ...this.persistentTemplates, ...this.sessionTemplates };
     }
     
+    saveNPCToFiles(template, key) {
+        try {
+            // Create NPC data object
+            const npcData = {
+                id: key,
+                name: template.name,
+                type: template.type,
+                color: template.color,
+                behavior: template.behavior,
+                speed: template.speed,
+                dialogue: template.dialogue,
+                icon: template.icon,
+                isCustom: template.isCustom,
+                customImage: template.customImage || `assets/npc/persistent/${template.name}.png`,
+                width: template.width || 32,
+                height: template.height || 32,
+                storageType: template.storageType,
+                createdAt: new Date().toISOString(),
+                version: "1.0"
+            };
+            
+            // Convert image data URL to blob
+            const imageDataUrl = template.customImage;
+            const imageBlob = this.dataURLToBlob(imageDataUrl);
+            
+            // Create a single deployment package
+            this.createNPCPackage(template.name, npcData, imageBlob);
+            
+            console.log('📁 NPC package created:', template.name);
+        } catch (error) {
+            console.error('❌ Failed to save NPC files:', error);
+        }
+    }
+    
+    createNPCPackage(npcName, npcData, imageBlob) {
+        const sanitizedName = npcName.replace(/[^a-zA-Z0-9]/g, '_');
+        
+        // Create a comprehensive package with all necessary files
+        const packageData = {
+            metadata: {
+                npcName: npcName,
+                sanitizedName: sanitizedName,
+                createdAt: new Date().toISOString(),
+                version: "1.0"
+            },
+            files: {
+                json: {
+                    filename: `${sanitizedName}.json`,
+                    content: JSON.stringify(npcData, null, 2),
+                    path: `assets/npc/persistent/${sanitizedName}.json`
+                },
+                image: {
+                    filename: `${sanitizedName}.png`,
+                    content: this.blobToBase64(imageBlob),
+                    path: `assets/npc/persistent/${sanitizedName}.png`
+                }
+            },
+            instructions: {
+                title: "Deployment Instructions",
+                steps: [
+                    `1. Create file: ${sanitizedName}.json`,
+                    `2. Copy the JSON content from the 'json.content' field above`,
+                    `3. Save it to: assets/npc/persistent/${sanitizedName}.json`,
+                    `4. Create file: ${sanitizedName}.png`,
+                    `5. Convert the base64 image data from 'image.content' field`,
+                    `6. Save it to: assets/npc/persistent/${sanitizedName}.png`,
+                    `7. Commit and push to GitHub`,
+                    `8. The NPC will be available to all users!`
+                ]
+            }
+        };
+        
+        // Download the package file
+        this.downloadFile(
+            JSON.stringify(packageData, null, 2),
+            `${sanitizedName}_NPC_Package.json`,
+            'application/json'
+        );
+        
+        // Also save to localStorage for immediate use
+        this.saveToLocalStorage(sanitizedName, npcData, imageBlob);
+        
+        console.log(`📦 NPC package created: ${sanitizedName}_NPC_Package.json`);
+        console.log(`💾 NPC also saved to localStorage for immediate use`);
+    }
+    
+    saveToLocalStorage(sanitizedName, npcData, imageBlob) {
+        const persistentKey = `persistent_npc_${sanitizedName}`;
+        const storageData = {
+            json: JSON.stringify(npcData, null, 2),
+            image: this.blobToBase64(imageBlob),
+            timestamp: Date.now()
+        };
+        
+        localStorage.setItem(persistentKey, JSON.stringify(storageData));
+    }
+    
+    blobToBase64(blob) {
+        return new Promise((resolve) => {
+            const reader = new FileReader();
+            reader.onloadend = () => resolve(reader.result);
+            reader.readAsDataURL(blob);
+        });
+    }
+    
+    dataURLToBlob(dataURL) {
+        const arr = dataURL.split(',');
+        const mime = arr[0].match(/:(.*?);/)[1];
+        const bstr = atob(arr[1]);
+        let n = bstr.length;
+        const u8arr = new Uint8Array(n);
+        while (n--) {
+            u8arr[n] = bstr.charCodeAt(n);
+        }
+        return new Blob([u8arr], { type: mime });
+    }
+    
+    downloadFile(data, filename, mimeType) {
+        const blob = data instanceof Blob ? data : new Blob([data], { type: mimeType });
+        const url = URL.createObjectURL(blob);
+        
+        const link = document.createElement('a');
+        link.href = url;
+        link.download = filename;
+        link.style.display = 'none';
+        
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        
+        URL.revokeObjectURL(url);
+    }
+    
     initializeUI() {
         this.createNPCPanel();
-        this.createTemplateList();
         this.createConfigPanel();
         this.setupEventListeners();
+        
+        // Create template list after UI is initialized
+        this.createTemplateList();
     }
     
     createNPCPanel() {
@@ -111,6 +344,10 @@ class NPCBuilder {
                         <button id="npc-add-custom-btn" class="npc-add-custom-btn">
                             <span class="npc-tool-icon">📁</span>
                             Add Custom NPC
+                        </button>
+                        <button id="npc-load-custom-btn" class="npc-load-custom-btn">
+                            <span class="npc-tool-icon">📂</span>
+                            Load NPC File
                         </button>
                     </div>
                     <div id="npc-template-list" class="npc-template-list"></div>
@@ -377,6 +614,8 @@ class NPCBuilder {
             icon: '🎨', // Custom icon
             customImage: imageSrc, // Store the image data URL
             isCustom: true,
+            width: 32, // Default width for custom NPCs
+            height: 32, // Default height for custom NPCs
             storageType: storageType // Track how it was stored
         };
         
@@ -384,6 +623,8 @@ class NPCBuilder {
         if (storageType === 'persistent') {
             this.persistentTemplates[customKey] = customTemplate;
             this.savePersistentTemplates();
+            // Also save as downloadable files
+            this.saveNPCToFiles(customTemplate, customKey);
             console.log('💾 Saved NPC permanently:', customTemplate.name);
         } else {
             this.sessionTemplates[customKey] = customTemplate;
@@ -433,8 +674,85 @@ class NPCBuilder {
         }, 100);
     }
     
+    openLoadModal() {
+        // Create file input for JSON files
+        const input = document.createElement('input');
+        input.type = 'file';
+        input.accept = '.json';
+        input.style.display = 'none';
+        
+        input.addEventListener('change', (e) => {
+            const file = e.target.files[0];
+            if (file) {
+                this.loadNPCFromFile(file);
+            }
+            // Clean up
+            document.body.removeChild(input);
+        });
+        
+        document.body.appendChild(input);
+        input.click();
+    }
+    
+    loadNPCFromFile(file) {
+        const reader = new FileReader();
+        reader.onload = (e) => {
+            try {
+                const npcData = JSON.parse(e.target.result);
+                
+                // Validate the NPC data
+                if (!npcData.name || !npcData.type) {
+                    alert('Invalid NPC file format. Missing required fields.');
+                    return;
+                }
+                
+                // Create template from loaded data
+                const customKey = `loaded_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+                const customTemplate = {
+                    name: npcData.name,
+                    type: npcData.type || 'custom',
+                    color: npcData.color || '#8B4513',
+                    behavior: npcData.behavior || 'idle',
+                    speed: npcData.speed || 0.5,
+                    dialogue: npcData.dialogue || ['Hello there!'],
+                    icon: npcData.icon || '🎨',
+                    customImage: npcData.customImage || null, // Use customImage from loaded data
+                    isCustom: true,
+                    width: npcData.width || 32, // Include width from loaded data
+                    height: npcData.height || 32, // Include height from loaded data
+                    storageType: 'session', // Loaded NPCs are session-only by default
+                    loadedFromFile: true,
+                    originalData: npcData
+                };
+                
+                // Add to session templates
+                this.sessionTemplates[customKey] = customTemplate;
+                this.updateTemplateList();
+                this.createTemplateList();
+                
+                console.log('📂 NPC loaded from file:', customTemplate.name);
+                alert(`NPC "${customTemplate.name}" loaded successfully! Note: You'll need to upload the image separately if it wasn't included.`);
+                
+            } catch (error) {
+                console.error('❌ Failed to load NPC file:', error);
+                alert('Failed to load NPC file. Please check the file format.');
+            }
+        };
+        
+        reader.readAsText(file);
+    }
+    
     createTemplateList() {
         this.templateList = document.getElementById('npc-template-list');
+        
+        // Safety check: ensure the template list element exists
+        if (!this.templateList) {
+            console.warn('⚠️ Template list element not found, skipping template list creation');
+            return;
+        }
+        
+        // Clear existing template items to prevent duplication
+        this.templateList.innerHTML = '';
         
         Object.entries(this.npcTemplates).forEach(([key, template]) => {
             const templateItem = document.createElement('div');
@@ -455,14 +773,89 @@ class NPCBuilder {
                     <div class="npc-template-type">${template.type}</div>
                 </div>
                 <div class="npc-template-behavior">${template.behavior}</div>
+                <div class="npc-template-actions">
+                    <button class="npc-template-delete-btn" data-template="${key}" title="Delete NPC">
+                        🗑️
+                    </button>
+                </div>
             `;
             
             templateItem.addEventListener('click', () => {
                 this.selectTemplate(key);
             });
             
+            // Add delete button event listener
+            const deleteBtn = templateItem.querySelector('.npc-template-delete-btn');
+            deleteBtn.addEventListener('click', (e) => {
+                e.stopPropagation(); // Prevent template selection
+                this.deleteTemplate(key, template.name);
+            });
+            
             this.templateList.appendChild(templateItem);
         });
+    }
+    
+    deleteTemplate(templateKey, templateName) {
+        if (confirm(`Are you sure you want to delete "${templateName}"? This will remove it from both persistent and session storage.`)) {
+            // Remove from persistent templates if it exists there
+            if (this.persistentTemplates[templateKey]) {
+                delete this.persistentTemplates[templateKey];
+                this.savePersistentTemplates();
+                
+                // Also clean up individual localStorage entries
+                this.cleanupPersistentStorage(templateKey, templateName);
+                
+                console.log(`🗑️ Deleted persistent NPC: ${templateName}`);
+            }
+            
+            // Remove from session templates if it exists there
+            if (this.sessionTemplates[templateKey]) {
+                delete this.sessionTemplates[templateKey];
+                console.log(`🗑️ Deleted session NPC: ${templateName}`);
+            }
+            
+            // Update template list
+            this.updateTemplateList();
+            this.createTemplateList();
+            
+            // Clear selection if this template was selected
+            if (this.selectedNPCTemplate === templateKey) {
+                this.selectedNPCTemplate = null;
+                this.updateConfigPanel();
+            }
+            
+            console.log(`✅ NPC "${templateName}" deleted successfully`);
+        }
+    }
+    
+    cleanupPersistentStorage(templateKey, templateName) {
+        try {
+            // Clean up individual NPC storage entries
+            const sanitizedName = templateName.replace(/[^a-zA-Z0-9]/g, '_');
+            const persistentKey = `persistent_npc_${sanitizedName}`;
+            
+            // Remove the individual NPC storage entry
+            localStorage.removeItem(persistentKey);
+            console.log(`🧹 Cleaned up localStorage entry: ${persistentKey}`);
+            
+            // Also clean up any old storage keys that might match
+            const keysToRemove = [];
+            for (let i = 0; i < localStorage.length; i++) {
+                const key = localStorage.key(i);
+                if (key && key.startsWith('persistent_npc_') && key.includes(sanitizedName)) {
+                    keysToRemove.push(key);
+                }
+            }
+            
+            // Remove any matching keys
+            keysToRemove.forEach(key => {
+                localStorage.removeItem(key);
+                console.log(`🧹 Cleaned up additional localStorage entry: ${key}`);
+            });
+            
+        } catch (error) {
+            console.warn('⚠️ Failed to clean up persistent storage:', error);
+        }
     }
     
     createConfigPanel() {
@@ -658,7 +1051,10 @@ class NPCBuilder {
             ...config,
             // Include custom image data if available
             customImage: template.customImage || null,
-            isCustom: template.isCustom || false
+            isCustom: template.isCustom || false,
+            // Add default dimensions for custom NPCs
+            width: template.width || 32,
+            height: template.height || 32
         };
         
         this.npcs.push(npc);
@@ -793,17 +1189,8 @@ class NPCBuilder {
     }
     
     setupEventListeners() {
-        // Canvas click handler for NPC placement
-        this.canvas.addEventListener('click', (e) => {
-            if (this.isCreatingNPC) {
-                // Use the renderer's coordinate conversion to get proper world coordinates
-                const worldCoords = window.editor.renderer.getWorldCoords(e.clientX, e.clientY);
-                // Convert world coordinates to pixel coordinates for NPC placement
-                const x = worldCoords.x * window.editor.renderer.TILE_SIZE;
-                const y = worldCoords.y * window.editor.renderer.TILE_SIZE;
-                this.placeNPC(x, y);
-            }
-        });
+        // Canvas click handler removed - NPC placement is now handled through ToolManager
+        // This prevents duplicate event handling and conflicts with tile placement
         
         // Panel toggle
         const toggleBtn = document.getElementById('npc-panel-toggle');
@@ -838,6 +1225,11 @@ class NPCBuilder {
         // Add Custom NPC button
         document.getElementById('npc-add-custom-btn').addEventListener('click', () => {
             this.openUploadModal();
+        });
+        
+        // Load Custom NPC button
+        document.getElementById('npc-load-custom-btn').addEventListener('click', () => {
+            this.openLoadModal();
         });
     }
     
@@ -932,16 +1324,25 @@ class NPCBuilder {
     }
     
     togglePanel() {
+        if (!this.npcPanel) {
+            console.error('NPC panel not found!');
+            return;
+        }
+        
         const content = this.npcPanel.querySelector('.npc-panel-content');
         const toggleBtn = document.getElementById('npc-panel-toggle');
         
-        if (this.npcPanel.style.display === 'none') {
+        const isHidden = this.npcPanel.style.display === 'none' || 
+                         this.npcPanel.style.display === '' || 
+                         !this.npcPanel.style.display;
+        
+        if (isHidden) {
             this.npcPanel.style.display = 'block';
-            content.style.display = 'block'; // Show the content too
-            toggleBtn.textContent = '−';
+            if (content) content.style.display = 'block'; // Show the content too
+            if (toggleBtn) toggleBtn.textContent = '−';
         } else {
             this.npcPanel.style.display = 'none';
-            toggleBtn.textContent = '+';
+            if (toggleBtn) toggleBtn.textContent = '+';
         }
     }
     
@@ -957,17 +1358,8 @@ class NPCBuilder {
         console.log('Active tool:', tool);
     }
     
-    render() {
-        // Render all placed NPCs
-        this.npcs.forEach(npc => {
-            this.renderNPC(npc);
-        });
-        
-        // Render preview NPC if creating
-        if (this.previewNPC) {
-            this.renderNPC(this.previewNPC, true);
-        }
-    }
+    // NPC rendering is now handled by the main Renderer
+    // This method is kept for potential future use but is not called
     
     renderNPC(npc, isPreview = false) {
         this.ctx.save();
@@ -976,39 +1368,61 @@ class NPCBuilder {
             this.ctx.globalAlpha = 0.7;
         }
         
+        // NPCs are already stored in pixel coordinates
+        const pixelX = npc.x;
+        const pixelY = npc.y;
+        
         // Check if NPC has custom image
         if (npc.isCustom && npc.customImage) {
-            // Draw custom image
-            const img = new Image();
-            img.onload = () => {
-                this.ctx.drawImage(img, npc.x - 16, npc.y - 16, 32, 32);
-            };
-            img.src = npc.customImage;
+            // Try to draw cached image first
+            if (npc.cachedImage && npc.cachedImage.complete && npc.cachedImage.naturalWidth > 0) {
+                this.ctx.drawImage(npc.cachedImage, pixelX - 16, pixelY - 16, 32, 32);
+            } else {
+                // Create and cache image element if not already done
+                if (!npc.cachedImage) {
+                    npc.cachedImage = new Image();
+                    npc.cachedImage.onload = () => {
+                        // Image loaded successfully, will be drawn on next render
+                    };
+                    npc.cachedImage.onerror = () => {
+                        console.warn('Failed to load custom NPC image:', npc.name);
+                    };
+                    npc.cachedImage.src = npc.customImage;
+                }
+                
+                // Draw fallback while image is loading
+                this.ctx.fillStyle = npc.color || '#8B4513';
+                this.ctx.fillRect(pixelX - 16, pixelY - 16, 32, 32);
+                
+                // Draw custom indicator
+                this.ctx.fillStyle = '#FFD700';
+                this.ctx.fillRect(pixelX - 12, pixelY - 12, 24, 8);
+            }
         } else {
             // Draw default NPC body
             this.ctx.fillStyle = npc.color;
-            this.ctx.fillRect(npc.x - 16, npc.y - 16, 32, 32);
+            this.ctx.fillRect(pixelX - 16, pixelY - 16, 32, 32);
             
             // Draw NPC face
             this.ctx.fillStyle = '#FFE4B5';
-            this.ctx.fillRect(npc.x - 12, npc.y - 16, 24, 16);
+            this.ctx.fillRect(pixelX - 12, pixelY - 16, 24, 16);
             
             // Draw eyes
             this.ctx.fillStyle = '#000';
-            this.ctx.fillRect(npc.x - 8, npc.y - 12, 4, 4);
-            this.ctx.fillRect(npc.x + 4, npc.y - 12, 4, 4);
+            this.ctx.fillRect(pixelX - 8, pixelY - 12, 4, 4);
+            this.ctx.fillRect(pixelX + 4, pixelY - 12, 4, 4);
         }
         
         // Draw name tag
         this.ctx.fillStyle = '#000';
         this.ctx.font = '12px Arial';
         this.ctx.textAlign = 'center';
-        this.ctx.fillText(npc.name, npc.x, npc.y - 20);
+        this.ctx.fillText(npc.name, pixelX, pixelY - 20);
         
         // Draw behavior indicator
         this.ctx.fillStyle = '#00FF00';
         this.ctx.beginPath();
-        this.ctx.arc(npc.x + 12, npc.y - 12, 3, 0, Math.PI * 2);
+        this.ctx.arc(pixelX + 12, pixelY - 12, 3, 0, Math.PI * 2);
         this.ctx.fill();
         
         this.ctx.restore();
@@ -1023,6 +1437,10 @@ class NPCBuilder {
     
     loadSaveData(data) {
         console.log('🔍 Loading save data:', data);
+        
+        // Clear existing NPCs before loading new ones
+        this.npcs = [];
+        
         if (data.npcs) {
             console.log(`📋 Found ${data.npcs.length} NPCs in save data:`, data.npcs.map(npc => `${npc.name} (${npc.id})`));
             this.npcs = data.npcs;
@@ -1063,6 +1481,57 @@ class NPCBuilder {
         }
         
         console.log('All NPCs cleared');
+    }
+    
+    /**
+     * Load NPCs from world save data
+     */
+    loadSaveData(worldData) {
+        if (!worldData.npcs || !Array.isArray(worldData.npcs)) {
+            console.log('ℹ️ No NPCs found in world data to load');
+            return;
+        }
+        
+        console.log(`📂 Loading ${worldData.npcs.length} NPCs from world data`);
+        
+        // Clear existing NPCs
+        this.npcs = [];
+        
+        // Load each NPC from world data
+        worldData.npcs.forEach(npcData => {
+            try {
+                // Keep pixel coordinates as-is for NPCBuilder
+                const npc = {
+                    id: npcData.id,
+                    name: npcData.name,
+                    type: npcData.type || 'townie',
+                    x: npcData.x, // Store as pixel coordinates for NPCBuilder
+                    y: npcData.y,
+                    dialogue: npcData.dialogue || ['Hello there!'],
+                    behavior: npcData.behavior || 'idle',
+                    wanderRadius: npcData.wanderRadius || 50,
+                    patrolPoints: npcData.patrolPoints || [],
+                    color: npcData.color || '#8B4513',
+                    interactable: npcData.interactable !== false,
+                    // Include custom image fields if present
+                    customImage: npcData.customImage || null,
+                    isCustom: npcData.isCustom || false,
+                    width: npcData.width || 32,
+                    height: npcData.height || 32
+                };
+                
+                this.npcs.push(npc);
+                console.log(`✅ Loaded NPC: ${npc.name} at tile (${tileX}, ${tileY})`);
+                
+            } catch (error) {
+                console.error(`❌ Failed to load NPC:`, npcData, error);
+            }
+        });
+        
+        // Update the NPC list display
+        this.updateNPCList();
+        
+        console.log(`✅ Successfully loaded ${this.npcs.length} NPCs from world data`);
     }
 }
 

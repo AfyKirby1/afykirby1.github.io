@@ -7,7 +7,7 @@ class ToolManager {
         this.worldManager = worldManager;
         this.renderer = renderer;
         this.currentTool = 'draw';
-        this.tools = ['draw', 'erase', 'fill', 'quickfill', 'pan', 'rotate', 'flip', 'spawn', 'npc'];
+        this.tools = ['draw', 'erase', 'fill', 'quickfill', 'pan', 'rotate', 'flip', 'spawn', 'deletespawn', 'npc'];
         
         this.setupTools();
         // Ensure draw tool is selected on initialization
@@ -48,6 +48,12 @@ class ToolManager {
         
         // Track tool usage
         this.trackToolUsage(tool);
+        
+        // Special handling for NPC tool - open panel immediately
+        if (tool === 'npc' && window.editor && window.editor.npcBuilder) {
+            console.log('🔍 DEBUG: NPC tool selected, opening NPC Builder panel');
+            window.editor.npcBuilder.togglePanel();
+        }
         
         console.log('🔍 DEBUG: Tool selection complete, current tool is now:', this.currentTool);
     }
@@ -134,6 +140,9 @@ class ToolManager {
             case 'spawn':
                 this.handleSpawnAction(x, y);
                 break;
+            case 'deletespawn':
+                this.handleDeleteSpawnAction(x, y);
+                break;
             case 'npc':
                 this.handleNPCAction(x, y);
                 break;
@@ -219,6 +228,19 @@ class ToolManager {
         this.openSpawnModal(x, y);
     }
 
+    handleDeleteSpawnAction(x, y) {
+        // Check if there's a spawn point at this location
+        const existingSpawn = this.worldManager.getSpawnPointAt(x, y);
+        
+        if (existingSpawn) {
+            // Directly delete the spawn point
+            this.deleteSpawnPoint(existingSpawn);
+        } else {
+            // Show message that no spawn point was found
+            this.showSpawnMessage(`❌ No spawn point found at (${x}, ${y})`);
+        }
+    }
+
     handleNPCAction(x, y) {
         // Handle NPC placement or interaction
         this.handleNPCClick(x, y);
@@ -269,8 +291,83 @@ class ToolManager {
     }
 
     openSpawnModal(x, y) {
-        // Implement spawn modal opening
-        console.log('Open spawn modal at', x, y);
+        // Check if there's already a spawn point at this location
+        const existingSpawn = this.worldManager.getSpawnPointAt(x, y);
+        
+        if (existingSpawn) {
+            // If spawn point exists, show options to edit or delete
+            this.showSpawnOptions(existingSpawn);
+        } else {
+            // Create new spawn point
+            this.createSpawnPoint(x, y);
+        }
+    }
+
+    createSpawnPoint(x, y) {
+        // For now, create a player spawn point by default
+        // In the future, this could open a modal to select spawn type
+        const spawnPoint = this.worldManager.addSpawnPoint(x, y, 'player');
+        
+        // Trigger render to show the new spawn point
+        this.renderer.render();
+        
+        // Show success message
+        this.showSpawnMessage(`📍 Player spawn point added at (${x}, ${y})`);
+    }
+
+    showSpawnOptions(spawnPoint) {
+        const options = [
+            `Edit ${spawnPoint.name}`,
+            `Delete ${spawnPoint.name}`,
+            'Cancel'
+        ];
+        
+        const choice = prompt(`Spawn point found at (${spawnPoint.x}, ${spawnPoint.y})\n\nOptions:\n1. ${options[0]}\n2. ${options[1]}\n3. ${options[2]}\n\nEnter choice (1-3):`);
+        
+        switch (choice) {
+            case '1':
+                this.editSpawnPoint(spawnPoint);
+                break;
+            case '2':
+                this.deleteSpawnPoint(spawnPoint);
+                break;
+            case '3':
+            default:
+                // Cancel - do nothing
+                break;
+        }
+    }
+
+    editSpawnPoint(spawnPoint) {
+        const newName = prompt(`Edit spawn point name:\nCurrent: ${spawnPoint.name}`, spawnPoint.name);
+        if (newName && newName.trim() !== '') {
+            spawnPoint.name = newName.trim();
+            this.renderer.render();
+            this.showSpawnMessage(`📍 Updated spawn point: ${spawnPoint.name}`);
+        }
+    }
+
+    deleteSpawnPoint(spawnPoint) {
+        if (confirm(`Are you sure you want to delete "${spawnPoint.name}" at (${spawnPoint.x}, ${spawnPoint.y})?`)) {
+            this.worldManager.removeSpawnPoint(spawnPoint.id);
+            this.renderer.render();
+            this.showSpawnMessage(`🗑️ Deleted spawn point: ${spawnPoint.name}`);
+        }
+    }
+
+    showSpawnMessage(message) {
+        // Simple message display - could be enhanced with a toast notification
+        console.log(message);
+        
+        // Show temporary message in status bar
+        const statusBar = document.querySelector('.status-bar');
+        if (statusBar) {
+            const originalText = statusBar.innerHTML;
+            statusBar.innerHTML = `<span style="color: #00FF00;">${message}</span>`;
+            setTimeout(() => {
+                statusBar.innerHTML = originalText;
+            }, 3000);
+        }
     }
 
     handleNPCClick(x, y) {

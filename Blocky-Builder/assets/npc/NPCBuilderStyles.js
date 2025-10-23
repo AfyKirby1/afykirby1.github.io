@@ -9,11 +9,15 @@ const NPCBuilderStyles = `
     position: fixed;
     top: 20px;
     right: 20px;
-    width: 300px;
+    width: 400px;
+    min-width: 350px;
+    max-width: 80vw;
+    min-height: 500px;
+    max-height: 90vh;
     background: linear-gradient(135deg, #2c3e50 0%, #34495e 100%);
     border-radius: 8px;
     box-shadow: 0 6px 24px rgba(0, 0, 0, 0.3);
-    z-index: 1000;
+    z-index: 10001;
     font-family: 'Inter', system-ui, -apple-system, sans-serif;
     color: #ecf0f1;
     border: 1px solid #34495e;
@@ -24,6 +28,27 @@ const NPCBuilderStyles = `
     transform: translateZ(0);
     backface-visibility: hidden;
     -webkit-backface-visibility: hidden;
+    /* Resizing functionality */
+    resize: both;
+    resize: horizontal vertical;
+}
+
+/* Resize handle styling */
+.npc-panel::after {
+    content: '';
+    position: absolute;
+    bottom: 0;
+    right: 0;
+    width: 20px;
+    height: 20px;
+    background: linear-gradient(-45deg, transparent 30%, #34495e 30%, #34495e 70%, transparent 70%);
+    cursor: nw-resize;
+    opacity: 0.5;
+    transition: opacity 0.2s ease;
+}
+
+.npc-panel:hover::after {
+    opacity: 0.8;
 }
 
 /* Dragging state optimizations */
@@ -204,6 +229,30 @@ const NPCBuilderStyles = `
     color: #8A2BE2;
     font-weight: 500;
     text-transform: capitalize;
+}
+
+.npc-template-actions {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+}
+
+.npc-template-delete-btn {
+    background: #e74c3c;
+    color: white;
+    border: none;
+    border-radius: 3px;
+    padding: 4px 6px;
+    cursor: pointer;
+    font-size: 10px;
+    transition: all 0.2s ease;
+    opacity: 0.7;
+}
+
+.npc-template-delete-btn:hover {
+    background: #c0392b;
+    opacity: 1;
+    transform: scale(1.1);
 }
 
 /* NPC Configuration Panel */
@@ -882,25 +931,48 @@ const NPCBuilderStyles = `
 
 /* Template Actions */
 .npc-template-actions {
-    margin-bottom: 15px;
+    display: flex;
+    gap: 6px;
+    margin-bottom: 12px;
 }
 
 .npc-add-custom-btn {
+    flex: 1;
     background: #4CAF50;
     color: #fff;
     border: none;
     border-radius: 4px;
-    padding: 8px 12px;
-    font-size: 12px;
+    padding: 6px 8px;
+    font-size: 10px;
     cursor: pointer;
     display: flex;
     align-items: center;
-    gap: 5px;
+    justify-content: center;
+    gap: 4px;
     transition: background-color 0.2s;
+    min-height: 26px;
 }
 
-.npc-add-custom-btn:hover {
-    background: #45a049;
+.npc-load-custom-btn {
+    flex: 1;
+    background: #2196F3;
+    color: white;
+    border: none;
+    padding: 6px 8px;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 4px;
+    transition: all 0.3s ease;
+    min-height: 26px;
+}
+
+.npc-load-custom-btn:hover {
+    background: #1976D2;
+    transform: translateY(-1px);
 }
 
 /* Custom Image Templates */

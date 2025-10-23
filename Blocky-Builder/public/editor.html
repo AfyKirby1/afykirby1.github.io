@@ -38,7 +38,9 @@
                 <button class="tool-btn" onclick="selectTool('pan')" id="panBtn" title="Pan (P)">✋ Pan</button>
                 <button class="tool-btn" onclick="selectTool('rotate')" id="rotateBtn" title="Rotate (R)">🔄 Rotate</button>
                 <button class="tool-btn" onclick="selectTool('flip')" id="flipBtn" title="Flip (X)">↔️ Flip</button>
-                <button class="tool-btn" onclick="openNPCPanel()" id="npcBtn" title="Open NPC Builder (N)">🧙 NPCs</button>
+                <button class="tool-btn" onclick="selectTool('spawn')" id="spawnBtn" title="Spawn Point (S)">📍 Spawn</button>
+                <button class="tool-btn" onclick="selectTool('deletespawn')" id="deletespawnBtn" title="Delete Spawn Point (Delete/Backspace)">🗑️ Delete Spawn</button>
+                <button class="tool-btn" onclick="selectTool('npc')" id="npcBtn" title="NPC Tool (N)">🧙 NPCs</button>
             </div>
 
             <div class="tool-section" id="betaToolsSection" style="display: none;">
@@ -50,11 +52,6 @@
                 <button class="tool-btn" onclick="selectTool('debug')" id="debugBtn" title="Debug - Show debug information">🐛 Debug</button>
             </div>
 
-            <div class="tool-section">
-                <h3>📁 Project</h3>
-                <button class="tool-btn" onclick="showProjectPanel()" id="projectBtn" title="Project Settings">⚙️ Setup</button>
-                <button class="tool-btn" onclick="showProjectPanel()" id="loadWorldBtn" title="Load Existing World">📂 Load</button>
-            </div>
 
             <div class="tool-section">
                 <h3>↩️ History</h3>

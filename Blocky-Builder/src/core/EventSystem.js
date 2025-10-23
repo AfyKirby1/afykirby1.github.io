@@ -48,6 +48,9 @@ class EventSystem {
         // Window events
         window.addEventListener('resize', () => this.handleResize());
         
+        // Note: Canvas resize timing is now handled manually in toggle functions
+        // to ensure smooth animations without jumping
+        
         console.log('🔍 DEBUG: Event listeners setup complete');
     }
 
@@ -200,6 +203,11 @@ class EventSystem {
                     this.toolManager.selectTool('spawn');
                 }
                 break;
+            case 'delete':
+            case 'backspace':
+                e.preventDefault();
+                this.toolManager.selectTool('deletespawn');
+                break;
             case 'n':
                 e.preventDefault();
                 this.toolManager.selectTool('npc');
@@ -299,7 +307,12 @@ class EventSystem {
     toggleLeftPanel() {
         const panel = document.getElementById('leftToolbar');
         const btn = panel.querySelector('.minimize-btn');
-        
+
+        // Measure canvas center before DOM changes
+        const canvas = this.canvas;
+        const before = canvas.getBoundingClientRect();
+        const beforeCenterX = before.left + before.width / 2;
+
         if (panel.classList.contains('minimized')) {
             panel.classList.remove('minimized');
             btn.textContent = '◀';
@@ -309,12 +322,31 @@ class EventSystem {
             btn.textContent = '▶';
             btn.title = 'Expand Panel';
         }
+
+        // After layout updates, compute the canvas center shift and compensate
+        requestAnimationFrame(() => {
+            const after = canvas.getBoundingClientRect();
+            const afterCenterX = after.left + after.width / 2;
+            const deltaCenterX = afterCenterX - beforeCenterX; // +right, -left shift in CSS px
+
+            // Compensate view so the same world point stays under the same screen coordinate
+            if (deltaCenterX !== 0) {
+                this.worldManager.viewX += deltaCenterX / Math.max(0.0001, this.worldManager.zoom);
+            }
+
+            this.renderer.resizeCanvas();
+        });
     }
 
     toggleRightPanel() {
         const panel = document.getElementById('rightPanel');
         const btn = panel.querySelector('.minimize-btn');
-        
+
+        // Measure canvas center before DOM changes
+        const canvas = this.canvas;
+        const before = canvas.getBoundingClientRect();
+        const beforeCenterX = before.left + before.width / 2;
+
         if (panel.classList.contains('minimized')) {
             panel.classList.remove('minimized');
             btn.textContent = '◀';
@@ -324,6 +356,19 @@ class EventSystem {
             btn.textContent = '▶';
             btn.title = 'Expand Panel';
         }
+
+        // After layout updates, compute the canvas center shift and compensate
+        requestAnimationFrame(() => {
+            const after = canvas.getBoundingClientRect();
+            const afterCenterX = after.left + after.width / 2;
+            const deltaCenterX = afterCenterX - beforeCenterX; // +right, -left shift in CSS px
+
+            if (deltaCenterX !== 0) {
+                this.worldManager.viewX += deltaCenterX / Math.max(0.0001, this.worldManager.zoom);
+            }
+
+            this.renderer.resizeCanvas();
+        });
     }
 
     undo() {

@@ -1,0 +1,33 @@
+{
+  "metadata": {
+    "npcName": "Rat",
+    "sanitizedName": "Rat",
+    "createdAt": "2025-10-23T02:35:21.132Z",
+    "version": "1.0"
+  },
+  "files": {
+    "json": {
+      "filename": "Rat.json",
+      "content": "{\n  \"id\": \"custom_1761186921126_ecz4x0onj\",\n  \"name\": \"Rat\",\n  \"type\": \"custom\",\n  \"color\": \"#8B4513\",\n  \"behavior\": \"wander\",\n  \"speed\": 0.5,\n  \"dialogue\": [\n    \"Squeek!\"\n  ],\n  \"icon\": \"🎨\",\n  \"isCustom\": true,\n  \"storageType\": \"persistent\",\n  \"createdAt\": \"2025-10-23T02:35:21.127Z\",\n  \"version\": \"1.0\"\n}",
+      "path": "assets/npc/persistent/Rat.json"
+    },
+    "image": {
+      "filename": "Rat.png",
+      "content": {},
+      "path": "assets/npc/persistent/Rat.png"
+    }
+  },
+  "instructions": {
+    "title": "Deployment Instructions",
+    "steps": [
+      "1. Create file: Rat.json",
+      "2. Copy the JSON content from the 'json.content' field above",
+      "3. Save it to: assets/npc/persistent/Rat.json",
+      "4. Create file: Rat.png",
+      "5. Convert the base64 image data from 'image.content' field",
+      "6. Save it to: assets/npc/persistent/Rat.png",
+      "7. Commit and push to GitHub",
+      "8. The NPC will be available to all users!"
+    ]
+  }
+}

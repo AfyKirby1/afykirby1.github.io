@@ -2,6 +2,42 @@
 
 All notable changes to Blocky Builder will be documented in this file.
 
+## [V 0.08] - 2025-01-27
+
+### 🧙 NPC Builder System Overhaul
+
+#### Custom NPC Upload System
+- **PNG Upload Support** - Users can now upload custom PNG images for NPCs
+- **Preview System** - Real-time preview of uploaded NPC images before confirmation
+- **Template Management** - Custom NPCs saved as templates with persistent storage
+- **File Package System** - NPCs exported as downloadable packages for GitHub Pages deployment
+- **Persistent Storage** - Hybrid localStorage + file system for NPC persistence
+
+#### Enhanced NPC Builder UI
+- **Streamlined Interface** - Removed NPC Management panel, direct access to NPC Builder
+- **Drag Functionality** - NPC Builder panel can be dragged around the screen
+- **Responsive Design** - Optimized drag performance with `requestAnimationFrame` and GPU acceleration
+- **Compact Layout** - Shrunk text and elements for better space utilization
+- **Side-by-Side Buttons** - "Add Custom NPC" and "Load NPC File" buttons arranged horizontally
+
+#### Technical Improvements
+- **Initialization Order Fix** - Fixed null element reference errors during NPC Builder startup
+- **Event Handling** - Prevented keyboard event conflicts between modal inputs and main editor
+- **File Dialog Fix** - Resolved double file dialog opening issue
+- **Template Cleanup** - Automatic cleanup of orphaned localStorage entries
+- **Error Handling** - Added safety checks for UI element creation
+
+#### User Experience Enhancements
+- **Silent File Saving** - NPC packages save to `persistent/` folder without multiple download prompts
+- **Template Deletion** - Complete deletion from both UI and localStorage
+- **Manual File Cleanup** - Clear instructions for removing physical files from persistent folder
+- **Focus Management** - Auto-focus on NPC name input when opening upload modal
+
+#### GitHub Pages Integration
+- **Deployment Script** - `deploy-npc.js` helper script for automated NPC package deployment
+- **Persistent Folder Structure** - Organized `assets/npc/persistent/` folder for file storage
+- **Documentation** - Updated README with deployment workflow instructions
+
 ## [V 0.07] - 2025-10-22
 
 ### 🔧 Grid System & Settings Overhaul

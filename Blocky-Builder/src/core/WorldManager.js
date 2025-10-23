@@ -16,6 +16,10 @@ class WorldManager {
         this.betaMode = false; // Beta features disabled by default
         this.showTooltips = true; // Tooltips enabled by default
         
+        // Spawn points system
+        this.spawnPoints = [];
+        this.nextSpawnId = 1;
+        
         this.initializeWorld();
     }
 
@@ -42,6 +46,13 @@ class WorldManager {
 
         this.worldWidth = newWidth;
         this.worldHeight = newHeight;
+        
+        // Clear spawn points that are outside the new world bounds
+        this.spawnPoints = this.spawnPoints.filter(spawn => 
+            spawn.x >= 0 && spawn.x < newWidth && spawn.y >= 0 && spawn.y < newHeight
+        );
+        console.log(`🗑️ Filtered spawn points for resized world (${newWidth}x${newHeight})`);
+        
         this.initializeWorld();
     }
 
@@ -104,6 +115,15 @@ class WorldManager {
         this.zoom = data.zoom || 1;
         // Don't override showGrid from saved world data - preserve user preference
         // this.showGrid = data.showGrid !== undefined ? data.showGrid : true;
+        
+        // Load spawn points if they exist
+        if (data.spawnPoints) {
+            this.loadSpawnPoints(data.spawnPoints);
+        } else {
+            // Reset spawn points if none in data
+            this.spawnPoints = [];
+            this.nextSpawnId = 1;
+        }
     }
 
     createWorld(width, height) {
@@ -111,6 +131,11 @@ class WorldManager {
         this.worldWidth = width;
         this.worldHeight = height;
         this.tiles = [];
+        
+        // Clear all spawn points when creating a new world
+        this.spawnPoints = [];
+        this.nextSpawnId = 1;
+        console.log('🗑️ Cleared all spawn points for new world');
         
         // Fill with grass tiles
         for (let y = 0; y < height; y++) {
@@ -132,6 +157,68 @@ class WorldManager {
         this.viewX = 0;
         this.viewY = 0;
         this.zoom = 0.3;
+    }
+
+    // Spawn Point Management Methods
+    addSpawnPoint(x, y, type = 'player', name = '') {
+        const spawnPoint = {
+            id: this.nextSpawnId++,
+            x: x,
+            y: y,
+            type: type, // 'player', 'enemy', 'npc', 'item'
+            name: name || `${type.charAt(0).toUpperCase() + type.slice(1)} Spawn ${this.nextSpawnId - 1}`,
+            color: this.getSpawnColor(type)
+        };
+        
+        this.spawnPoints.push(spawnPoint);
+        console.log(`📍 Added ${type} spawn point at (${x}, ${y})`);
+        return spawnPoint;
+    }
+
+    removeSpawnPoint(id) {
+        const index = this.spawnPoints.findIndex(spawn => spawn.id === id);
+        if (index !== -1) {
+            const removed = this.spawnPoints.splice(index, 1)[0];
+            console.log(`🗑️ Removed spawn point: ${removed.name}`);
+            return removed;
+        }
+        return null;
+    }
+
+    getSpawnPointsByType(type) {
+        return this.spawnPoints.filter(spawn => spawn.type === type);
+    }
+
+    getSpawnPointAt(x, y) {
+        return this.spawnPoints.find(spawn => spawn.x === x && spawn.y === y);
+    }
+
+    getSpawnColor(type) {
+        const colors = {
+            'player': '#00FF00', // Green
+            'enemy': '#FF0000',  // Red
+            'npc': '#0000FF',    // Blue
+            'item': '#FFFF00'    // Yellow
+        };
+        return colors[type] || '#FFFFFF';
+    }
+
+    // Export spawn points data for game integration
+    exportSpawnPoints() {
+        return {
+            spawnPoints: this.spawnPoints,
+            spawnCount: this.spawnPoints.length,
+            spawnTypes: [...new Set(this.spawnPoints.map(spawn => spawn.type))]
+        };
+    }
+
+    // Load spawn points from saved data
+    loadSpawnPoints(spawnData) {
+        if (spawnData && spawnData.spawnPoints) {
+            this.spawnPoints = spawnData.spawnPoints;
+            this.nextSpawnId = Math.max(...this.spawnPoints.map(spawn => spawn.id), 0) + 1;
+            console.log(`📍 Loaded ${this.spawnPoints.length} spawn points`);
+        }
     }
 }
 

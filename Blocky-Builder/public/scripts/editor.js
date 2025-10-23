@@ -527,22 +527,43 @@ class BlockyBuilderEditor {
             
             // Add NPCs to world data
             if (this.npcBuilder && this.npcBuilder.npcs && this.npcBuilder.npcs.length > 0) {
-                worldData.npcs = this.npcBuilder.npcs.map(npc => ({
-                    id: npc.id,
-                    name: npc.name,
-                    type: npc.type,
-                    x: npc.x,
-                    y: npc.y,
-                    dialogue: npc.dialogue,
-                    behavior: npc.behavior,
-                    wanderRadius: npc.wanderRadius,
-                    patrolPoints: npc.patrolPoints,
-                    color: npc.color,
-                    interactable: true
-                }));
+                worldData.npcs = this.npcBuilder.npcs.map(npc => {
+                    const exportedNPC = {
+                        id: npc.id,
+                        name: npc.name,
+                        type: npc.type,
+                        x: npc.x,
+                        y: npc.y,
+                        dialogue: npc.dialogue,
+                        behavior: npc.behavior,
+                        wanderRadius: npc.wanderRadius,
+                        patrolPoints: npc.patrolPoints,
+                        color: npc.color,
+                        interactable: true
+                    };
+                    
+                    // Add custom image fields if NPC is custom
+                    if (npc.isCustom || npc.type === 'custom') {
+                        exportedNPC.isCustom = true;
+                        exportedNPC.customImage = npc.customImage || `assets/npc/persistent/${npc.name}.png`;
+                        exportedNPC.width = npc.width || 32;
+                        exportedNPC.height = npc.height || 32;
+                        console.log(`🎨 Exporting custom NPC: ${npc.name} with image: ${exportedNPC.customImage}`);
+                    }
+                    
+                    return exportedNPC;
+                });
                 console.log(`✅ Exported ${worldData.npcs.length} NPCs with world data`);
             } else {
                 console.log('ℹ️ No NPCs to export');
+            }
+            
+            // Add spawn points to world data
+            if (this.worldManager.spawnPoints && this.worldManager.spawnPoints.length > 0) {
+                worldData.spawnPoints = this.worldManager.exportSpawnPoints();
+                console.log(`✅ Exported ${worldData.spawnPoints.spawnCount} spawn points with world data`);
+            } else {
+                console.log('ℹ️ No spawn points to export');
             }
             
             const dataStr = JSON.stringify(worldData, null, 2);
@@ -556,6 +577,68 @@ class BlockyBuilderEditor {
             this.showToast('World exported successfully!', 'success');
         } catch (error) {
             this.showToast('Failed to export world: ' + error.message, 'error');
+        }
+    }
+
+    // Global function for file input onchange
+    loadWorldFromFile(input) {
+        const file = input.files[0];
+        if (!file) return;
+        
+        const reader = new FileReader();
+        reader.onload = (e) => {
+            try {
+                const worldData = JSON.parse(e.target.result);
+                console.log('📁 Loading world from file:', file.name);
+                
+                // Load world data into WorldManager
+                this.worldManager.loadWorldData(worldData);
+                
+                // Load NPCs into NPCBuilder if available
+                if (this.npcBuilder && worldData.npcs) {
+                    console.log(`🎯 Loading ${worldData.npcs.length} NPCs from imported world:`, worldData.npcs.map(npc => `${npc.name} (${npc.id})`));
+                    this.npcBuilder.loadSaveData(worldData);
+                    console.log(`✅ Loaded ${worldData.npcs.length} NPCs from imported world`);
+                } else if (this.npcBuilder) {
+                    console.log('ℹ️ No NPCs found in imported world data');
+                }
+                
+                this.updateWorldStats();
+                this.showToast(`World "${file.name}" imported successfully!`, 'success');
+                
+                // Clear the file input so the same file can be imported again
+                input.value = '';
+                
+            } catch (error) {
+                console.error('❌ Failed to import world:', error);
+                this.showToast('Failed to import world: ' + error.message, 'error');
+            }
+        };
+        
+        reader.readAsText(file);
+    }
+
+    initializeNPCBuilder() {
+        try {
+            // Check if NPCBuilder class is available
+            if (typeof NPCBuilder === 'undefined') {
+                console.warn('⚠️ NPCBuilder class not found - NPC system disabled');
+                return;
+            }
+            
+            // Inject NPC Builder styles
+            if (typeof injectNPCBuilderStyles === 'function') {
+                injectNPCBuilderStyles();
+            }
+            
+            // Create NPCBuilder instance
+            this.npcBuilder = new NPCBuilder(this.canvas, this.worldManager);
+            
+            console.log('✅ NPCBuilder initialized successfully');
+            
+        } catch (error) {
+            console.error('❌ Failed to initialize NPCBuilder:', error);
+            this.npcBuilder = null;
         }
     }
 
@@ -1005,6 +1088,11 @@ function createNewWorld() {
     // Create new world with specified dimensions
     window.editor.worldManager.createWorld(width, height);
     window.editor.worldManager.worldName = name;
+    
+    // Clear all NPCs when creating a new world
+    if (window.editor.npcBuilder) {
+        window.editor.npcBuilder.clearAllNPCs();
+    }
     
     // Reset viewport and center on world
     window.editor.worldManager.viewX = 0;

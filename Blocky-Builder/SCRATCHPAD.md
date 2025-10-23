@@ -134,3 +134,49 @@ User wanted to:
 - No content bleeding through panel boundaries
 - Smooth animations work correctly
 - Keyboard shortcuts (Q and Ctrl+E) work as expected
+
+---
+
+## Version 0.08 - January 27, 2025
+**NPC Builder System Overhaul**
+
+### User Requests and Issues Resolved
+1. **NPC Placement Alignment** - Fixed NPCs placing away from cursor
+2. **Custom NPC Upload** - Implemented PNG upload system with preview
+3. **UI Streamlining** - Removed NPC Management panel, direct NPC Builder access
+4. **Drag Functionality** - Added draggable NPC Builder panel with smooth performance
+5. **Double File Dialog** - Fixed duplicate file dialog opening issue
+6. **Keyboard Conflicts** - Prevented modal input hotkey conflicts
+7. **Template Cleanup** - Removed all default templates except user's custom ones
+8. **Persistent Storage** - Implemented hybrid localStorage + file system for GitHub Pages
+9. **File Management** - Added manual file cleanup instructions for persistent folder
+10. **PNG Import Issues** - Fixed template list initialization order problems
+
+### Technical Implementation Details
+- **Custom NPC Upload System**: Complete workflow from PNG upload to template creation
+- **Drag Performance**: Used `requestAnimationFrame` and CSS `transform` for GPU acceleration
+- **Event Handling**: Added `stopPropagation()` to prevent keyboard event conflicts
+- **Initialization Order**: Fixed `createTemplateList()` being called before UI elements exist
+- **File System Integration**: Created `deploy-npc.js` helper script for GitHub Pages deployment
+- **Storage Management**: Hybrid system with localStorage for immediate use and files for persistence
+
+### Key Code Changes
+- **NPCBuilder.js**: Major refactor for custom NPC system, drag functionality, and initialization fixes
+- **NPCBuilderStyles.js**: Added upload modal styles, drag optimizations, and compact layout
+- **ToolManager.js**: Updated NPC tool handler for direct panel access
+- **editor.html**: Removed NPC Management section, updated NPC button
+- **deploy-npc.js**: New helper script for automated NPC package deployment
+
+### Current Status
+- ✅ All user-reported issues resolved
+- ✅ Custom NPC upload system fully functional
+- ✅ Drag functionality smooth and responsive
+- ✅ Persistent storage working for GitHub Pages
+- ✅ File cleanup system implemented
+- ✅ PNG import issues fixed
+
+### Notes for Future Development
+- Consider adding NPC animation system
+- Could implement NPC behavior editor
+- Might add NPC template sharing system
+- Consider adding NPC collision detection

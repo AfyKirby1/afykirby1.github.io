@@ -15,6 +15,9 @@ class Renderer {
         this.experimentalRendering = false; // Beta feature flag
         this.performanceMode = false; // Performance optimization flag
         
+        // NPC sprite cache for custom images
+        this.npcSpriteCache = new Map();
+        
         this.loadTextures();
     }
 
@@ -46,9 +49,30 @@ class Renderer {
 
     resizeCanvas() {
         const rect = this.canvas.getBoundingClientRect();
-        this.canvas.width = rect.width * window.devicePixelRatio;
-        this.canvas.height = rect.height * window.devicePixelRatio;
-        this.ctx.scale(window.devicePixelRatio, window.devicePixelRatio);
+        
+        // Ensure we have valid dimensions
+        if (rect.width <= 0 || rect.height <= 0) {
+            console.warn('Canvas has invalid dimensions, skipping resize');
+            return;
+        }
+        
+        const dpr = window.devicePixelRatio || 1;
+        
+        // Match canvas to container size (in device pixels)
+        this.canvas.width = Math.round(rect.width * dpr);
+        this.canvas.height = Math.round(rect.height * dpr);
+        
+        // Reset transform and apply DPR scaling (avoid compounding scale across resizes)
+        if (typeof this.ctx.setTransform === 'function') {
+            this.ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+        } else {
+            // Fallback for very old browsers
+            this.ctx.resetTransform && this.ctx.resetTransform();
+            this.ctx.scale(dpr, dpr);
+        }
+        
+        // Render immediately to reflect new size
+        this.render();
     }
 
     render() {
@@ -67,8 +91,11 @@ class Renderer {
         const worldCenterX = (this.worldManager.worldWidth * this.TILE_SIZE) / 2;
         const worldCenterY = (this.worldManager.worldHeight * this.TILE_SIZE) / 2;
         
-        // Apply zoom and pan
-        this.ctx.translate(this.canvas.width / 2, this.canvas.height / 2);
+        // Apply zoom and pan (use CSS pixel space after DPR scaling)
+        const dpr = window.devicePixelRatio || 1;
+        const canvasCssWidth = this.canvas.width / dpr;
+        const canvasCssHeight = this.canvas.height / dpr;
+        this.ctx.translate(canvasCssWidth / 2, canvasCssHeight / 2);
         this.ctx.scale(this.worldManager.zoom, this.worldManager.zoom);
         this.ctx.translate(-worldCenterX + this.worldManager.viewX, -worldCenterY + this.worldManager.viewY);
 
@@ -80,8 +107,11 @@ class Renderer {
             this.renderGrid();
         }
 
-        // Render NPCs if available
+        // Render NPCs
         this.renderNPCs();
+
+        // Render spawn points
+        this.renderSpawnPoints();
 
         this.ctx.restore();
 
@@ -169,10 +199,7 @@ class Renderer {
             this.ctx.stroke();
         }
         
-        // Draw world boundary
-        this.ctx.strokeStyle = 'rgba(255, 0, 0, 1.0)'; // Bright red boundary
-        this.ctx.lineWidth = 4; // Thicker boundary
-        this.ctx.strokeRect(0, 0, worldWidth, worldHeight);
+        // World boundary debug stroke removed (was drawing a red rectangle)
     }
 
     enableExperimentalRendering() {
@@ -260,8 +287,11 @@ class Renderer {
         // 1. Remove canvas center offset
         // 2. Apply inverse zoom
         // 3. Remove world center and view offset
-        const worldX = Math.floor(((canvasX - this.canvas.width / 2) / this.worldManager.zoom + worldCenterX - this.worldManager.viewX) / this.TILE_SIZE);
-        const worldY = Math.floor(((canvasY - this.canvas.height / 2) / this.worldManager.zoom + worldCenterY - this.worldManager.viewY) / this.TILE_SIZE);
+        const dpr = window.devicePixelRatio || 1;
+        const canvasCssWidth = this.canvas.width / dpr;
+        const canvasCssHeight = this.canvas.height / dpr;
+        const worldX = Math.floor(((canvasX - canvasCssWidth / 2) / this.worldManager.zoom + worldCenterX - this.worldManager.viewX) / this.TILE_SIZE);
+        const worldY = Math.floor(((canvasY - canvasCssHeight / 2) / this.worldManager.zoom + worldCenterY - this.worldManager.viewY) / this.TILE_SIZE);
         
         // Ensure coordinates are integers
         return { x: Math.floor(worldX), y: Math.floor(worldY) };
@@ -312,27 +342,153 @@ class Renderer {
         }
     }
 
+    // Preload NPC sprite into cache
+    preloadNPCSprite(npcId, imageSrc) {
+        if (this.npcSpriteCache.has(npcId)) {
+            return; // Already cached
+        }
+        
+        const img = new Image();
+        img.onload = () => {
+            this.npcSpriteCache.set(npcId, img);
+            console.log('NPC sprite cached:', npcId);
+        };
+        img.onerror = () => {
+            console.warn('Failed to preload NPC sprite:', npcId);
+        };
+        img.src = imageSrc;
+    }
+    
+    // Get cached NPC sprite
+    getCachedNPCSprite(npcId) {
+        return this.npcSpriteCache.get(npcId);
+    }
+
     renderNPC(npc) {
         this.ctx.save();
         
-        // Set NPC color
-        this.ctx.fillStyle = npc.color || '#8B4513';
-        
-        // Draw NPC as a circle at the exact pixel coordinates
-        this.ctx.beginPath();
-        this.ctx.arc(npc.x, npc.y, 12, 0, Math.PI * 2);
-        this.ctx.fill();
-        
-        // Draw NPC border
-        this.ctx.strokeStyle = '#000000';
-        this.ctx.lineWidth = 2;
-        this.ctx.stroke();
+        // Check if NPC has custom image (from NPC Builder)
+        if (npc.isCustom && npc.customImage) {
+            // Try to get cached sprite first
+            const cachedSprite = this.getCachedNPCSprite(npc.id || npc.name);
+            
+            if (cachedSprite) {
+                // Draw cached sprite
+                this.ctx.drawImage(cachedSprite, npc.x - 16, npc.y - 16, 32, 32);
+            } else {
+                // Preload sprite for next frame and draw placeholder
+                this.preloadNPCSprite(npc.id || npc.name, npc.customImage);
+                
+                // Draw placeholder for custom NPCs
+                this.ctx.fillStyle = npc.color || '#8B4513';
+                this.ctx.fillRect(npc.x - 16, npc.y - 16, 32, 32);
+                
+                // Draw custom indicator (golden stripe)
+                this.ctx.fillStyle = '#FFD700';
+                this.ctx.fillRect(npc.x - 12, npc.y - 12, 24, 8);
+                
+                // Draw NPC border
+                this.ctx.strokeStyle = '#000000';
+                this.ctx.lineWidth = 2;
+                this.ctx.strokeRect(npc.x - 16, npc.y - 16, 32, 32);
+            }
+        } else {
+            // Draw default NPC sprite
+            this.renderDefaultNPC(npc);
+        }
         
         // Draw NPC name above
         this.ctx.fillStyle = '#FFFFFF';
         this.ctx.font = '12px Arial';
         this.ctx.textAlign = 'center';
         this.ctx.fillText(npc.name, npc.x, npc.y - 20);
+        
+        // Draw behavior indicator (small colored dot)
+        this.ctx.fillStyle = '#00FF00';
+        this.ctx.beginPath();
+        this.ctx.arc(npc.x + 12, npc.y - 12, 3, 0, Math.PI * 2);
+        this.ctx.fill();
+        
+        this.ctx.restore();
+    }
+    
+    renderDefaultNPC(npc) {
+        // Draw NPC body
+        this.ctx.fillStyle = npc.color || '#8B4513';
+        this.ctx.fillRect(npc.x - 16, npc.y - 16, 32, 32);
+        
+        // Draw NPC face
+        this.ctx.fillStyle = '#FFE4B5';
+        this.ctx.fillRect(npc.x - 12, npc.y - 16, 24, 16);
+        
+        // Draw eyes
+        this.ctx.fillStyle = '#000';
+        this.ctx.fillRect(npc.x - 8, npc.y - 12, 4, 4);
+        this.ctx.fillRect(npc.x + 4, npc.y - 12, 4, 4);
+        
+        // Draw NPC border
+        this.ctx.strokeStyle = '#000000';
+        this.ctx.lineWidth = 2;
+        this.ctx.strokeRect(npc.x - 16, npc.y - 16, 32, 32);
+    }
+
+    renderSpawnPoints() {
+        if (!this.worldManager.spawnPoints || this.worldManager.spawnPoints.length === 0) {
+            return;
+        }
+
+        this.worldManager.spawnPoints.forEach(spawnPoint => {
+            this.renderSpawnPoint(spawnPoint);
+        });
+    }
+
+    renderSpawnPoint(spawnPoint) {
+        const x = spawnPoint.x * this.TILE_SIZE + this.TILE_SIZE / 2;
+        const y = spawnPoint.y * this.TILE_SIZE + this.TILE_SIZE / 2;
+        
+        this.ctx.save();
+        
+        // Draw spawn point circle
+        this.ctx.fillStyle = spawnPoint.color;
+        this.ctx.strokeStyle = '#FFFFFF';
+        this.ctx.lineWidth = 2;
+        
+        // Draw outer ring
+        this.ctx.beginPath();
+        this.ctx.arc(x, y, 12, 0, Math.PI * 2);
+        this.ctx.fill();
+        this.ctx.stroke();
+        
+        // Draw inner circle
+        this.ctx.fillStyle = '#FFFFFF';
+        this.ctx.beginPath();
+        this.ctx.arc(x, y, 6, 0, Math.PI * 2);
+        this.ctx.fill();
+        
+        // Draw spawn point icon based on type
+        this.ctx.fillStyle = spawnPoint.color;
+        this.ctx.font = '12px Arial';
+        this.ctx.textAlign = 'center';
+        this.ctx.textBaseline = 'middle';
+        
+        const icons = {
+            'player': '👤',
+            'enemy': '👹',
+            'npc': '🧙',
+            'item': '📦'
+        };
+        
+        const icon = icons[spawnPoint.type] || '📍';
+        this.ctx.fillText(icon, x, y);
+        
+        // Draw spawn point name (if zoomed in enough)
+        if (this.worldManager.zoom > 0.5) {
+            this.ctx.fillStyle = '#FFFFFF';
+            this.ctx.font = '10px Arial';
+            this.ctx.textAlign = 'center';
+            this.ctx.textBaseline = 'top';
+            this.ctx.fillText(spawnPoint.name, x, y + 15);
+        }
         
         this.ctx.restore();
     }

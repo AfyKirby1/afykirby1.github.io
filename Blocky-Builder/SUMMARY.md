@@ -3,8 +3,8 @@
 ## Overview
 Blocky Builder is a standalone visual world editor for creating custom game worlds using a tile-based system. Built as a single-file HTML application with no dependencies, it provides an intuitive interface for designing game levels and exporting them to JSON format.
 
-## Current Status: V 0.06 - UI/UX Enhancement Update
-**Date:** October 15, 2025
+## Current Status: V 0.08 - NPC Builder System Overhaul
+**Date:** January 27, 2025
 
 ## What's Been Done
 
@@ -38,6 +38,11 @@ Blocky Builder is a standalone visual world editor for creating custom game worl
 - ✅ **Wider Panels** - Increased panel widths to reduce scrolling
 - ✅ **Compact Layout** - Optimized spacing and button sizes
 - ✅ **Enhanced Keyboard Shortcuts** - Q and Ctrl+E for panel controls
+- ✅ **Custom NPC Upload System** - PNG upload with preview and template management
+- ✅ **Draggable NPC Builder Panel** - Smooth drag functionality with GPU acceleration
+- ✅ **Persistent NPC Storage** - Hybrid localStorage + file system for GitHub Pages
+- ✅ **NPC Template Management** - Custom NPC templates with deletion and cleanup
+- ✅ **GitHub Pages Integration** - Deployment script and persistent folder structure
 
 ### Technical Stack
 - **Frontend:** Pure HTML5, CSS3, JavaScript (ES6+)

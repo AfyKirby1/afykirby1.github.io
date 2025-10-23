@@ -116,7 +116,8 @@ body {
     display: flex;
     flex-direction: column;
     gap: 20px;
-    transition: width 0.3s ease;
+    /* Disable CSS transitions - we'll handle animation manually */
+    transition: none;
     position: relative;
     overflow-y: auto;
 }
@@ -124,10 +125,35 @@ body {
 .toolbar.minimized {
     width: 50px;
     padding: 20px 5px;
+    overflow: hidden; /* Prevent content from bleeding out */
+    text-indent: -9999px; /* Hide any remaining text */
+    font-size: 0; /* Hide any remaining text */
 }
 
 .toolbar.minimized .tool-section {
-    display: none;
+    display: none !important; /* Force hide all tool sections */
+}
+
+.toolbar.minimized h3 {
+    display: none !important; /* Force hide all headings */
+}
+
+.toolbar.minimized .tool-btn {
+    display: none !important; /* Force hide all buttons */
+}
+
+.toolbar.minimized * {
+    display: none !important; /* Hide all content except minimize button */
+}
+
+.toolbar.minimized .minimize-btn {
+    display: block !important; /* Keep minimize button visible */
+    text-indent: 0; /* Reset text indent for button */
+    font-size: 14px; /* Reset font size for button */
+    position: absolute;
+    top: 10px;
+    right: 10px;
+    z-index: 10;
 }
 
 .minimize-btn {
@@ -177,6 +203,9 @@ body {
     display: flex;
     align-items: center;
     gap: 8px;
+    overflow: hidden; /* Prevent content from bleeding out */
+    position: relative; /* Ensure proper containment */
+    white-space: nowrap; /* Prevent text wrapping */
 }
 
 .tool-btn:hover {
@@ -243,6 +272,10 @@ body {
     position: relative;
     background: var(--bg-primary);
     overflow: hidden;
+    min-width: 0;
+    min-height: 0;
+    /* Ensure no transitions on canvas container to prevent pulling */
+    transition: none !important;
 }
 
 #worldCanvas {
@@ -250,6 +283,9 @@ body {
     height: 100%;
     cursor: crosshair;
     display: block;
+    /* Remove transitions - canvas should resize instantly, not smoothly */
+    transition: none !important; /* Force no transitions */
+    transform: none !important; /* Prevent any transforms */
 }
 
 .canvas-overlay {
@@ -286,18 +322,48 @@ body {
     display: flex;
     flex-direction: column;
     gap: 20px;
-    transition: width 0.3s ease;
+    /* Disable CSS transitions - we'll handle animation manually */
+    transition: none;
     position: relative;
     overflow-y: auto;
 }
 
 .right-panel.minimized {
     width: 50px;
-    overflow: hidden;
+    overflow: hidden; /* Prevent content from bleeding out */
+    padding: 20px 5px; /* Match left panel padding */
+    text-indent: -9999px; /* Hide any remaining text */
+    font-size: 0; /* Hide any remaining text */
 }
 
 .right-panel.minimized > *:not(.minimize-btn) {
-    display: none;
+    display: none !important; /* Force hide all content except minimize button */
+}
+
+.right-panel.minimized .tool-section {
+    display: none !important; /* Force hide all tool sections */
+}
+
+.right-panel.minimized h3 {
+    display: none !important; /* Force hide all headings */
+}
+
+.right-panel.minimized .tool-btn {
+    display: none !important; /* Force hide all buttons */
+}
+
+.right-panel.minimized * {
+    display: none !important; /* Hide all content except minimize button */
+}
+
+.right-panel.minimized .minimize-btn {
+    display: block !important; /* Keep minimize button visible */
+    text-indent: 0; /* Reset text indent for button */
+    font-size: 14px; /* Reset font size for button */
+    position: absolute;
+    top: 10px;
+    left: 10px;
+    z-index: 10;
 }
 
 .right-panel .minimize-btn {
@@ -443,7 +509,6 @@ body.modal-open .toolbar button,
 body.modal-open .right-panel button,
 body.modal-open .toolbar input,
 body.modal-open .right-panel input {
-    tabindex: -1;
     pointer-events: none;
 }
 
