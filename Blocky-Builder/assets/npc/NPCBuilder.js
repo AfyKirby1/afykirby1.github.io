@@ -73,14 +73,14 @@ class NPCBuilder {
             for (const npcName of persistentNPCs) {
                 try {
                     // Load from GitHub Pages - this is the source of truth
-                    const githubUrl = `https://afykirby1.github.io/github-pages/Blocky-Builder/assets/npc/persistent/${npcName}.json`;
+                    const githubUrl = `https://afykirby1.github.io/Blocky-Builder/assets/npc/persistent/${npcName}.json`;
                     
                     const response = await fetch(githubUrl);
                     if (response.ok) {
                         const npcData = await response.json();
                         
                         // Load image from GitHub Pages
-                        const githubImgUrl = `https://afykirby1.github.io/github-pages/Blocky-Builder/assets/npc/persistent/${npcName}.png`;
+                        const githubImgUrl = `https://afykirby1.github.io/Blocky-Builder/assets/npc/persistent/${npcName}.png`;
                         const imgResponse = await fetch(githubImgUrl);
                         
                         if (imgResponse.ok) {
