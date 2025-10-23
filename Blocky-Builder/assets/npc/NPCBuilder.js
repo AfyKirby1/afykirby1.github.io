@@ -72,16 +72,16 @@ class NPCBuilder {
             
             for (const npcName of persistentNPCs) {
                 try {
-                    // Load from GitHub Pages - this is the source of truth
-                    const githubUrl = `https://afykirby1.github.io/Blocky-Builder/assets/npc/persistent/${npcName}.json`;
+                    // Use relative path - works both locally and on GitHub Pages
+                    const jsonUrl = `../assets/npc/persistent/${npcName}.json`;
                     
-                    const response = await fetch(githubUrl);
+                    const response = await fetch(jsonUrl);
                     if (response.ok) {
                         const npcData = await response.json();
                         
-                        // Load image from GitHub Pages
-                        const githubImgUrl = `https://afykirby1.github.io/Blocky-Builder/assets/npc/persistent/${npcName}.png`;
-                        const imgResponse = await fetch(githubImgUrl);
+                        // Load image using relative path
+                        const imgUrl = `../assets/npc/persistent/${npcName}.png`;
+                        const imgResponse = await fetch(imgUrl);
                         
                         if (imgResponse.ok) {
                             const blob = await imgResponse.blob();
@@ -97,12 +97,12 @@ class NPCBuilder {
                         this.persistentTemplates[key] = {
                             ...npcData,
                             storageType: 'persistent',
-                            source: 'github_pages'
+                            source: 'file_system'
                         };
                         
-                        console.log(`✅ Loaded persistent NPC from GitHub Pages: ${npcName}`);
+                        console.log(`✅ Loaded persistent NPC: ${npcName}`);
                     } else {
-                        console.log(`⚠️ NPC ${npcName} not found on GitHub Pages`);
+                        console.log(`⚠️ NPC ${npcName} not found`);
                     }
                 } catch (error) {
                     console.warn(`⚠️ Failed to load persistent NPC ${npcName}:`, error);
