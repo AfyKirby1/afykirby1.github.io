@@ -192,7 +192,7 @@ class BlockyBuilderEditor {
 
         let customTileTypes = {};
         try {
-            const response = await fetch('../tiles.json');
+            const response = await fetch('./tiles.json');
             if (response.ok) {
                 customTileTypes = await response.json();
             }

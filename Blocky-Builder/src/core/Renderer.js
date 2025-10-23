@@ -33,7 +33,7 @@ class Renderer {
 
         // Load custom tiles from tiles.json
         try {
-            const response = await fetch('../tiles.json');
+            const response = await fetch('./tiles.json');
             if (response.ok) {
                 const customTiles = await response.json();
                 Object.entries(customTiles).forEach(([type, data]) => {
