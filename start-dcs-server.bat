@@ -28,6 +28,11 @@ echo 🛠️ Blocky Builder: http://localhost:3001/Blocky-Builder/
 echo ⚔️ The War Room: http://localhost:3001/war-room.html
 echo 🔐 Admin Panel: http://localhost:3001/admin.html
 echo.
+echo 🎨 Tile Palette Upload: Upload custom tile textures via API
+echo 💾 World Management: Save/load worlds via API endpoints
+echo 📁 Tile textures saved to: ./Blocky-Builder/assets/tiles/
+echo 💾 Worlds saved to: ./Blocky-Builder/worlds/
+echo.
 echo Press Ctrl+C to stop the server
 echo.
 

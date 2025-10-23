@@ -2,6 +2,7 @@ const express = require('express');
 const multer = require('multer');
 const path = require('path');
 const fs = require('fs').promises;
+const fsSync = require('fs');
 const crypto = require('crypto');
 
 const app = express();
@@ -10,6 +11,8 @@ const PORT = 3001;
 // Create war-room directories if they don't exist
 const WAR_ROOM_DIR = path.join(__dirname, 'war-room-assets');
 const WAR_ROOM_MUSIC_DIR = path.join(__dirname, 'war-room-music');
+const BLOCKY_TILES_DIR = path.join(__dirname, 'Blocky-Builder/assets/tiles');
+const BLOCKY_WORLDS_DIR = path.join(__dirname, 'Blocky-Builder/worlds');
 const ensureWarRoomDir = async () => {
     try {
         await fs.access(WAR_ROOM_DIR);
@@ -24,6 +27,24 @@ const ensureWarRoomMusicDir = async () => {
     } catch {
         await fs.mkdir(WAR_ROOM_MUSIC_DIR, { recursive: true });
         console.log('Created war-room-music directory');
+    }
+};
+
+const ensureBlockyTilesDir = async () => {
+    try {
+        await fs.access(BLOCKY_TILES_DIR);
+    } catch {
+        await fs.mkdir(BLOCKY_TILES_DIR, { recursive: true });
+        console.log('Created Blocky-Builder tiles directory');
+    }
+};
+
+const ensureBlockyWorldsDir = async () => {
+    try {
+        await fs.access(BLOCKY_WORLDS_DIR);
+    } catch {
+        await fs.mkdir(BLOCKY_WORLDS_DIR, { recursive: true });
+        console.log('Created Blocky-Builder worlds directory');
     }
 };
 
@@ -85,6 +106,34 @@ const musicUpload = multer({
             cb(null, true);
         } else {
             cb(new Error('Only audio files are allowed!'), false);
+        }
+    }
+});
+
+// Configure multer for tile texture uploads
+const tileStorage = multer.diskStorage({
+    destination: async (req, file, cb) => {
+        await ensureBlockyTilesDir();
+        cb(null, BLOCKY_TILES_DIR);
+    },
+    filename: (req, file, cb) => {
+        const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9);
+        cb(null, file.fieldname + '-' + uniqueSuffix + path.extname(file.originalname));
+    }
+});
+
+const tileUpload = multer({ 
+    storage: tileStorage,
+    limits: {
+        fileSize: 50 * 1024 * 1024, // 50MB limit for tile textures
+        files: 10 // Max 10 files at once
+    },
+    fileFilter: (req, file, cb) => {
+        // Check if file is an image
+        if (file.mimetype.startsWith('image/')) {
+            cb(null, true);
+        } else {
+            cb(new Error('Only image files are allowed for tile textures!'), false);
         }
     }
 });
@@ -527,12 +576,132 @@ app.get('/api/health', (req, res) => {
     res.json({ status: 'OK', timestamp: new Date().toISOString() });
 });
 
+// ===== BLOCKY BUILDER APIs =====
+
+// Tile texture upload endpoint
+app.post('/api/upload-tile-texture', tileUpload.single('texture'), (req, res) => {
+    if (!req.file) {
+        return res.json({ success: false, message: 'No file uploaded.' });
+    }
+    // Return the relative path to be used by the frontend
+    res.json({ success: true, path: `../assets/tiles/${req.file.filename}` });
+});
+
+// Add tile metadata endpoint
+app.post('/api/add-tile', (req, res) => {
+    const { id, data } = req.body;
+    const tilesPath = path.join(__dirname, 'Blocky-Builder', 'public', 'tiles.json');
+
+    fsSync.readFile(tilesPath, 'utf8', (err, fileData) => {
+        let tiles = {};
+        if (!err) {
+            try {
+                tiles = JSON.parse(fileData);
+            } catch (e) {
+                // Ignore if JSON is invalid, we'll overwrite it
+            }
+        }
+        
+        tiles[id] = data;
+
+        fsSync.writeFile(tilesPath, JSON.stringify(tiles, null, 2), (writeErr) => {
+            if (writeErr) {
+                return res.json({ success: false, message: 'Failed to save tile data.' });
+            }
+            res.json({ success: true, message: 'Tile added successfully.' });
+        });
+    });
+});
+
+// World management APIs
+app.post('/api/save-world', (req, res) => {
+    console.log('🔍 DEBUG: Save world API called');
+    try {
+        // Validate request body
+        if (!req.body || typeof req.body !== 'object') {
+            return res.status(400).json({ success: false, message: 'Invalid request body' });
+        }
+        
+        const { worldData, filename } = req.body;
+        
+        if (!worldData) {
+            return res.status(400).json({ success: false, message: 'World data is required' });
+        }
+        
+        // Create worlds directory if it doesn't exist
+        ensureBlockyWorldsDir().then(() => {
+            const safeFilename = (filename || 'world').replace(/[^a-zA-Z0-9-_]/g, '_');
+            const filePath = path.join(BLOCKY_WORLDS_DIR, `${safeFilename}.json`);
+            
+            fsSync.writeFileSync(filePath, JSON.stringify(worldData, null, 2));
+            
+            res.json({ success: true, message: 'World saved successfully', path: filePath });
+        });
+    } catch (error) {
+        console.error('Save world error:', error);
+        res.status(500).json({ success: false, message: error.message });
+    }
+});
+
+app.get('/api/load-world/:filename', (req, res) => {
+    console.log('🔍 DEBUG: Load world API called for:', req.params.filename);
+    try {
+        const { filename } = req.params;
+        const filePath = path.join(BLOCKY_WORLDS_DIR, `${filename}.json`);
+        
+        if (!fsSync.existsSync(filePath)) {
+            return res.status(404).json({ success: false, message: 'World not found' });
+        }
+        
+        const worldData = JSON.parse(fsSync.readFileSync(filePath, 'utf8'));
+        res.json({ success: true, data: worldData });
+    } catch (error) {
+        res.status(500).json({ success: false, message: error.message });
+    }
+});
+
+app.get('/api/worlds', (req, res) => {
+    try {
+        if (!fsSync.existsSync(BLOCKY_WORLDS_DIR)) {
+            return res.json({ success: true, worlds: [] });
+        }
+        
+        const files = fsSync.readdirSync(BLOCKY_WORLDS_DIR)
+            .filter(file => file.endsWith('.json'))
+            .map(file => ({
+                name: path.basename(file, '.json'),
+                filename: file,
+                modified: fsSync.statSync(path.join(BLOCKY_WORLDS_DIR, file)).mtime
+            }));
+        
+        res.json({ success: true, worlds: files });
+    } catch (error) {
+        res.status(500).json({ success: false, message: error.message });
+    }
+});
+
 // Static file serving (must come after API routes)
 app.use(express.static(__dirname));
 
 // Serve specific directories with proper routing
 app.use('/RunesOfTirNaNog', express.static(path.join(__dirname, 'RunesOfTirNaNog')));
 app.use('/Blocky-Builder', express.static(path.join(__dirname, 'Blocky-Builder')));
+
+// Serve Blocky-Builder public directory (for tiles.json and other assets)
+app.use('/Blocky-Builder/public', express.static(path.join(__dirname, 'Blocky-Builder/public')));
+app.use('/Blocky-Builder/assets', express.static(path.join(__dirname, 'Blocky-Builder/assets')));
+app.use('/Blocky-Builder/src', express.static(path.join(__dirname, 'Blocky-Builder/src')));
+
+// Specific route for tiles.json to handle the 404 error
+app.get('/Blocky-Builder/tiles.json', (req, res) => {
+    const tilesPath = path.join(__dirname, 'Blocky-Builder', 'public', 'tiles.json');
+    if (fsSync.existsSync(tilesPath)) {
+        res.sendFile(tilesPath);
+    } else {
+        // Return empty tiles object if file doesn't exist
+        res.json({});
+    }
+});
 
 // Handle SPA routing for main website
 app.get('/', (req, res) => {
@@ -555,11 +724,15 @@ app.listen(PORT, () => {
     console.log(`🚀 DCS Main Server running on http://localhost:${PORT}`);
     console.log(`📁 War Room assets directory: ${WAR_ROOM_DIR}`);
     console.log(`🎵 War Room music directory: ${WAR_ROOM_MUSIC_DIR}`);
+    console.log(`🎨 Blocky Builder tiles directory: ${BLOCKY_TILES_DIR}`);
+    console.log(`💾 Blocky Builder worlds directory: ${BLOCKY_WORLDS_DIR}`);
     console.log(`🌐 Main Website: http://localhost:${PORT}`);
     console.log(`🎮 Runes of Tir na Nog: http://localhost:${PORT}/RunesOfTirNaNog/`);
     console.log(`🛠️ Blocky Builder: http://localhost:${PORT}/Blocky-Builder/`);
     console.log(`⚔️ The War Room: http://localhost:${PORT}/war-room.html`);
     console.log(`🔐 Admin Panel: http://localhost:${PORT}/admin.html`);
+    console.log(`\n🎨 Tile Palette Upload: Upload custom tile textures via API`);
+    console.log(`💾 World Management: Save/load worlds via API endpoints`);
 });
 
 // Graceful shutdown
