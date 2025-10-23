@@ -31,8 +31,11 @@ class BlockyBuilderEditor {
             // Setup UI
             this.setupUI();
             
-            // Initialize NPC Builder
-            this.initializeNPCBuilder();
+        // Initialize NPC Builder
+        this.initializeNPCBuilder();
+        
+        // Initialize Building Manager
+        this.initializeBuildingManager();
             
             // Resize canvas to proper dimensions
             this.renderer.resizeCanvas();
@@ -252,7 +255,12 @@ class BlockyBuilderEditor {
             });
         }
         
-        this.showToast(`Selected ${type} tile`, 'info');
+        // Auto-switch to Draw tool when selecting a tile
+        if (this.toolManager) {
+            this.toolManager.selectTool('draw');
+        }
+        
+        this.showToast(`Selected ${type} tile - switched to Draw tool`, 'info');
     }
 
     updateGridColorButton() {
@@ -375,36 +383,39 @@ class BlockyBuilderEditor {
     }
 
     updateWorldStats() {
-        const stats = {
-            grass: 0,
-            water: 0,
-            cave: 0,
-            wall: 0
-        };
+        // Dynamically count all tile types that exist in the world
+        const stats = {};
         
         this.worldManager.tiles.forEach(tile => {
-            if (stats[tile.type] !== undefined) {
-                stats[tile.type]++;
+            if (!stats[tile.type]) {
+                stats[tile.type] = 0;
             }
+            stats[tile.type]++;
         });
         
         const totalTiles = this.worldManager.tiles.length;
         
-        // Update stats display
-        const elements = {
-            grass: document.getElementById('grassCount'),
-            water: document.getElementById('waterCount'),
-            cave: document.getElementById('caveCount'),
-            wall: document.getElementById('wallCount')
-        };
+        // Get the stats container and clear it
+        const statsContainer = document.getElementById('worldStats');
+        if (!statsContainer) return;
         
-        Object.entries(elements).forEach(([type, element]) => {
-            if (element) {
-                const count = stats[type];
-                const percentage = totalTiles > 0 ? ((count / totalTiles) * 100).toFixed(1) : '0.0';
-                element.textContent = `${this.getTileIcon(type)} ${this.getTileName(type)}: ${count} (${percentage}%)`;
-            }
+        statsContainer.innerHTML = '';
+        
+        // Create stats for each tile type found in the world
+        Object.entries(stats).forEach(([type, count]) => {
+            const percentage = totalTiles > 0 ? ((count / totalTiles) * 100).toFixed(1) : '0.0';
+            const statElement = document.createElement('div');
+            statElement.textContent = `${this.getTileIcon(type)} ${this.getTileName(type)}: ${count} (${percentage}%)`;
+            statsContainer.appendChild(statElement);
         });
+        
+        // If no tiles exist, show a message
+        if (Object.keys(stats).length === 0) {
+            const noTilesElement = document.createElement('div');
+            noTilesElement.textContent = 'No tiles found';
+            noTilesElement.style.color = '#666';
+            statsContainer.appendChild(noTilesElement);
+        }
     }
 
     getTileIcon(type) {
@@ -412,9 +423,10 @@ class BlockyBuilderEditor {
             grass: '🌱',
             water: '💧',
             cave: '🪨',
-            wall: '🧱'
+            wall: '🧱',
+            vertical_trail: '🛤️'
         };
-        return icons[type] || '❓';
+        return icons[type] || '🔲';
     }
 
     getTileName(type) {
@@ -422,9 +434,10 @@ class BlockyBuilderEditor {
             grass: 'Grass',
             water: 'Water',
             cave: 'Cave',
-            wall: 'Wall'
+            wall: 'Wall',
+            vertical_trail: 'Vertical Trail'
         };
-        return names[type] || 'Unknown';
+        return names[type] || type.charAt(0).toUpperCase() + type.slice(1).replace(/_/g, ' ');
     }
 
     applyTheme(themeName) {
@@ -651,6 +664,29 @@ class BlockyBuilderEditor {
         } catch (error) {
             console.error('❌ Failed to initialize NPCBuilder:', error);
             this.npcBuilder = null;
+        }
+    }
+
+    initializeBuildingManager() {
+        try {
+            console.log('🔍 DEBUG: Attempting to initialize BuildingManager...');
+            console.log('🔍 DEBUG: typeof BuildingManager:', typeof BuildingManager);
+            console.log('🔍 DEBUG: window.BuildingManager:', window.BuildingManager);
+            
+            // Check if BuildingManager class is available
+            if (typeof BuildingManager === 'undefined') {
+                console.warn('⚠️ BuildingManager class not found - Building system disabled');
+                return;
+            }
+            
+            // Create BuildingManager instance
+            this.buildingManager = new BuildingManager(this.canvas, this.worldManager);
+            
+            console.log('✅ BuildingManager initialized successfully');
+            console.log('🔍 DEBUG: this.buildingManager:', this.buildingManager);
+        } catch (error) {
+            console.error('❌ Failed to initialize BuildingManager:', error);
+            this.buildingManager = null;
         }
     }
 
@@ -1250,6 +1286,11 @@ function createNewWorld() {
     // Clear all NPCs when creating a new world
     if (window.editor.npcBuilder) {
         window.editor.npcBuilder.clearAllNPCs();
+    }
+    
+    // Clear all Buildings when creating a new world
+    if (window.editor.buildingManager) {
+        window.editor.buildingManager.clearAllBuildings();
     }
     
     // Reset viewport and center on world

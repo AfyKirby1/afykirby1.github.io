@@ -2,6 +2,41 @@
 
 All notable changes to Blocky Builder will be documented in this file.
 
+## [V 0.09] - 2025-01-27
+
+### 🏗️ Building System Implementation & Fixes
+
+#### Building Manager System
+- **Complete Building System** - Full building placement, management, and rendering system
+- **Texture-Based Buildings** - Upload PNG textures and place them as buildings
+- **Template System** - Support for both texture-based and template-based buildings
+- **Persistent Storage** - Buildings saved to localStorage with session and permanent options
+- **Building Manager UI** - Dedicated panel for building management with drag functionality
+
+#### Coordinate System Fixes
+- **Fixed Building Placement** - Buildings now place exactly where you click (accounting for zoom and viewport)
+- **Proper Coordinate Conversion** - BuildingManager now uses same coordinate system as other tools
+- **Zoom-Aware Placement** - Buildings respect zoom level and pan offset for accurate positioning
+- **Viewport Integration** - Buildings properly integrate with centered viewport system
+
+#### Rendering System Improvements
+- **Building Rendering Pipeline** - Complete rendering system for texture-based buildings
+- **Texture Caching** - Efficient texture loading and caching system
+- **Fallback Rendering** - Brown rectangle fallback while textures load
+- **Building Outlines** - Golden outline borders for placed buildings
+- **Debug Spam Reduction** - Throttled warning messages to reduce console spam
+
+#### Project Management Integration
+- **New World Clearing** - Buildings properly cleared when creating new worlds (like NPCs)
+- **World Data Integration** - Buildings integrated with world save/load system
+- **Building Persistence** - Buildings persist across sessions and world loads
+
+#### Technical Improvements
+- **Template ID Resolution** - Fixed undefined templateId issues for texture-based buildings
+- **Event System Integration** - Buildings use proper coordinate conversion from EventSystem
+- **Error Handling** - Improved error handling and debugging capabilities
+- **Performance Optimization** - Efficient building rendering with proper culling
+
 ## [V 0.08] - 2025-01-27
 
 ### 🧙 NPC Builder System Overhaul

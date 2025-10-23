@@ -7,7 +7,7 @@ class ToolManager {
         this.worldManager = worldManager;
         this.renderer = renderer;
         this.currentTool = 'draw';
-        this.tools = ['draw', 'erase', 'fill', 'quickfill', 'pan', 'rotate', 'flip', 'spawn', 'deletespawn', 'npc'];
+        this.tools = ['draw', 'erase', 'fill', 'quickfill', 'pan', 'rotate', 'flip', 'spawn', 'deletespawn', 'npc', 'building'];
         
         this.setupTools();
         // Ensure draw tool is selected on initialization
@@ -55,6 +55,12 @@ class ToolManager {
             window.editor.npcBuilder.togglePanel();
         }
         
+        // Special handling for Building tool - open panel immediately
+        if (tool === 'building' && window.editor && window.editor.buildingManager) {
+            console.log('🔍 DEBUG: Building tool selected, opening Building Manager panel');
+            window.editor.buildingManager.togglePanel();
+        }
+        
         console.log('🔍 DEBUG: Tool selection complete, current tool is now:', this.currentTool);
     }
 
@@ -77,6 +83,7 @@ class ToolManager {
             pan: 'grab',
             spawn: 'cell',
             npc: 'crosshair',
+            building: 'crosshair',
             default: 'crosshair'
         };
         

@@ -1,5 +1,28 @@
 # Blocky Builder - Development Scratchpad
 
+## Version 0.09 - January 27, 2025
+**Building System Implementation & Coordinate Fixes**
+
+### Major Features Added
+- **Complete Building System** - Full building placement, management, and rendering
+- **Texture-Based Buildings** - Upload PNG textures and place them as buildings
+- **Building Manager UI** - Dedicated panel with drag functionality
+- **Building Persistence** - Buildings saved to localStorage and integrated with world system
+- **Coordinate System Fixes** - Buildings now place exactly where you click (zoom-aware)
+
+### Technical Fixes
+- **Fixed Building Placement** - Buildings now use proper coordinate conversion system
+- **Template ID Resolution** - Fixed undefined templateId issues for texture-based buildings
+- **Debug Spam Reduction** - Throttled warning messages to reduce console spam
+- **New World Clearing** - Buildings properly cleared when creating new worlds
+- **Rendering Pipeline** - Complete rendering system with texture caching and fallbacks
+
+### Architecture Updates
+- **BuildingManager Class** - New building management system with template support
+- **Renderer Integration** - Buildings integrated into main rendering pipeline
+- **Event System Integration** - Buildings use proper coordinate conversion from EventSystem
+- **World Data Integration** - Buildings integrated with world save/load system
+
 ## Version 0.01 - October 15, 2025
 **Initial Project Setup**
 

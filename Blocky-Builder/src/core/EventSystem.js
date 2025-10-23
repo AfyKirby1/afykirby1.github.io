@@ -223,6 +223,10 @@ class EventSystem {
                 e.preventDefault();
                 this.toolManager.selectTool('npc');
                 break;
+            case 'b':
+                e.preventDefault();
+                this.toolManager.selectTool('building');
+                break;
             case 'tab':
                 e.preventDefault();
                 this.toolManager.cycleTools();

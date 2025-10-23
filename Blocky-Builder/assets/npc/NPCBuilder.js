@@ -1291,11 +1291,16 @@ class NPCBuilder {
         this.npcs.forEach((npc, index) => {
             const npcItem = document.createElement('div');
             npcItem.className = 'npc-list-item';
+            
+            // Safe icon access with fallback
+            const template = npc.template || npc.type || 'townie';
+            const icon = (this.npcTemplates[template] && this.npcTemplates[template].icon) || '👤';
+            
             npcItem.innerHTML = `
-                <div class="npc-list-icon" style="background-color: ${npc.color}">${this.npcTemplates[npc.template].icon}</div>
+                <div class="npc-list-icon" style="background-color: ${npc.color}">${icon}</div>
                 <div class="npc-list-info">
                     <div class="npc-list-name">${npc.name}</div>
-                    <div class="npc-list-type">${npc.template} - ${npc.behavior}</div>
+                    <div class="npc-list-type">${template} - ${npc.behavior}</div>
                 </div>
                 <div class="npc-list-actions">
                     <button class="npc-edit-btn" data-index="${index}">✏️</button>
@@ -1702,7 +1707,7 @@ class NPCBuilder {
                 };
                 
                 this.npcs.push(npc);
-                console.log(`✅ Loaded NPC: ${npc.name} at tile (${tileX}, ${tileY})`);
+                console.log(`✅ Loaded NPC: ${npc.name} at position (${npcData.x}, ${npcData.y})`);
                 
             } catch (error) {
                 console.error(`❌ Failed to load NPC:`, npcData, error);

@@ -20,6 +20,9 @@ class WorldManager {
         this.spawnPoints = [];
         this.nextSpawnId = 1;
         
+        // Buildings system
+        this.buildings = [];
+        
         this.initializeWorld();
     }
 
@@ -88,7 +91,8 @@ class WorldManager {
             grass: '#4CAF50',
             water: '#2196F3',
             cave: '#795548',
-            wall: '#9E9E9E'
+            wall: '#9E9E9E',
+            vertical_trail: '#ffffff'
         };
         return colors[type] || '#4CAF50';
     }
@@ -98,6 +102,8 @@ class WorldManager {
             width: this.worldWidth,
             height: this.worldHeight,
             tiles: this.tiles,
+            spawnPoints: this.spawnPoints,
+            buildings: this.buildings,
             viewX: this.viewX,
             viewY: this.viewY,
             zoom: this.zoom,
@@ -123,6 +129,14 @@ class WorldManager {
             // Reset spawn points if none in data
             this.spawnPoints = [];
             this.nextSpawnId = 1;
+        }
+        
+        // Load buildings if they exist
+        if (data.buildings) {
+            this.buildings = data.buildings;
+        } else {
+            // Reset buildings if none in data
+            this.buildings = [];
         }
     }
 

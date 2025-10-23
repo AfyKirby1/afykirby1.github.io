@@ -18,6 +18,9 @@ class Renderer {
         // NPC sprite cache for custom images
         this.npcSpriteCache = new Map();
         
+        // Building sprite cache for custom images
+        this.buildingSpriteCache = new Map();
+        
         this.loadTextures();
     }
 
@@ -27,6 +30,21 @@ class Renderer {
             water: '../assets/Water_Texture.png',
             cave: '../assets/Cave_Texture_1.png'
         };
+
+        // Load custom tiles from tiles.json
+        try {
+            const response = await fetch('../tiles.json');
+            if (response.ok) {
+                const customTiles = await response.json();
+                Object.entries(customTiles).forEach(([type, data]) => {
+                    if (data.texture) {
+                        textureFiles[type] = data.texture;
+                    }
+                });
+            }
+        } catch (error) {
+            console.warn('Could not load custom tiles.json:', error);
+        }
 
         const loadPromises = Object.entries(textureFiles).map(([type, path]) => {
             return new Promise((resolve, reject) => {
@@ -109,6 +127,9 @@ class Renderer {
 
         // Render NPCs
         this.renderNPCs();
+
+        // Render Buildings
+        this.renderBuildings();
 
         // Render spawn points
         this.renderSpawnPoints();
@@ -331,6 +352,128 @@ class Renderer {
         this.worldManager.viewY = (y * this.TILE_SIZE) - worldCenterY;
         
         this.render();
+    }
+
+    renderBuildings() {
+        if (!window.editor || !window.editor.buildingManager) return;
+        
+        const buildings = window.editor.buildingManager.buildings;
+        if (!buildings || buildings.length === 0) return;
+        
+        buildings.forEach(building => {
+            this.renderBuilding(building);
+        });
+    }
+
+    renderBuilding(building) {
+        // Try to get template from buildingTemplates first
+        let template = window.editor.buildingManager.buildingTemplates[building.templateId];
+        
+        // If not found, check if it's a texture-based building
+        if (!template) {
+            const allTextures = { 
+                ...window.editor.buildingManager.persistentTextures, 
+                ...window.editor.buildingManager.sessionTextures 
+            };
+            
+            const texture = allTextures[building.templateId];
+            
+            if (texture) {
+                // Create a simple template for texture-based buildings
+                template = {
+                    id: building.templateId,
+                    name: texture.name,
+                    width: 1,
+                    height: 1,
+                    tiles: [{ x: 0, y: 0, type: 'grass' }],
+                    texture: texture.path,
+                    isTexture: true
+                };
+            }
+        }
+        
+        if (!template) {
+            // Throttle warning to every 2 seconds to reduce spam
+            const now = Date.now();
+            const warningKey = `building_template_warning_${building.templateId || 'undefined'}`;
+            
+            if (!this.lastWarningTime) {
+                this.lastWarningTime = {};
+            }
+            
+            if (!this.lastWarningTime[warningKey] || now - this.lastWarningTime[warningKey] > 2000) {
+                console.warn(`Building template not found for ID: ${building.templateId}`);
+                this.lastWarningTime[warningKey] = now;
+            }
+            return;
+        }
+        
+        const tileSize = this.TILE_SIZE;
+        const x = building.x * tileSize;
+        const y = building.y * tileSize;
+        
+        this.ctx.save();
+        
+        // For texture-based buildings, draw the texture directly
+        if (template.isTexture && template.texture) {
+            // Check if texture is already cached
+            if (this.buildingSpriteCache.has(template.texture)) {
+                const img = this.buildingSpriteCache.get(template.texture);
+                this.ctx.drawImage(img, x, y, template.width * tileSize, template.height * tileSize);
+            } else {
+                // Load and cache the texture
+                const img = new Image();
+                img.onload = () => {
+                    this.buildingSpriteCache.set(template.texture, img);
+                    // Redraw the scene to show the loaded texture
+                    if (window.editor && window.editor.renderer) {
+                        window.editor.renderer.render();
+                    }
+                };
+                img.onerror = () => {
+                    console.error(`Failed to load building texture: ${template.texture}`);
+                };
+                img.src = template.texture;
+                
+                // Draw a fallback rectangle while image loads
+                this.ctx.fillStyle = '#8B4513'; // Brown color for buildings
+                this.ctx.fillRect(x, y, template.width * tileSize, template.height * tileSize);
+            }
+        } else {
+            // Draw building tiles for template-based buildings
+            if (template.tiles) {
+                template.tiles.forEach(tile => {
+                    const tileX = x + (tile.x * tileSize);
+                    const tileY = y + (tile.y * tileSize);
+                    
+                    // Draw tile background
+                    this.ctx.fillStyle = this.worldManager.getTileColor(tile.type);
+                    this.ctx.fillRect(tileX, tileY, tileSize, tileSize);
+                    
+                    // Draw tile texture if available
+                    const texture = this.textures.get(tile.type);
+                    if (texture && this.texturesLoaded) {
+                        this.ctx.drawImage(texture, tileX, tileY, tileSize, tileSize);
+                    }
+                });
+            }
+        }
+        
+        // Draw building outline
+        this.ctx.strokeStyle = '#FFD700';
+        this.ctx.lineWidth = 2;
+        this.ctx.strokeRect(x, y, template.width * tileSize, template.height * tileSize);
+        
+        // Draw building name (if zoomed in enough)
+        if (this.worldManager.zoom > 0.5) {
+            this.ctx.fillStyle = '#FFD700';
+            this.ctx.font = '12px Arial';
+            this.ctx.textAlign = 'center';
+            this.ctx.textBaseline = 'top';
+            this.ctx.fillText(template.name, x + (template.width * tileSize) / 2, y - 20);
+        }
+        
+        this.ctx.restore();
     }
 
     renderNPCs() {

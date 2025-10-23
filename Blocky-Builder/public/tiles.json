@@ -3,5 +3,10 @@
     "name": "Vertical TRail",
     "color": "#ffffff",
     "texture": "../assets/tiles/texture-1761235030692-954083779.png"
+  },
+  "connector_trail_": {
+    "name": "Connector Trail ",
+    "color": "#22ec4b",
+    "texture": "../assets/tiles/texture-1761242748448-920870894.png"
   }
 }

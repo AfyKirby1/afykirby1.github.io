@@ -29,6 +29,7 @@ Blocky Builder is now a professional, modular world editor built with a clean se
 │  │  │                                                  │  │ │
 │  │  │  • WorldManager.js    • Renderer.js            │  │ │
 │  │  │  • EventSystem.js      • ToolManager.js         │  │ │
+│  │  │  • BuildingManager.js  • NPCBuilder.js          │  │ │
 │  │  │  • Theme System        • UI Components          │  │ │
 │  │  └─────────────────────────────────────────────────┘  │ │
 │  └────────────────────────────────────────────────────────┘ │
@@ -114,7 +115,16 @@ Blocky Builder is now a professional, modular world editor built with a clean se
 - **Smooth transitions** between themes
 - **Persistent theme selection** via localStorage
 
-### 6. UI Components (`public/editor.html`)
+### 6. BuildingManager.js (`assets/buildings/BuildingManager.js`)
+- **Building placement** and management system
+- **Texture-based buildings** with PNG upload support
+- **Template system** for both texture and template-based buildings
+- **Persistent storage** with localStorage integration
+- **Building Manager UI** with drag functionality
+- **Coordinate system integration** with proper zoom/pan handling
+- **Building rendering** with texture caching and fallbacks
+
+### 7. UI Components (`public/editor.html`)
 - **Modular toolbar** with minimize/expand
 - **Tile palette** with visual selection and proper click handling
 - **Minimap** with viewport indicator
@@ -123,6 +133,7 @@ Blocky Builder is now a professional, modular world editor built with a clean se
 - **Toast notifications** for user feedback
 - **Project Setup modal** with mandatory world creation flow
 - **New Project button** in header for easy project management
+- **Building Manager panel** with template management
 - **Focus management** and accessibility features
 
 ## Data Flow
