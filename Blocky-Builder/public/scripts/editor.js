@@ -57,21 +57,6 @@ class BlockyBuilderEditor {
         }
     }
 
-    initializeNPCBuilder() {
-        try {
-            // Check if NPCBuilder class is available
-            if (typeof NPCBuilder !== 'undefined') {
-                this.npcBuilder = new NPCBuilder(this.canvas, this.worldManager);
-                console.log('✅ NPC Builder initialized successfully');
-            } else {
-                console.warn('⚠️ NPCBuilder class not found - NPC functionality disabled');
-                this.showToast('NPC Builder not available', 'warning');
-            }
-        } catch (error) {
-            console.error('Failed to initialize NPC Builder:', error);
-            this.showToast('Failed to initialize NPC Builder: ' + error.message, 'error');
-        }
-    }
 
     setupUI() {
         // Setup right tile palette
@@ -1258,6 +1243,17 @@ function loadWorldFromServer(worldName) {
             // Load world data
             window.editor.worldManager.loadWorldData(worldData);
             
+            // Load NPCs into NPCBuilder if available
+            if (window.editor.npcBuilder && worldData.npcs) {
+                console.log(`🎯 Loading ${worldData.npcs.length} NPCs from server world:`, worldData.npcs.map(npc => `${npc.name} (${npc.id})`));
+                window.editor.npcBuilder.loadSaveData(worldData);
+                console.log(`✅ Loaded ${worldData.npcs.length} NPCs from server world`);
+            } else if (window.editor.npcBuilder) {
+                console.log('ℹ️ No NPCs found in server world data');
+            } else {
+                console.warn('⚠️ NPCBuilder not initialized, cannot load NPCs');
+            }
+            
             // Set the world name from the loaded data or use the filename as fallback
             window.editor.worldManager.worldName = worldData.worldName || worldName;
             
@@ -1301,6 +1297,17 @@ function loadCachedWorld() {
         
         // Load world data
         window.editor.worldManager.loadWorldData(worldData);
+        
+        // Load NPCs into NPCBuilder if available
+        if (window.editor.npcBuilder && worldData.npcs) {
+            console.log(`🎯 Loading ${worldData.npcs.length} NPCs from cached world:`, worldData.npcs.map(npc => `${npc.name} (${npc.id})`));
+            window.editor.npcBuilder.loadSaveData(worldData);
+            console.log(`✅ Loaded ${worldData.npcs.length} NPCs from cached world`);
+        } else if (window.editor.npcBuilder) {
+            console.log('ℹ️ No NPCs found in cached world data');
+        } else {
+            console.warn('⚠️ NPCBuilder not initialized, cannot load NPCs');
+        }
         
         // Set the world name from the loaded data
         window.editor.worldManager.worldName = worldData.worldName || 'Cached World';
@@ -1349,6 +1356,17 @@ function loadWorldFromFile(input) {
             
             // Load world data
             window.editor.worldManager.loadWorldData(worldData);
+            
+            // Load NPCs into NPCBuilder if available
+            if (window.editor.npcBuilder && worldData.npcs) {
+                console.log(`🎯 Loading ${worldData.npcs.length} NPCs from imported world:`, worldData.npcs.map(npc => `${npc.name} (${npc.id})`));
+                window.editor.npcBuilder.loadSaveData(worldData);
+                console.log(`✅ Loaded ${worldData.npcs.length} NPCs from imported world`);
+            } else if (window.editor.npcBuilder) {
+                console.log('ℹ️ No NPCs found in imported world data');
+            } else {
+                console.warn('⚠️ NPCBuilder not initialized, cannot load NPCs');
+            }
             
             // Set the world name from the loaded data or use filename as fallback
             window.editor.worldManager.worldName = worldData.worldName || file.name.replace('.json', '');
