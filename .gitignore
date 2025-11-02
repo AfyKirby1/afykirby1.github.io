@@ -1,0 +1,114 @@
+# Node.js dependencies
+node_modules/
+**/node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+package-lock.json
+*.lock
+
+# Python cache and compiled files
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+*.egg-info/
+dist/
+build/
+*.egg
+
+# Environment variables
+.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+
+# IDE and editor files
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# OS-specific files
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+Desktop.ini
+
+# Log files
+*.log
+logs/
+*.log.*
+
+# Temporary files
+*.tmp
+*.temp
+.tmp/
+temp/
+
+# Build and dist files
+dist/
+build/
+out/
+.next/
+.cache/
+
+# User-uploaded content (War Room assets)
+war-room-assets/*.png
+war-room-assets/*.jpg
+war-room-assets/*.jpeg
+war-room-assets/*.gif
+war-room-assets/*.mp3
+war-room-assets/*.wav
+war-room-assets/*.mp4
+# Keep the directory structure
+!war-room-assets/.gitkeep
+
+# Test coverage
+coverage/
+.nyc_output/
+*.lcov
+
+# Debug files
+*.debug
+debugs/temp/
+
+# Server process files
+*.pid
+*.seed
+*.pid.lock
+
+# Optional npm cache directory
+.npm
+
+# Optional eslint cache
+.eslintcache
+
+# Optional REPL history
+.node_repl_history
+
+# Output of 'npm pack'
+*.tgz
+
+# Yarn Integrity file
+.yarn-integrity
+
+# parcel-bundler cache
+.parcel-cache
+
+# TypeScript cache
+*.tsbuildinfo
+
+# Optional stylelint cache
+.stylelintcache
+

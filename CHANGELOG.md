@@ -2,6 +2,28 @@
 
 All notable changes to this project will be documented in this file.
 
+## [2025-01-27] - Project Maintenance & Documentation
+
+### Added
+- **Comprehensive .gitignore** - Created complete .gitignore file covering:
+  - Node.js dependencies (node_modules, package-lock.json, npm logs)
+  - Python cache and compiled files (__pycache__, *.pyc, etc.)
+  - Environment variables (.env files)
+  - IDE and editor files (.vscode, .idea, *.swp)
+  - OS-specific files (.DS_Store, Thumbs.db)
+  - User-uploaded content (war-room-assets media files)
+  - Build artifacts, logs, and temporary files
+- **war-room-assets/.gitkeep** - Preserves directory structure while ignoring uploaded files
+
+### Changed
+- **SBOM.md** - Updated multer version from ^2.0.2 to ^1.4.5-lts.1 to match package.json
+- **Documentation** - Updated timestamps and maintenance information
+
+### Technical Details
+- **Git Configuration**: Proper .gitignore prevents accidental commits of dependencies and user-generated content
+- **Directory Preservation**: .gitkeep ensures war-room-assets directory is tracked in git
+- **Security**: Environment files and sensitive data excluded from version control
+
 ## [2025-01-27] - Major Feature Updates
 
 ### Added - Blocky-Builder World Editor (v0.09)

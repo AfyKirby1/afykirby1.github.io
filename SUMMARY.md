@@ -66,6 +66,7 @@ Diamond Clad Studios (DCS) portfolio website showcasing multiple gaming and soft
 - ✅ **Performance Optimization** - Instant localStorage caching with zero-delay page loads
 - ✅ **Filesystem Storage** - Full-quality asset management with upload/download capabilities
 - ✅ **Unified Server Architecture** - Single Express.js server serving all projects
+- ✅ **Comprehensive Documentation** - Complete documentation suite with SBOM, requirements, and architecture docs
 
 ### Blocky-Builder World Editor (v0.09)
 - ✅ **Complete Building System** - Texture-based building placement with coordinate system fixes
@@ -73,6 +74,14 @@ Diamond Clad Studios (DCS) portfolio website showcasing multiple gaming and soft
 - ✅ **NPC Builder Overhaul** - Custom PNG upload system with persistent storage
 - ✅ **Professional Rearrangement** - Modular architecture with landing page and theme system
 - ✅ **Coordinate System Fixes** - Buildings place exactly where you click with zoom awareness
+
+### Blocky-Builder-2.0 (React/TypeScript)
+- ✅ **Professional Map Editor** - React-based 2D map editor with TypeScript
+- ✅ **Advanced Drawing Tools** - Pixel-perfect drawing with anti-aliasing prevention
+- ✅ **Comprehensive Tile Management** - Custom tile import with grid-based cutting
+- ✅ **Animation Timeline** - Frame management with playback controls
+- ✅ **Layer System** - Multi-layer maps with opacity controls
+- ✅ **Export System** - Multiple export formats (PNG, JSON, GIF)
 
 ### Runes of Tir na nÓg RPG (v2.0)
 - ✅ **Complete Combat System** - Player and NPC attacks with RuneScape Classic-style animations
